@@ -1,0 +1,580 @@
+/* dashboard.css */
+.dashboard {
+  font-family: Arial, sans-serif;
+  margin: 0 auto;
+  
+  position: relative; /* Added position relative */
+  overflow: hidden;
+}
+
+.dashboard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('../assets/bg_img.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transform: rotate(180deg); /* Flips the background image upside down */
+  z-index: -1; /* Ensures the pseudo-element is behind the body content */
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  position: sticky;
+  align-items: center;
+  padding: 15px;
+  background-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  background-color: #ddd;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.user-name {
+  margin-left: 10px;
+}
+
+.notifications {
+  position: relative;
+}
+
+.bell-icon {
+  font-size: 24px;
+}
+
+.notification-count {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: red;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 12px;
+}
+
+main {
+  padding: 20px;
+}
+
+.image-section {
+  background-color: white;
+  border-radius: 30px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.image-placeholder {
+  width: 100%;
+  height: 200px;
+  border-radius: 30px;
+  background-color: #ddd;
+  margin-bottom: 10px;
+}
+
+.scores-section {
+  background-color: white;
+  border-radius: 30px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.score-update{
+  color: #888;
+  font-size: 0.7em;
+}
+
+.score-tab-menu {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.score-tab-menu button {
+  background: none;
+  border: none;
+  padding: 5px 20px;
+  margin: 0 5px;
+  cursor: pointer;
+  font-size: 0.7em;
+  color: #ffffff;
+  border-bottom: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.score-tab-menu button.active {
+  color: #767676;
+  border-bottom-color: #767676;
+}
+  
+
+.score-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.score-label {
+  width: 60px; // Increased width to accommodate longer labels
+  text-align: left;
+  margin-right: 10px;
+}
+
+.score-bar {
+  flex-grow: 1;
+  height: 10px;
+  background-color: #eee;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.score-fill {
+  height: 100%;
+  background-image: linear-gradient(to left, #ff500b, #E190CB);
+  border-radius: 5px;
+  transition: width 0.5s ease-out; // Add transition for smooth animation
+}
+
+.score-value {
+  width: 30px;
+  text-align: right;
+  margin-left: 10px;
+}
+
+.abilities-section {
+  background-color: white;
+  border-radius: 30px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.ability-tab-menu {
+display: flex;
+justify-content: center;
+margin-bottom: 20px;
+}
+
+.ability-tab-menu button {
+  background: none;
+  border: none;
+  padding: 5px 20px;
+  margin: 0 5px;
+  cursor: pointer;
+  font-size: 0.7em;
+  color: #ffffff;
+  border-bottom: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.ability-tab-menu button.active {
+  color: #767676;
+  border-bottom-color: #767676;
+}
+
+.ability-chart {
+width: 200px;
+height: 200px;
+position: relative;
+margin: 20px auto 30px;
+}
+
+.ability-chart svg {
+  transform: rotate(180deg);
+  overflow: visible;
+}
+
+.ability-fill-circle {
+  transition: stroke-dashoffset 0.5s ease-out;
+}
+
+/* Ensure the gradient is visible on the SVG stroke */
+.ability-fill-circle {
+  stroke: url(#abilityChartGradient);
+}
+
+.ability-percentage {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.ability-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.ability-label {
+  width: 40px; /* Adjust this value as needed */
+  text-align: left;
+  margin-right: 10px;
+}
+
+.ability-bar {
+  flex-grow: 1;
+  height: 10px;
+  background-color: #eee;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.ability-fill {
+  height: 100%;
+  background-image: linear-gradient(to left, #ff500b, #E190CB);
+  border-radius: 5px;
+}
+
+.ability-fill {
+transition: width 0.5s ease-out;
+}
+
+.ability-value {
+  width: 40px; /* Adjust this value as needed */
+  text-align: right;
+  margin-left: 10px;
+}
+
+.stats-section {
+  display: flex;
+  justify-content: space-between;
+  background-color: white;
+  border-radius: 20px;
+  padding: 15px 30px;
+  margin-bottom: 20px;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 32px;
+  font-weight: bold;
+  display: block;
+}
+
+.stat-label{
+  font-size: 0.7em;
+  color: #888;
+}
+
+.todo-section {
+  background-color: white;
+  border-radius: 30px;
+  padding: 15px;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.action-buttons button {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background-color: #ddd;
+}
+
+nav {
+  display: flex;
+  justify-content: space-around;
+  padding: 15px;
+  background-color: white;
+}
+
+nav button {
+  border: none;
+  background: none;
+  font-size: 16px;
+  color: #888;
+}
+
+nav button.active {
+  color: #4a90e2;
+  font-weight: bold;
+}
+
+.nav-icon img {
+  width: 24px;
+  height: 24px;
+  margin-bottom: 5px;
+}
+
+.icon-label {
+  font-size: 12px;
+  text-align: center;
+}
+
+.icon-group {
+  display: flex;
+  align-items: center;
+}
+
+.clip-icon, .paper-plane-icon {
+  font-size: 18px;
+  margin-left: 10px;
+}
+
+.sticky-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: white;
+  padding: 15px;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: height 0.3s;
+  height: 100px; // Increased to accommodate taller button
+
+  &.expanded {
+    height: 98%;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    overflow: hidden;
+  }
+}
+
+.nav-icons {
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+.nav-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+}
+
+.chatbox-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #f0f0f0;
+  border: none;
+  padding: 20px 15px;
+  font-size: 14px;
+  color: #888;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  width: 95%;
+  max-width: 95%;
+  height: 80px;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  border-bottom-left-radius: 0px;  // New line
+  border-bottom-right-radius: 0px; // New line
+}
+
+.expanded-chat-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+}
+
+.chatbox-button:hover {
+  background-color: #e0e0e0;
+}
+
+.chat-text {
+  flex-grow: 1;
+  text-align: left;
+  margin-right: 10px;
+}
+
+.header {
+  background-color: #FF9A8B;
+  background-image: linear-gradient(90deg, #FF9A8B 0%, #FF6A88 55%, #FF99AC 100%);
+  padding: 10px;
+  width: 100%;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  color: white;
+}
+
+.solfie-ai-label {
+  font-size: 18px;
+  font-weight: bold;
+  padding-left: 10px;
+}
+
+.close-icon {
+  font-size: 24px;
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding-right: 10px;
+}
+
+.chat-messages {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 15px;
+  width: 100%;
+}
+
+.message-container {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.sender-name {
+  font-size: 12px;
+  margin-top: 5px;
+  font-weight: bold;
+}
+
+.chat-bubble {
+  display: inline-block;
+  max-width: 80%;
+  padding: 10px 15px;
+  border-radius: 18px;
+  font-size: 14px;
+  line-height: 0;
+  word-wrap: break-word;
+  white-space: pre-wrap; // This preserves whitespace and line breaks
+  text-align: left;
+  margin: 10px;
+}
+
+.timestamp {
+  font-size: 10px;
+  margin-top: 3px;
+  color: #888;
+}
+
+.user-message {
+  align-items: flex-end;
+
+  .sender-name, .timestamp {
+    text-align: right;
+    margin-right: 15px;
+  }
+
+  .chat-bubble {
+    background-color: #4a90e2;
+    color: white;
+    border-bottom-right-radius: 4px;
+  }
+}
+
+.ai-message {
+  align-items: flex-start;
+
+  .sender-name, .timestamp {
+    text-align: left;
+    margin-left: 15px;
+  }
+
+  .chat-bubble {
+    background-color: #f0f0f0;
+    color: #333;
+    border-bottom-left-radius: 4px;
+  }
+}
+
+.chat-messages-example {
+  padding: 15px;
+  width: 90%;
+  border-style: solid;
+  border-bottom: none;
+  border-left: none;
+  border-right: none;
+  border-color: #f8f8f8;
+}
+
+.messageExample {
+  font-size: 0.8em;
+  text-align: left;
+  margin-bottom: 8px;
+  color: #666;
+  font-style: italic;
+  cursor: pointer;
+}
+
+.chat-input-field {
+  display: flex;
+  flex-direction: column;
+  width: 90%;
+  background-color: #f0f0f0;
+  padding: 20px 15px;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+}
+
+textarea {
+  flex-grow: 1;
+  width: 100%;
+  min-height: 100px; // Ensures a minimum height for the textarea
+  padding: 10px;
+  font-size: 16px;
+  border: none;
+  background-color: transparent;
+  outline: none;
+  resize: none;
+  color: #666;
+}
+
+.chat-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding-top: 10px;
+}
+
+.file-upload-button,
+.send-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 5px;
+  margin-left: 10px;
+}
+
+.file-upload-button {
+  color: #4a90e2;
+}
+
+.send-button {
+  color: #4a90e2;
+}
+
+/* Ensure the dashboard content doesn't get hidden behind the sticky nav */
+.dashboard {
+padding-bottom: 100px; /* Adjust this value based on the height of your sticky nav */
+}
