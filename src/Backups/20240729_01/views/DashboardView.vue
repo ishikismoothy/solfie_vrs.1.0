@@ -1,0 +1,501 @@
+<template>
+  <header>
+    <div class="user-info">
+      <span class="avatar"></span>
+      <span class="user-name">{{ user.name }}</span>
+    </div>
+    <div class="plan-type">Plan Type : {{ user.planType }}</div>
+    <div class="notifications">
+      <span class="bell-icon"></span>
+      <span class="notification-count">{{ user.notifications }}</span>
+    </div>
+  </header>
+
+  <div class="dashboard">
+    <main>
+      <section class="image-section">
+        <div class="image-placeholder"></div>
+        <h2>The Maestro - 巨匠</h2>
+      </section>
+
+      <section class="potential-section">
+        <div class="score-tab-menu" v-if="scoresData && Object.keys(scoresData).length">
+          <button 
+            v-for="tab in Object.keys(scoresData)" 
+            :key="tab" 
+            @click="selectScoreTab(tab)"
+            :class="{ active: selectedScoreTab === tab }"
+          >
+            {{ tab }}
+          </button>
+        </div>
+
+        <section class="scores-section">
+          <p class="score-update">更新：{{ currentScoreData.date }}</p>
+          <div v-for="(value, key) in currentScoreData.items" :key="key" class="score-item">
+            <span class="score-label">{{ key }}</span>
+            <div class="score-bar">
+              <div class="ability-fill" :style="{ width: `${animatedScores[selectedScoreTab][key] * 20}%` }"></div>
+            </div>
+            <span class="ability-value">{{ animatedScores[selectedScoreTab][key].toFixed(1) }}</span>
+          </div>       
+        </section>
+      </section>
+
+      <section class="decision-section">
+        <div class="ability-tab-menu" v-if="abilitiesData && Object.keys(abilitiesData).length">
+          <button 
+            v-for="tab in Object.keys(abilitiesData)" 
+            :key="tab" 
+            @click="selectAbilityTab(tab)"
+            :class="{ active: selectedAbilityTab === tab }"
+          >
+            {{ tab }}
+          </button>
+        </div>
+
+        <section class="abilities-section">
+          
+          <div class="ability-chart">
+            <svg width="0" height="0">
+              <defs>
+                <linearGradient id="abilityChartGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" style="stop-color:#ff500b;stop-opacity:1" />
+                  <stop offset="100%" style="stop-color:#E190CB;stop-opacity:1" />
+                </linearGradient>
+              </defs>
+            </svg>
+            <svg viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="45" fill="none" stroke="#eee" stroke-width="10" />
+              <circle cx="50" cy="50" r="45" fill="none" stroke="url(#abilityChartGradient)" stroke-width="10"
+                      stroke-dasharray="282.7" :stroke-dashoffset="282.7 - (282.7 * currentAbilities.percentage / 100)"
+                      stroke-linecap="round" class="ability-fill-circle" />
+            </svg>
+            <span class="ability-percentage">{{ currentAbilities.percentage }}%</span>
+          </div>
+
+          <div v-for="(value, key) in currentAbilities.items" :key="key" class="ability-item">
+            <span class="ability-label">{{ key }}</span>
+            <div class="ability-bar">
+              <div class="ability-fill" :style="{ width: `${animatedAbilities[selectedAbilityTab].items[key]}%` }"></div>
+            </div>
+            <span class="ability-value">{{ Math.round(animatedAbilities[selectedAbilityTab].items[key]) }}%</span>
+          </div>
+        </section>
+      </section>
+
+      <section class="stats-section">
+        <div class="stat-item">
+          <span class="stat-label">Solfieレベル</span>
+          <span class="stat-value">{{ stats.solfieLevel }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">クエスト達成</span>
+          <span class="stat-value">{{ stats.questCleared }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">平均スコア</span>
+          <span class="stat-value">{{ stats.averageScore }}</span>
+        </div>
+      </section>
+
+      <section class="todo-section">
+        <h2>今月の選択</h2>
+        <div class="todo-list">
+          <div v-for="(todo, index) in todos" :key="index" class="todo-card">
+            <div class="todo-image">
+              <div class="placeholder-image"></div>
+            </div>
+            <div class="todo-content">
+              <h3>{{ todo?.title }}</h3>
+              <p>期限：{{ todo.date }}</p>
+            </div>
+            <div class="todo-actions">
+              <button class="action-btn tick-btn" @click="completeTodo(index)">
+                <svg viewBox="0 0 24 24" width="24" height="24">
+                  <circle cx="12" cy="12" r="11" fill="none" stroke="#888" stroke-width="1"/>
+                  <path d="M6 12l4 4 8-8" fill="none" stroke="#888" stroke-width="1"/>
+                </svg>
+              </button>
+              <button class="action-btn cross-btn" @click="deleteTodo(index)">
+                <svg viewBox="0 0 24 24" width="24" height="24">
+                  <circle cx="12" cy="12" r="11" fill="none" stroke="#888" stroke-width="1"/>
+                  <path d="M8 8l8 8M16 8l-8 8" fill="none" stroke="#888" stroke-width="1"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="todo-card add-todo" @click="showAddTodoModal">
+            <div class="add-icon">+</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Add Todo Modal -->
+      <div v-if="showModal" class="modal">
+        <div class="modal-content">
+          <h2>今月は何を選択する？</h2>
+          <input v-model="newTodo.title" placeholder="選択を入力" />
+          <input v-model="newTodo.date" type="date" :min="today" />
+          <textarea v-model="newTodo.description" placeholder="説明を入力"></textarea>
+          <div class="file-upload">
+            <label for="file-upload" class="custom-file-upload">
+              Upload Image
+            </label>
+            <input id="file-upload" type="file" @change="handleFileUpload" />
+          </div>
+          <div class="modal-actions">
+            <button @click="addTodo">Add</button>
+            <button @click="closeModal">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <nav class="sticky-nav" :class="{ expanded: isChatBoxExpanded }">
+      <div class="nav-icons" v-if="!isChatBoxExpanded">
+        <a href="#" class="nav-icon">
+          <img src="../assets/icons/journalIcon.svg" alt="Journal" />
+          <span class="icon-label">Solfie Journal</span>
+        </a>
+        <a href="#" class="nav-icon">
+          <img src="../assets/icons/eventIcon.svg" alt="Event" />
+          <span class="icon-label">Solfie Events</span>
+        </a>
+        <a href="#" class="nav-icon">
+          <img src="../assets/icons/squareIcon.svg" alt="Square" />
+          <span class="icon-label">Solfie Square</span>
+        </a>
+        <a href="#" class="nav-icon">
+          <img src="../assets/icons/statusIcon.svg" alt="Status" />
+          <span class="icon-label">Status</span>
+        </a>
+      </div>
+      <button class="chatbox-button" @click="toggleChatBox" v-if="!isChatBoxExpanded">
+        <span class="chat-text">Chat with Solfie AI</span>
+        <div class="icon-group">
+          <span class="clip-icon">📎</span>
+          <span class="paper-plane-icon">✈️</span>
+        </div>
+      </button>
+      <div class="expanded-chat-box" v-if="isChatBoxExpanded">
+        <div class="header">
+          <div class="header-content">
+            <span class="solfie-ai-label">Solfie AI</span>
+            <button class="close-icon" @click="toggleChatBox">×</button>
+          </div>
+        </div>
+        <div class="chat-messages">
+          <div v-for="(message, index) in chatMessages" :key="index" 
+              class="message-container" 
+              :class="{ 'user-message': message.sender === 'user', 'ai-message': message.sender === 'ai' }">
+              <div class="sender-name">{{ message.sender === 'user' ? 'You' : 'Solfie AI' }}</div>
+            <div class="chat-bubble">
+              <p v-for="(line, lineIndex) in message.text.split('\n')" :key="lineIndex">
+                {{ line }}
+              </p>
+            </div>
+            <div class="timestamp">{{ formatDate(message.timestamp) }}</div>
+          </div>
+        </div>
+        <div class="chat-messages-example">
+          <div 
+            v-for="(messageExample, index) in chatMessagesExample" 
+            :key="index" 
+            class="messageExample"
+            @click="copyToTextarea(messageExample)"
+          >
+            {{ messageExample }}
+          </div>
+        </div>
+        <div class="chat-input-field">
+          <textarea v-model="chatInput" placeholder="Type a message..."></textarea>
+          <div class="chat-actions">
+            <button class="file-upload-button">
+              <span class="clip-icon">📎</span>
+            </button>
+            <button class="send-button" @click="sendMessage">✈️</button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+</template>
+
+<script>
+// Dashboard.vue
+  import { defineComponent, ref, computed, watch } from 'vue';
+  import { useStore } from 'vuex';
+  import { formatDate } from '../utility/dateUtils';
+  //import store from './store'; // Import your store
+
+  export default defineComponent({
+    name: 'DashboardView',
+    setup() {
+      const store = useStore();
+      const user = computed(() => store.state.user || {});
+      const stats = computed(() => store.state.stats || {});
+
+      const selectedImage = ref({
+        title: 'Title',
+        date: '2024/01/01',
+      });
+
+
+      const toggleChatBox = () => {
+        isChatBoxExpanded.value = !isChatBoxExpanded.value;
+      };
+
+      const isChatBoxExpanded = ref(false);
+      
+      const chatInput = ref('');
+
+      const chatMessagesExample = computed(() => store.state.chatMessagesExample);
+
+      const copyToTextarea = (message) => {
+        chatInput.value = message;
+      };
+   
+      const chatMessages = computed(() => store.state.chatMessages);
+      
+      const sendMessage = () => {
+        if (chatInput.value.trim()) {
+          const formattedMessage = chatInput.value.replace(/\n/g, '\n');
+          store.dispatch('sendChatMessage', {
+            text: formattedMessage,
+            sender: 'user',
+            timestamp: new Date().toISOString()
+          });
+          chatInput.value = '';
+        }
+      };
+
+      //=====[SYSTEM01 : TAB FOR POTENTIAL GRAPH]=====
+      const selectedScoreTab = computed({
+        get: () => store.state.selectedScoreTab,
+        set: (value) => store.dispatch('selectScoreTab', value)
+      });
+      const selectScoreTab = (tab) => {
+        selectedScoreTab.value = tab;
+      };
+
+      const currentScoreData = computed(() => store.getters.currentScoreData || { date: '', items: {} });
+      const scoresData = computed(() => store.state.scoresData || {});
+      
+      // Initialize animatedScores with starting values
+      const animatedScores = ref({});
+
+      // Linear interpolation function
+      const lerp = (start, end, t) => start * (1 - t) + end * t;
+
+      // Initialize animatedScores with starting values
+      const initializeAnimatedScores = () => {
+        const scoresData = store.state.scoresData;
+        Object.keys(scoresData).forEach(tab => {
+          if (scoresData[tab] && scoresData[tab].items) {
+            animatedScores.value[tab] = Object.fromEntries(
+              Object.keys(scoresData[tab].items).map(key => [key, 0])
+            );
+          }
+        });
+      };
+
+      initializeAnimatedScores();
+
+      watch(selectedScoreTab, (newTab) => {
+        const scoresData = store.state.scoresData;
+        if (scoresData[newTab] && scoresData[newTab].items) {
+          const targetScores = scoresData[newTab].items;
+          const duration = 500;
+          const start = performance.now();
+
+          const animate = (time) => {
+            const elapsed = time - start;
+            const progress = Math.min(elapsed / duration, 1);
+
+            animatedScores.value[newTab] = Object.fromEntries(
+              Object.entries(targetScores).map(([key, value]) => [
+                key,
+                lerp(animatedScores.value[newTab][key], value, progress)
+              ])
+            );
+
+            if (progress < 1) {
+              requestAnimationFrame(animate);
+            }
+          };
+
+          requestAnimationFrame(animate);
+        }
+      }, { immediate: true });
+
+      //=====[SYSTEM02 : TAB FOR DECISION GRAPH]=====
+      const selectedAbilityTab = computed({
+        get: () => store.state.selectedAbilityTab,
+        set: (value) => store.dispatch('selectAbilityTab', value)
+      });
+      const selectAbilityTab = (tab) => {
+        store.dispatch('selectAbilityTab', tab);
+      };
+
+      const currentAbilities = computed(() => store.getters.currentAbilities || { percentage: 0, items: {} });
+      const abilitiesData = computed(() => store.state.abilitiesData || {});
+
+      const animatedAbilities = ref({});
+      
+      // Initialize animatedAbilities with starting values
+      const initializeAnimatedAbilities = () => {
+        const abilitiesData = store.state.abilitiesData;
+        Object.keys(abilitiesData).forEach(tab => {
+          if (abilitiesData[tab] && abilitiesData[tab].items) {
+            animatedAbilities.value[tab] = {
+              percentage: 0,
+              items: Object.fromEntries(
+                Object.keys(abilitiesData[tab].items).map(key => [key, 0])
+              )
+            };
+          }
+        });
+      };
+
+      initializeAnimatedAbilities();
+
+      watch(selectedAbilityTab, (newTab) => {
+        const abilitiesData = store.state.abilitiesData;
+        if (abilitiesData[newTab]) {
+          const targetAbilities = abilitiesData[newTab];
+          const duration = 500;
+          const start = performance.now();
+
+          const animate = (time) => {
+            const elapsed = time - start;
+            const progress = Math.min(elapsed / duration, 1);
+
+            animatedAbilities.value[newTab] = {
+              percentage: lerp(animatedAbilities.value[newTab].percentage, targetAbilities.percentage, progress),
+              items: Object.fromEntries(
+                Object.entries(targetAbilities.items).map(([key, value]) => [
+                  key,
+                  lerp(animatedAbilities.value[newTab].items[key], value, progress)
+                ])
+              )
+            };
+
+            if (progress < 1) {
+              requestAnimationFrame(animate);
+            }
+          };
+
+          requestAnimationFrame(animate);
+        }
+      }, { immediate: true });
+
+      //=====[SYSTEM03 : TODOS]=====
+      const todos = computed(() => store.state.todos || []);
+      const completedCount = computed(() => store.state.stats.questCleared);
+
+      const showModal = ref(false);
+      const newTodo = ref({ title: '', date: '', description: '', image: null });
+      
+      const today = computed(() => {
+        const date = new Date();
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      });
+
+      const showAddTodoModal = () => {
+        showModal.value = true;
+        newTodo.value = { title: '', date: today.value, description: '', image: null };
+      };
+
+      const closeModal = () => {
+        showModal.value = false;
+      };
+
+      const addTodo = () => {
+        if (newTodo.value.title && newTodo.value.date) {
+          store.dispatch('addTodo', {
+            title: newTodo.value.title,
+            date: newTodo.value.date.replace(/-/g, '/'),
+            image: newTodo.value.image,
+          });
+          closeModal();
+        }
+      };
+
+      const completeTodo = (index) => {
+        store.dispatch('completeTodo', index);
+      };
+
+      const deleteTodo = (index) => {
+        store.dispatch('deleteTodo', index);
+      };
+
+      const handleFileUpload = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            newTodo.value.image = e.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+
+      console.log('Store state:', store.state);
+      console.log('Selected score tab:', selectedScoreTab.value);
+      console.log('Selected ability tab:', selectedAbilityTab.value);
+      console.log('Current score data:', currentScoreData.value);
+      console.log('Current abilities:', currentAbilities.value);
+
+      return {
+        //USER DATA FUNCTION
+        user,
+        stats,
+
+        //SCORE DISPLAY FUNCTION
+        selectedScoreTab,
+        currentScoreData,
+        scoresData,
+        selectScoreTab,
+        animatedScores,
+
+        //ABILITY DISPLAY FUNCTION
+        selectedAbilityTab,
+        currentAbilities,
+        abilitiesData,
+        selectAbilityTab,
+        animatedAbilities,
+        
+        selectedImage,
+        //TODO FUNCTION     
+        todos,
+        showModal,
+        newTodo,
+        today,
+        completedCount,
+        showAddTodoModal,
+        closeModal,
+        addTodo,
+        completeTodo,
+        deleteTodo,
+        handleFileUpload,
+        //CHAT FUNCTION
+        isChatBoxExpanded,
+        chatInput,
+        chatMessagesExample,
+        copyToTextarea,
+        chatMessages,
+        formatDate,
+        toggleChatBox,
+        sendMessage,
+      };
+    },
+  });
+</script>
+
+<style lang="scss">
+  @import '../assets/dashboardStyle.scss';
+  @import '../assets/todosStyle.scss';
+</style>
