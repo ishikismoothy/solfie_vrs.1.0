@@ -26,16 +26,22 @@ export default {
         // Simulating an API call
         setTimeout(() => {
           const scoresData = {
+            // self-assessment
             '自己評価': {
               date: '2024/01/03',
               items: {
+                // reaching potential
                 '開花': 3.9,
+                // appearance
                 '姿': 4.5,
+                // environment
                 '環境': 3.0,
+                // activity
                 '活動': 1.5,
               }
             },
             '意識解析': {
+              // analyse assessment
               date: '2024/05/03',
               items: {
                 '開花': 4.2,

@@ -26,14 +26,19 @@ export default {
         // Simulating an API call
         setTimeout(() => {
           const abilitiesData = {
+            // appearance
             '姿': {
               percentage: 65,
               items: {
+                // conscious
                 '意識': 45,
+                // sync
                 '同期': 50,
+                // choice
                 '選択': 75
               }
             },
+            // environment
             '環境': {
               percentage: 70,
               items: {
@@ -42,6 +47,7 @@ export default {
                 '選択': 70
               }
             },
+            // activity
             '活動': {
               percentage: 55,
               items: {
