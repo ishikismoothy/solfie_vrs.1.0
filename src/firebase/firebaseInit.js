@@ -5,7 +5,7 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyD4dkqNFP6FnzPGw3tl3trGHrZaGfPmYhE",
+  apiKey: "*************", //CHANGE TO THE ACTUAL KEY
   authDomain: "solfie-398005.firebaseapp.com",
   projectId: "solfie-398005",
   storageBucket: "solfie-398005.appspot.com",
