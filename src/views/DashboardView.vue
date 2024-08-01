@@ -19,45 +19,50 @@
       </section>
 
       <section class="potential-section">
-        <div class="score-tab-menu">
+        <div class="score-tab-menu" v-if="Object.keys(scoresData).length">
           <button 
             v-for="tab in Object.keys(scoresData)" 
             :key="tab" 
-            @click="selectScoreTab(tab)"
+            @click="selectedScoreTab = tab"
             :class="{ active: selectedScoreTab === tab }"
+            :disabled="isScoresLoading"
           >
             {{ tab }}
           </button>
         </div>
-        <section class="scores-section">
+        <section v-if="isScoresLoading" class="scores-section-loading">
+          <!-- The loading text is handled by the ::after pseudo-element -->
+          <!-- <div class="scores-loading-text">Loading...</div>-->
+        </section>
+        <section v-if="!isScoresLoading && currentScoreData.items" class="scores-section">
           <p class="score-update">更新：{{ currentScoreData.date }}</p>
-
           <div v-for="(value, key) in currentScoreData.items" :key="key" class="score-item">
             <span class="score-label">{{ key }}</span>
             <div class="score-bar">
-              <div class="ability-fill" :style="{ width: `${animatedScores[selectedScoreTab][key] * 20}%` }"></div>
+              <div class="ability-fill" :style="{ width: `${(animatedScores[selectedScoreTab]?.[key] || 0) * 20}%` }"></div>
             </div>
-            <span class="ability-value">{{ animatedScores[selectedScoreTab][key].toFixed(1) }}</span>
+            <span class="ability-value">{{ (animatedScores[selectedScoreTab]?.[key] || 0).toFixed(1) }}</span>
           </div>       
         </section>
+        <div v-else class="no-data"></div>
       </section>
 
-      
-
       <section class="decision-section">
-        <div class="ability-tab-menu">
-            <button 
-              v-for="tab in Object.keys(abilitiesData)" 
-              :key="tab" 
-              @click="selectAbilityTab(tab)"
-              :class="{ active: selectedAbilityTab === tab }"
-            >
-              {{ tab }}
-            </button>
+        <div class="ability-tab-menu" v-if="Object.keys(abilitiesData).length">
+          <button 
+            v-for="tab in Object.keys(abilitiesData)" 
+            :key="tab" 
+            @click="selectedAbilityTab = tab"
+            :class="{ active: selectedAbilityTab === tab }"
+            :disabled="isAbilitiesLoading"
+          >
+            {{ tab }}
+          </button>
         </div>
-
-        <section class="abilities-section">
-          
+        <section v-if="isAbilitiesLoading" class="abilities-section-loading">
+          <!-- <div class="abilities-loading-text">Loading...</div> -->
+        </section>
+        <section v-if="!isAbilitiesLoading && currentAbilities.items" class="abilities-section">
           <div class="ability-chart">
             <svg width="0" height="0">
               <defs>
@@ -70,20 +75,21 @@
             <svg viewBox="0 0 100 100">
               <circle cx="50" cy="50" r="45" fill="none" stroke="#eee" stroke-width="10" />
               <circle cx="50" cy="50" r="45" fill="none" stroke="url(#abilityChartGradient)" stroke-width="10"
-                      stroke-dasharray="282.7" :stroke-dashoffset="282.7 - (282.7 * currentAbilities.percentage / 100)"
+                      stroke-dasharray="282.7" :stroke-dashoffset="282.7 - (282.7 * (animatedAbilities[selectedAbilityTab]?.percentage || 0) / 100)"
                       stroke-linecap="round" class="ability-fill-circle" />
             </svg>
-            <span class="ability-percentage">{{ currentAbilities.percentage }}%</span>
+            <span class="ability-percentage">{{ Math.round(animatedAbilities[selectedAbilityTab]?.percentage || 0) }}%</span>
           </div>
 
           <div v-for="(value, key) in currentAbilities.items" :key="key" class="ability-item">
             <span class="ability-label">{{ key }}</span>
             <div class="ability-bar">
-              <div class="ability-fill" :style="{ width: `${animatedAbilities[selectedAbilityTab].items[key]}%` }"></div>
+              <div class="ability-fill" :style="{ width: `${animatedAbilities[selectedAbilityTab]?.items[key] || 0}%` }"></div>
             </div>
-            <span class="ability-value">{{ Math.round(animatedAbilities[selectedAbilityTab].items[key]) }}%</span>
+            <span class="ability-value">{{ Math.round(animatedAbilities[selectedAbilityTab]?.items[key] || 0) }}%</span>
           </div>
         </section>
+        <div v-else class="no-data">No ability data available.</div>
       </section>
 
       <section class="stats-section">
@@ -100,16 +106,25 @@
           <span class="stat-value">{{ stats.averageScore }}</span>
         </div>
       </section>
-
+      
       <section class="todo-section">
         <h2>今月の選択</h2>
-        <div class="todo-list">
+        <div v-if="isTodosLoading" class="todos-loading">
+          <div class="todo-loading-card" v-for="i in 3" :key="i">
+            <div class="todo-loading-image"></div>
+            <div class="todo-loading-content">
+              <div class="todo-loading-title"></div>
+              <div class="todo-loading-date"></div>
+            </div>
+          </div>
+        </div>
+        <div v-else class="todo-list">
           <div v-for="(todo, index) in todos" :key="index" class="todo-card">
             <div class="todo-image">
               <div class="placeholder-image"></div>
             </div>
             <div class="todo-content">
-              <h3>{{ todo.title }}</h3>
+              <h3>{{ todo?.title }}</h3>
               <p>期限：{{ todo.date }}</p>
             </div>
             <div class="todo-actions">
@@ -136,10 +151,10 @@
       <!-- Add Todo Modal -->
       <div v-if="showModal" class="modal">
         <div class="modal-content">
-          <h2>Add New Todo</h2>
-          <input v-model="newTodo.title" placeholder="Title" />
+          <h2>今月は何を選択する？</h2>
+          <input v-model="newTodo.title" placeholder="選択を入力" />
           <input v-model="newTodo.date" type="date" :min="today" />
-          <textarea v-model="newTodo.description" placeholder="Description"></textarea>
+          <textarea v-model="newTodo.description" placeholder="説明を入力"></textarea>
           <div class="file-upload">
             <label for="file-upload" class="custom-file-upload">
               Upload Image
@@ -228,27 +243,24 @@
 
 <script>
 // Dashboard.vue
-  import { defineComponent, ref, computed, watch} from 'vue';
+  import { defineComponent, ref, computed, watch, onMounted } from 'vue';
+  import { useStore } from 'vuex';
+  import { formatDate } from '../utility/dateUtils';
+  import { nextTick } from 'vue';
+  //import store from './store'; // Import your store
 
   export default defineComponent({
     name: 'DashboardView',
     setup() {
-      const user = ref({
-        name: '寺岡 佑記',
-        planType: 'Solfie Careplus',
-        notifications: 3,
-      });
-
-      const stats = ref({
-        solfieLevel: 100,
-        questCleared: 34,
-        averageScore: 4.5,
-      });
+      const store = useStore();
+      const user = computed(() => store.state.user.user || {});
+      const stats = computed(() => store.state.user.stats || {});
 
       const selectedImage = ref({
         title: 'Title',
         date: '2024/01/01',
       });
+
 
       const toggleChatBox = () => {
         isChatBoxExpanded.value = !isChatBoxExpanded.value;
@@ -258,205 +270,184 @@
       
       const chatInput = ref('');
 
-      
-      const chatMessagesExample = ref([
-        'ソルフィ！解析結果を解説して！',
-        '選択を手伝って！',
-        '今月は何を意識したらいいかな？'
-      ]);
+      const chatMessagesExample = computed(() => store.getters['chat/getChatMessagesExample']);
 
       const copyToTextarea = (message) => {
         chatInput.value = message;
       };
    
-      const chatMessages = ref([
-        { text: "Hello! How can I help you today?", sender: "ai", timestamp: "2024/03/01 20:44" },
-        { text: "I have a question about the weather.", sender: "user", timestamp: "2024/03/01 20:45" },
-        { text: "Certainly! What would you like to know about the weather?", sender: "ai", timestamp: "2024/03/01 20:50" },
-        // ... more messages
-      ]);
-
-      const formatDate = (timestamp) => {
-        const date = new Date(timestamp);
-        return date.toLocaleString('ja-JP', { 
-          year: 'numeric', 
-          month: '2-digit', 
-          day: '2-digit', 
-          hour: '2-digit', 
-          minute: '2-digit'
-        });
-      };
+      const chatMessages = computed(() => store.state.chat.chatMessages);
       
       const sendMessage = () => {
         if (chatInput.value.trim()) {
-          // Replace line breaks with <br> tags
           const formattedMessage = chatInput.value.replace(/\n/g, '\n');
-          
-          chatMessages.value.push({
+          store.dispatch('chat/sendChatMessage', {
             text: formattedMessage,
             sender: 'user',
-            timestamp: new Date().toISOString() // Add current timestamp
+            timestamp: new Date().toISOString()
           });
-
           chatInput.value = '';
-          // Here you would typically call a function to get the AI's response
-          // and then add it to the chatMessages array
         }
       };
 
       //=====[SYSTEM01 : TAB FOR POTENTIAL GRAPH]=====
-      const selectedScoreTab = ref('自己評価');
-      const animatedScores = ref({});
+      const selectedScoreTab = computed({
+        get: () => store.state.scores.selectedScoreTab,
+        set: (value) => store.dispatch('scores/selectScoreTab', value)
+      });
 
-      const scoresData = ref({
+      const currentScoreData = computed(() => store.getters['scores/currentScoreData'] || { date: '', items: {} });
+      const scoresData = computed(() => store.state.scores.scoresData);
+      const isScoresLoading = computed(() => store.getters['scores/isLoading']);
+
+      //Initial Value during the loading
+      const animatedScores = ref({ 
         '自己評価': {
-          date: '2024/01/03',
+          date: '2024/01/01',
           items: {
-            '開花': 3.9,
-            '姿': 4.5,
-            '環境': 3.0,
-            '活動': 1.5,
+            '開花': 0,
+            '姿': 0,
+            '環境': 0,
+            '活動': 0,
           }
         },
         '意識解析': {
-          date: '2024/05/03',
+          date: '2024/01/01',
           items: {
-            '開花': 4.2,
-            '姿': 3.7,
-            '環境': 3.5,
-            '活動': 4.0,
+            '開花': 0,
+            '姿': 0,
+            '環境': 0,
+            '活動': 0,
           }
-        }
-      });
+        } });
 
-      const currentScoreData = computed(() => scoresData.value[selectedScoreTab.value]);
+      const lerp = (start, end, t) => start * (1 - t) + end * t;
 
-      const selectScoreTab = (tab) => {
-        selectedScoreTab.value = tab;
+      const initializeAnimatedScores = () => {
+        Object.keys(scoresData.value).forEach(tab => {
+          if (scoresData.value[tab]?.items) {
+            animatedScores.value[tab] = Object.fromEntries(
+              Object.keys(scoresData.value[tab].items).map(key => [key, 0])
+            );
+          }
+        });
       };
 
-      // Initialize animatedScores with starting values
-      Object.keys(scoresData.value).forEach(tab => {
-        animatedScores.value[tab] = Object.fromEntries(
-          Object.keys(scoresData.value[tab].items).map(key => [key, 0])
-        );
-      });
+      
 
-      // Watch for changes in the selected score tab and animate the values
-      watch(selectedScoreTab, (newTab) => {
-        const targetScores = scoresData.value[newTab].items;
-        const duration = 500; // Animation duration in milliseconds
-        const start = performance.now();
+      watch([selectedScoreTab, isScoresLoading], ([newTab, isLoading]) => {
+        if (!isLoading && scoresData.value[newTab]?.items) {
+            const targetScores = scoresData.value[newTab].items;
+            const duration = 500;
+            const start = performance.now();
 
-        const animate = (time) => {
-          const elapsed = time - start;
-          const progress = Math.min(elapsed / duration, 1);
+            const animate = (time) => {
+              const elapsed = time - start;
+              const progress = Math.min(elapsed / duration, 1);
 
-          animatedScores.value[newTab] = Object.fromEntries(
-            Object.entries(targetScores).map(([key, value]) => [
-              key,
-              lerp(animatedScores.value[newTab][key], value, progress)
-            ])
-          );
+              animatedScores.value[newTab] = Object.fromEntries(
+                Object.entries(targetScores).map(([key, value]) => [
+                  key,
+                  lerp(animatedScores.value[newTab][key], value, progress)
+                ])
+              );
 
-          if (progress < 1) {
+              if (progress < 1) {
+                requestAnimationFrame(animate);
+              }
+            };
+
             requestAnimationFrame(animate);
-          }
-        };
-
-        requestAnimationFrame(animate);
+        }
       }, { immediate: true });
 
-      const currentAbilities = computed(() => abilitiesData.value[selectedAbilityTab.value]);
-
-      const selectAbilityTab = (tab) => {
-        selectedAbilityTab.value = tab;
-      };
-
-
       //=====[SYSTEM02 : TAB FOR DECISION GRAPH]=====
-      const selectedAbilityTab = ref('姿');
-      const animatedAbilities = ref({});
+      const selectedAbilityTab = computed({
+        get: () => store.state.abilities.selectedAbilityTab,
+        set: (value) => store.dispatch('abilities/selectAbilityTab', value)
+      });
 
-      const abilitiesData = ref({
+      const currentAbilities = computed(() => store.getters['abilities/currentAbilities'] || { percentage: 0, items: {} });
+      const abilitiesData = computed(() => store.state.abilities.abilitiesData);
+      const isAbilitiesLoading = computed(() => store.getters['abilities/isLoading']);
+
+      const animatedAbilities = ref({ 
         '姿': {
-          percentage: 65,
+          percentage: 0,
           items: {
-            '意識': 45,
-            '同期': 50,
-            '選択': 75
+            '意識': 0,
+            '同期': 0,
+            '選択': 0
           }
         },
         '環境': {
-          percentage: 70,
+          percentage: 0,
           items: {
-            '意識': 60,
-            '同期': 80,
-            '選択': 70
+            '意識': 0,
+            '同期': 0,
+            '選択': 0
           }
         },
         '活動': {
-          percentage: 55,
+          percentage: 0,
           items: {
-            '意識': 50,
-            '同期': 60,
-            '選択': 55
+            '意識': 0,
+            '同期': 0,
+            '選択': 0
           }
         }
-      });
-      
-      // Initialize animatedAbilities with starting values
-      Object.keys(abilitiesData.value).forEach(tab => {
-        animatedAbilities.value[tab] = {
-          percentage: 0,
-          items: Object.fromEntries(
-            Object.keys(abilitiesData.value[tab].items).map(key => [key, 0])
-          )
-        };
-      });
+       });
 
-      // Watch for changes in the selected tab and animate the values
-      watch(selectedAbilityTab, (newTab) => {
-        const targetAbilities = abilitiesData.value[newTab];
-        const duration = 500; // Animation duration in milliseconds
-        const start = performance.now();
+      const initializeAnimatedAbilities = () => {
+        Object.keys(abilitiesData.value).forEach(tab => {
+          if (abilitiesData.value[tab] && abilitiesData.value[tab].items) {
+            animatedAbilities.value[tab] = {
+              percentage: 0,
+              items: Object.fromEntries(
+                Object.keys(abilitiesData.value[tab].items).map(key => [key, 0])
+              )
+            };
+          }
+        });
+      };
 
-        const animate = (time) => {
-          const elapsed = time - start;
-          const progress = Math.min(elapsed / duration, 1);
+      watch([selectedAbilityTab, isAbilitiesLoading], ([newTab, isLoading]) => {
+        if (!isLoading && abilitiesData.value[newTab]?.items) {
+          const targetAbilities = abilitiesData.value[newTab];
+          const duration = 500;
+          const start = performance.now();
 
-          animatedAbilities.value[newTab] = {
-            percentage: lerp(animatedAbilities.value[newTab].percentage, targetAbilities.percentage, progress),
-            items: Object.fromEntries(
-              Object.entries(targetAbilities.items).map(([key, value]) => [
-                key,
-                lerp(animatedAbilities.value[newTab].items[key], value, progress)
-              ])
-            )
+          const animate = (time) => {
+            const elapsed = time - start;
+            const progress = Math.min(elapsed / duration, 1);
+
+            animatedAbilities.value[newTab] = {
+              percentage: lerp(animatedAbilities.value[newTab].percentage, targetAbilities.percentage, progress),
+              items: Object.fromEntries(
+                Object.entries(targetAbilities.items).map(([key, value]) => [
+                  key,
+                  lerp(animatedAbilities.value[newTab].items[key], value, progress)
+                ])
+              )
+            };
+
+            if (progress < 1) {
+              requestAnimationFrame(animate);
+            }
           };
 
-          if (progress < 1) {
-            requestAnimationFrame(animate);
-          }
-        };
-
-        requestAnimationFrame(animate);
+          requestAnimationFrame(animate);
+        }
       }, { immediate: true });
 
-      // Linear interpolation function
-      const lerp = (start, end, t) => start * (1 - t) + end * t;
-
-
       //=====[SYSTEM03 : TODOS]=====
-      const todos = ref([
-        { title: 'Sample Todo', date: '2024/01/01', image: null },
-        // Add more sample todos as needed
-      ]);
+      const todos = computed(() => store.state.todos.todos);
+      const completedCount = computed(() => store.getters['todos/getCurrentCompleted']);
+      const isTodosLoading = computed(() => store.getters['todos/isLoading']);
 
       const showModal = ref(false);
       const newTodo = ref({ title: '', date: '', description: '', image: null });
-      const completedCount = ref(0);
-
+      
       const today = computed(() => {
         const date = new Date();
         return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -471,9 +462,10 @@
         showModal.value = false;
       };
 
+      // Corrected actions
       const addTodo = () => {
         if (newTodo.value.title && newTodo.value.date) {
-          todos.value.push({
+          store.dispatch('todos/addTodo', {
             title: newTodo.value.title,
             date: newTodo.value.date.replace(/-/g, '/'),
             image: newTodo.value.image,
@@ -483,13 +475,13 @@
       };
 
       const completeTodo = (index) => {
-        todos.value.splice(index, 1);
-        completedCount.value++;
+        store.dispatch('todos/completeTodo', index);
       };
 
       const deleteTodo = (index) => {
-        todos.value.splice(index, 1);
+        store.dispatch('todos/deleteTodo', index);
       };
+
 
       const handleFileUpload = (event) => {
         const file = event.target.files[0];
@@ -502,21 +494,55 @@
         }
       };
 
+      onMounted(async () => {
+        // Load scores data
+        await store.dispatch('scores/loadScoresData');
+        // Initialize animated scores
+        initializeAnimatedScores();
+      });
+
+      onMounted(async () => {
+        // Load abilities data
+        await store.dispatch('abilities/loadAbilitiesData');
+        // Initialize animated abilities
+        initializeAnimatedAbilities();
+      });
+      
+      onMounted(async () => {
+        // Load todos data
+        await store.dispatch('todos/loadTodosData');
+      });
+
+      nextTick(() => {
+        console.log('Current message:', chatMessagesExample.value);
+        console.log('Current message:', store.state.chat.chatMessagesExample);
+      });
+
+      console.log('Entire store state:', store.state);
+      console.log('Current User:', store.state.user.user.name);
+      console.log('Store state:', store.state);
+      console.log('Selected score tab:', selectedScoreTab.value);
+      console.log('Selected ability tab:', selectedAbilityTab.value);
+      console.log('Current score data:', currentScoreData.value);
+      console.log('Current abilities:', currentAbilities.value);
+
       return {
         //USER DATA FUNCTION
         user,
         stats,
+
         //SCORE DISPLAY FUNCTION
         selectedScoreTab,
-        scoresData,
         currentScoreData,
-        selectScoreTab,
+        scoresData,
+        isScoresLoading,
         animatedScores,
+
         //ABILITY DISPLAY FUNCTION
         selectedAbilityTab,
-        abilitiesData,
         currentAbilities,
-        selectAbilityTab,
+        abilitiesData,
+        isAbilitiesLoading,
         animatedAbilities,
         
         selectedImage,
@@ -532,6 +558,8 @@
         completeTodo,
         deleteTodo,
         handleFileUpload,
+        isTodosLoading,
+        
         //CHAT FUNCTION
         isChatBoxExpanded,
         chatInput,

@@ -1,18 +1,32 @@
 <template>
+  <signingUp v-if="!isAuthenticated"/>
   <div class="home">
     <img alt="Vue logo" src="../assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
   </div>
+  <LogoutButton v-if="isAuthenticated" />
 </template>
 
 <script>
-// @ is an alias to /src
-import HelloWorld from '@/components/HelloWorld.vue'
+import signingUp from '@/components/signingUp.vue'
+import LogoutButton from '@/components/logoutButton.vue'
+import { computed } from 'vue'
+import { useStore } from 'vuex'
 
 export default {
   name: 'HomeView',
   components: {
-    HelloWorld
+
+    signingUp,
+    LogoutButton,
+  },
+  setup() {
+    const store = useStore();
+
+    const isAuthenticated = computed(() => store.getters['auth/isAuthenticated']);
+
+    return {
+      isAuthenticated
+    };
   }
 }
 </script>

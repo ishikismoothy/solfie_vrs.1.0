@@ -82,6 +82,55 @@ main {
   margin-bottom: 10px;
 }
 
+.scores-section-loading {
+  background-color: white;
+  border-radius: 30px;
+  padding: 15px;
+  margin-bottom: 20px;
+  height: 200px; /* Adjust this value based on your loaded scores-section height */
+  position: relative;
+  overflow: hidden;
+}
+/*
+.scores-loading-text{
+  font-size: 24px;
+  color: #888;
+  animation: pulse 1.5s ease-in-out infinite;
+}*/
+
+
+.scores-section-loading::after {
+  content: "Loading...";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 24px;
+  color: white;
+}
+
+.scores-section-loading::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, #e7e7e7, #ffffff, #e7e7e7);
+  //background: linear-gradient(90deg, #ff500b, #E190CB, #ff500b);
+  background-size: 200% 100%;
+  animation: gradientMove 2s linear infinite;
+}
+
+@keyframes gradientMove {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
 .scores-section {
   background-color: white;
   border-radius: 30px;
@@ -150,6 +199,65 @@ main {
   text-align: right;
   margin-left: 10px;
 }
+
+/*
+.abilities-section-loading {
+  background-color: white;
+  border-radius: 30px;
+  padding: 15px;
+  margin-bottom: 20px;
+  height: 300px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}*/
+.abilities-section-loading {
+  background-color: white;
+  border-radius: 30px;
+  padding: 15px;
+  margin-bottom: 20px;
+  height: 300px; /* Adjust this value based on your loaded scores-section height */
+  position: relative;
+  overflow: hidden;
+}
+.abilities-section-loading::after {
+  content: "Loading...";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 24px;
+  color: white;
+}
+
+.abilities-section-loading::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, #e7e7e7, #ffffff, #e7e7e7);
+  background-size: 200% 100%;
+  animation: gradientMove 2s linear infinite;
+}
+
+/*
+.abilities-loading-text {
+  font-size: 24px;
+  color: #888;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}*/
 
 .abilities-section {
   background-color: white;
@@ -269,12 +377,6 @@ transition: width 0.5s ease-out;
 .stat-label{
   font-size: 0.7em;
   color: #888;
-}
-
-.todo-section {
-  background-color: white;
-  border-radius: 30px;
-  padding: 15px;
 }
 
 .action-buttons {
