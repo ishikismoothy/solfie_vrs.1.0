@@ -1,4 +1,4 @@
-<template>
+<!-- <template>
   <signingUp v-if="!isAuthenticated"/>
   <div class="home">
     <img alt="Vue logo" src="../assets/logo.png">
@@ -29,4 +29,4 @@ export default {
     };
   }
 }
-</script>
+</script> -->

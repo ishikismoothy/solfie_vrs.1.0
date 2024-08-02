@@ -1,12 +1,14 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
-//import LogIn from '../views/logInView.vue'
+import { getAuth } from 'firebase/auth'
 
 const routes = [
   {
     path: '/',
     name: 'home',
-    component: HomeView
+    redirect: () => {
+      const auth = getAuth();
+      return auth.currentUser ? '/dashboard' : '/login'
+    }
   },
   {
     path: '/login',
@@ -16,13 +18,27 @@ const routes = [
   {
     path: '/dashboard',
     name: 'dashboard',
-    component: () => import('../views/DashboardView.vue')
+    component: () => import('../views/DashboardView.vue'),
+    meta: { requiresAuth: true }
   },
 ]
 
 const router = createRouter({
   history: createWebHashHistory(),
   routes
+})
+
+router.beforeEach((to, from, next) => {
+  const auth = getAuth();
+  const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
+
+  if (requiresAuth && !auth.currentUser) {
+    next('/login');
+  } else if (to.path === '/login' && auth.currentUser) {
+    next('/dashboard');
+  } else {
+    next();
+  }
 })
 
 export default router

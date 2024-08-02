@@ -1,14 +1,14 @@
 <template>
   <div class="about">
-    <signingUp v-if="!isAuthenticated && !isSigningUp  && !isForgetPassword"/>
-    <signingIn v-if="!isAuthenticated && isSigningUp  && !isForgetPassword"/>
+    <signingUp v-if="!isAuthenticated && isSigningUp  && !isForgetPassword"/>
+    <signingIn v-if="!isAuthenticated && !isSigningUp  && !isForgetPassword"/>
     <ForgotPassword v-if="!isAuthenticated && isForgetPassword" />
-    
-    <button v-if="!isAuthenticated && !isSigningUp" @click="toggleSignUp">I have an account</button>
-    <button v-if="!isAuthenticated && isSigningUp" @click="toggleSignUp">Create a new account</button>
-    
+
+    <button v-if="!isAuthenticated && isSigningUp" @click="toggleSignUp">I have an account</button>
+    <button v-if="!isAuthenticated && !isSigningUp" @click="toggleSignUp">Create a new account</button>
+
     <button v-if="!isAuthenticated && isSigningUp && !isForgetPassword" @click="toggleForgetPassword">Forgot Password</button>
-    
+
     <LogoutButton v-if="isAuthenticated" />
   </div>
 </template>

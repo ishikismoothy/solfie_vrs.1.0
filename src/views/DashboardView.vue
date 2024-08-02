@@ -8,6 +8,8 @@
     <div class="notifications">
       <span class="bell-icon"></span>
       <span class="notification-count">{{ user.notifications }}</span>
+          <!-- Add the logout button here -->
+    <logout-button />
     </div>
   </header>
 
@@ -20,9 +22,9 @@
 
       <section class="potential-section">
         <div class="score-tab-menu" v-if="Object.keys(scoresData).length">
-          <button 
-            v-for="tab in Object.keys(scoresData)" 
-            :key="tab" 
+          <button
+            v-for="tab in Object.keys(scoresData)"
+            :key="tab"
             @click="selectedScoreTab = tab"
             :class="{ active: selectedScoreTab === tab }"
             :disabled="isScoresLoading"
@@ -42,16 +44,16 @@
               <div class="ability-fill" :style="{ width: `${(animatedScores[selectedScoreTab]?.[key] || 0) * 20}%` }"></div>
             </div>
             <span class="ability-value">{{ (animatedScores[selectedScoreTab]?.[key] || 0).toFixed(1) }}</span>
-          </div>       
+          </div>
         </section>
         <div v-else class="no-data"></div>
       </section>
 
       <section class="decision-section">
         <div class="ability-tab-menu" v-if="Object.keys(abilitiesData).length">
-          <button 
-            v-for="tab in Object.keys(abilitiesData)" 
-            :key="tab" 
+          <button
+            v-for="tab in Object.keys(abilitiesData)"
+            :key="tab"
             @click="selectedAbilityTab = tab"
             :class="{ active: selectedAbilityTab === tab }"
             :disabled="isAbilitiesLoading"
@@ -106,7 +108,7 @@
           <span class="stat-value">{{ stats.averageScore }}</span>
         </div>
       </section>
-      
+
       <section class="todo-section">
         <h2>今月の選択</h2>
         <div v-if="isTodosLoading" class="todos-loading">
@@ -205,8 +207,8 @@
           </div>
         </div>
         <div class="chat-messages">
-          <div v-for="(message, index) in chatMessages" :key="index" 
-              class="message-container" 
+          <div v-for="(message, index) in chatMessages" :key="index"
+              class="message-container"
               :class="{ 'user-message': message.sender === 'user', 'ai-message': message.sender === 'ai' }">
               <div class="sender-name">{{ message.sender === 'user' ? 'You' : 'Solfie AI' }}</div>
             <div class="chat-bubble">
@@ -218,9 +220,9 @@
           </div>
         </div>
         <div class="chat-messages-example">
-          <div 
-            v-for="(messageExample, index) in chatMessagesExample" 
-            :key="index" 
+          <div
+            v-for="(messageExample, index) in chatMessagesExample"
+            :key="index"
             class="messageExample"
             @click="copyToTextarea(messageExample)"
           >
@@ -247,10 +249,15 @@
   import { useStore } from 'vuex';
   import { formatDate } from '../utility/dateUtils';
   import { nextTick } from 'vue';
+  import LogoutButton from '@/components/logoutButton.vue';
   //import store from './store'; // Import your store
 
   export default defineComponent({
     name: 'DashboardView',
+    components: {
+      LogoutButton
+    },
+
     setup() {
       const store = useStore();
       const user = computed(() => store.state.user.user || {});
@@ -267,7 +274,7 @@
       };
 
       const isChatBoxExpanded = ref(false);
-      
+
       const chatInput = ref('');
 
       const chatMessagesExample = computed(() => store.getters['chat/getChatMessagesExample']);
@@ -275,9 +282,9 @@
       const copyToTextarea = (message) => {
         chatInput.value = message;
       };
-   
+
       const chatMessages = computed(() => store.state.chat.chatMessages);
-      
+
       const sendMessage = () => {
         if (chatInput.value.trim()) {
           const formattedMessage = chatInput.value.replace(/\n/g, '\n');
@@ -301,7 +308,7 @@
       const isScoresLoading = computed(() => store.getters['scores/isLoading']);
 
       //Initial Value during the loading
-      const animatedScores = ref({ 
+      const animatedScores = ref({
         '自己評価': {
           date: '2024/01/01',
           items: {
@@ -333,7 +340,7 @@
         });
       };
 
-      
+
 
       watch([selectedScoreTab, isScoresLoading], ([newTab, isLoading]) => {
         if (!isLoading && scoresData.value[newTab]?.items) {
@@ -371,7 +378,7 @@
       const abilitiesData = computed(() => store.state.abilities.abilitiesData);
       const isAbilitiesLoading = computed(() => store.getters['abilities/isLoading']);
 
-      const animatedAbilities = ref({ 
+      const animatedAbilities = ref({
         '姿': {
           percentage: 0,
           items: {
@@ -447,7 +454,7 @@
 
       const showModal = ref(false);
       const newTodo = ref({ title: '', date: '', description: '', image: null });
-      
+
       const today = computed(() => {
         const date = new Date();
         return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -507,7 +514,7 @@
         // Initialize animated abilities
         initializeAnimatedAbilities();
       });
-      
+
       onMounted(async () => {
         // Load todos data
         await store.dispatch('todos/loadTodosData');
@@ -544,9 +551,9 @@
         abilitiesData,
         isAbilitiesLoading,
         animatedAbilities,
-        
+
         selectedImage,
-        //TODO FUNCTION     
+        //TODO FUNCTION
         todos,
         showModal,
         newTodo,
@@ -559,7 +566,7 @@
         deleteTodo,
         handleFileUpload,
         isTodosLoading,
-        
+
         //CHAT FUNCTION
         isChatBoxExpanded,
         chatInput,
