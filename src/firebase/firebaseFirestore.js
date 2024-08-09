@@ -1,6 +1,6 @@
 // src/firebase/firebaseFirestore.js
 
-import { 
+import {
     doc,
     setDoc,
     getDoc,
@@ -8,19 +8,25 @@ import {
     deleteDoc
   } from 'firebase/firestore';
   import { db } from './firebaseInit';
-  
+
   export const createUserDocument = (uid, data) => {
-    return setDoc(doc(db, 'users', uid), data);
+    const defaultData = {
+      name: 'John Doe',
+      email: data.email,
+      dateOfBirth: 'None',
+      // Add more default fields if needed
+    };
+    return setDoc(doc(db, 'users', uid), { ...defaultData, ...data });
   };
-  
+
   export const getUserDocument = (uid) => {
     return getDoc(doc(db, 'users', uid));
   };
-  
+
   export const updateUserDocument = (uid, data) => {
     return updateDoc(doc(db, 'users', uid), data);
   };
-  
+
   export const deleteUserDocument = (uid) => {
     return deleteDoc(doc(db, 'users', uid));
   };
@@ -51,7 +57,7 @@ import {
   //
 
   //updateUserSettings("userId123", "preferences", "theme", "light");
-  //Settings-Preferences: 
+  //Settings-Preferences:
 
   //updateUserSettings("userId123", "privacy", "lastSeen", "noOne");
   //Settings-privacy: CommunityVisivility, Show-birthday, Show-profile, Show-posts
@@ -60,7 +66,7 @@ import {
     try {
       const settingsRef = doc(db, 'users', uid, 'settings', category);
       const settingsSnap = await getDoc(settingsRef);
-  
+
       if (settingsSnap.exists()) {
         return settingsSnap.data();
       } else {
@@ -84,5 +90,5 @@ import {
       throw error;
     }
   };
-  
+
   // Add more Firestore operations as needed

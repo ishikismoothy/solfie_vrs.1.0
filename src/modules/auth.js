@@ -1,14 +1,14 @@
 // src/store/modules/auth.js
 
-import { 
-    registerUser, 
-    loginUser, 
-    logoutUser, 
-    getCurrentUser, 
-    onAuthStateChange 
+import {
+    registerUser,
+    loginUser,
+    logoutUser,
+    getCurrentUser,
+    onAuthStateChange
   } from '@/firebase/firebaseAuth';
   import { createUserDocument, getUserDocument } from '@/firebase/firebaseFirestore';
-  
+
   export default {
     namespaced: true,
     state: () => ({
@@ -55,10 +55,12 @@ import {
       },
       async logout({ commit }) {
         try {
-          await logoutUser();
+          await logoutUser(); // Ensure this correctly calls Firebase's signOut
           commit('SET_USER', null);
+          console.log('Logout successful');
         } catch (error) {
           commit('SET_ERROR', error.message);
+          console.error('Error during logout:', error.message);
         }
       },
       async fetchUser({ commit }) {

@@ -1,6 +1,12 @@
 <template>
-  
+
   <router-view/>
+
+  <!-- uncomment the following lines to use the FirestoreTest component -->
+
+  <!-- <div id="app">
+    <FirestoreTest />
+  </div> -->
 
 </template>
 
@@ -28,5 +34,14 @@ nav {
 </style>
 
 <script>
+// uncomment the following lines to use the FirestoreTest component
 
+// import FirestoreTest from './components/firestoreTest.vue'; // Adjust path if needed
+
+// export default {
+//   name: 'App',
+//   components: {
+//     FirestoreTest
+//   }
+// }
 </script>

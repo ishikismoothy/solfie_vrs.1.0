@@ -1,6 +1,6 @@
 // src/firebase/firebaseAuth.js
 
-import { 
+import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     signOut,
@@ -13,8 +13,13 @@ export const registerUser = (email, password) => {
   return createUserWithEmailAndPassword(auth, email, password);
 };
 
-export const loginUser = (email, password) => {
-  return signInWithEmailAndPassword(auth, email, password);
+export const loginUser = async (email, password) => {
+  try {
+    return await signInWithEmailAndPassword(auth, email, password);
+  } catch (error) {
+    console.error("Error in loginUser:", error.message);
+    throw error;  // re-throw the error so the component can handle it
+  }
 };
 
 export const logoutUser = () => {
