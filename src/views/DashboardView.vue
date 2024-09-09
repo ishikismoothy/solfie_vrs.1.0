@@ -279,6 +279,10 @@
 
       const chatMessagesExample = computed(() => store.getters['chat/getChatMessagesExample']);
 
+      onMounted(() => {
+        store.dispatch('chat/addRandomMessages');
+      });
+
       const copyToTextarea = (message) => {
         chatInput.value = message;
       };
