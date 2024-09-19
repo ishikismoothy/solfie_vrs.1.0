@@ -1,4 +1,4 @@
-const { defineConfig } = require('@vue/cli-service')
+const { defineConfig } = require('@vue/cli-service');
 
 module.exports = defineConfig({
   transpileDependencies: true,
@@ -14,6 +14,15 @@ module.exports = defineConfig({
         args[0].__VUE_PROD_HYDRATION_MISMATCH_DETAILS__ = false;
       }
       return args;
-    })
-  }
-})
+    });
+  },
+  devServer: {
+    proxy: {
+      '/api': {
+        target: 'https://api.openai.com',
+        changeOrigin: true,
+        pathRewrite: { '^/api': '' },
+      },
+    },
+  },
+});

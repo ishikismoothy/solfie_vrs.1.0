@@ -173,73 +173,7 @@
     </main>
   </div>
 
-  <nav class="sticky-nav" :class="{ expanded: isChatBoxExpanded }">
-      <div class="nav-icons" v-if="!isChatBoxExpanded">
-        <a href="#" class="nav-icon">
-          <img src="../assets/icons/journalIcon.svg" alt="Journal" />
-          <span class="icon-label">Solfie Journal</span>
-        </a>
-        <a href="#" class="nav-icon">
-          <img src="../assets/icons/eventIcon.svg" alt="Event" />
-          <span class="icon-label">Solfie Events</span>
-        </a>
-        <a href="#" class="nav-icon">
-          <img src="../assets/icons/squareIcon.svg" alt="Square" />
-          <span class="icon-label">Solfie Square</span>
-        </a>
-        <a href="#" class="nav-icon">
-          <img src="../assets/icons/statusIcon.svg" alt="Status" />
-          <span class="icon-label">Status</span>
-        </a>
-      </div>
-      <button class="chatbox-button" @click="toggleChatBox" v-if="!isChatBoxExpanded">
-        <span class="chat-text">Chat with Solfie AI</span>
-        <div class="icon-group">
-          <span class="clip-icon">📎</span>
-          <span class="paper-plane-icon">✈️</span>
-        </div>
-      </button>
-      <div class="expanded-chat-box" v-if="isChatBoxExpanded">
-        <div class="header">
-          <div class="header-content">
-            <span class="solfie-ai-label">Solfie AI</span>
-            <button class="close-icon" @click="toggleChatBox">×</button>
-          </div>
-        </div>
-        <div class="chat-messages">
-          <div v-for="(message, index) in chatMessages" :key="index"
-              class="message-container"
-              :class="{ 'user-message': message.sender === 'user', 'ai-message': message.sender === 'ai' }">
-              <div class="sender-name">{{ message.sender === 'user' ? 'You' : 'Solfie AI' }}</div>
-            <div class="chat-bubble">
-              <p v-for="(line, lineIndex) in message.text.split('\n')" :key="lineIndex">
-                {{ line }}
-              </p>
-            </div>
-            <div class="timestamp">{{ formatDate(message.timestamp) }}</div>
-          </div>
-        </div>
-        <div class="chat-messages-example">
-          <div
-            v-for="(messageExample, index) in chatMessagesExample"
-            :key="index"
-            class="messageExample"
-            @click="copyToTextarea(messageExample)"
-          >
-            {{ messageExample }}
-          </div>
-        </div>
-        <div class="chat-input-field">
-          <textarea v-model="chatInput" placeholder="Type a message..."></textarea>
-          <div class="chat-actions">
-            <button class="file-upload-button">
-              <span class="clip-icon">📎</span>
-            </button>
-            <button class="send-button" @click="sendMessage">✈️</button>
-          </div>
-        </div>
-      </div>
-    </nav>
+  <ChatBox/>
 
 </template>
 
@@ -247,59 +181,20 @@
 // Dashboard.vue
   import { defineComponent, ref, computed, watch, onMounted } from 'vue';
   import { useStore } from 'vuex';
-  import { formatDate } from '../utility/dateUtils';
-  import { nextTick } from 'vue';
   import LogoutButton from '@/components/logoutButton.vue';
-  //import store from './store'; // Import your store
+  import ChatBox from '@/components/chatBox.vue';
 
   export default defineComponent({
     name: 'DashboardView',
     components: {
-      LogoutButton
+      LogoutButton,
+      ChatBox,
     },
 
     setup() {
       const store = useStore();
       const user = computed(() => store.state.user.user || {});
       const stats = computed(() => store.state.user.stats || {});
-
-      const selectedImage = ref({
-        title: 'Title',
-        date: '2024/01/01',
-      });
-
-
-      const toggleChatBox = () => {
-        isChatBoxExpanded.value = !isChatBoxExpanded.value;
-      };
-
-      const isChatBoxExpanded = ref(false);
-
-      const chatInput = ref('');
-
-      const chatMessagesExample = computed(() => store.getters['chat/getChatMessagesExample']);
-
-      onMounted(() => {
-        store.dispatch('chat/addRandomMessages');
-      });
-
-      const copyToTextarea = (message) => {
-        chatInput.value = message;
-      };
-
-      const chatMessages = computed(() => store.state.chat.chatMessages);
-
-      const sendMessage = () => {
-        if (chatInput.value.trim()) {
-          const formattedMessage = chatInput.value.replace(/\n/g, '\n');
-          store.dispatch('chat/sendChatMessage', {
-            text: formattedMessage,
-            sender: 'user',
-            timestamp: new Date().toISOString()
-          });
-          chatInput.value = '';
-        }
-      };
 
       //=====[SYSTEM01 : TAB FOR POTENTIAL GRAPH]=====
       const selectedScoreTab = computed({
@@ -506,27 +401,12 @@
       };
 
       onMounted(async () => {
-        // Load scores data
+        await store.dispatch('chat/addRandomMessages');
         await store.dispatch('scores/loadScoresData');
-        // Initialize animated scores
-        initializeAnimatedScores();
-      });
-
-      onMounted(async () => {
-        // Load abilities data
         await store.dispatch('abilities/loadAbilitiesData');
-        // Initialize animated abilities
-        initializeAnimatedAbilities();
-      });
-
-      onMounted(async () => {
-        // Load todos data
         await store.dispatch('todos/loadTodosData');
-      });
-
-      nextTick(() => {
-        console.log('Current message:', chatMessagesExample.value);
-        console.log('Current message:', store.state.chat.chatMessagesExample);
+        initializeAnimatedScores();
+        initializeAnimatedAbilities();
       });
 
       console.log('Entire store state:', store.state);
@@ -536,6 +416,7 @@
       console.log('Selected ability tab:', selectedAbilityTab.value);
       console.log('Current score data:', currentScoreData.value);
       console.log('Current abilities:', currentAbilities.value);
+
 
       return {
         //USER DATA FUNCTION
@@ -556,7 +437,6 @@
         isAbilitiesLoading,
         animatedAbilities,
 
-        selectedImage,
         //TODO FUNCTION
         todos,
         showModal,
@@ -571,15 +451,6 @@
         handleFileUpload,
         isTodosLoading,
 
-        //CHAT FUNCTION
-        isChatBoxExpanded,
-        chatInput,
-        chatMessagesExample,
-        copyToTextarea,
-        chatMessages,
-        formatDate,
-        toggleChatBox,
-        sendMessage,
       };
     },
   });

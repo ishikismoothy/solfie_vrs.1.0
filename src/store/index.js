@@ -5,6 +5,7 @@ import todos from '../modules/todos';
 import scores from '../modules/scores';
 import abilities from '../modules/abilities';
 import auth from '../modules/auth';  // Import the new auth module
+// import store from '@/Backups/20240729_01/store';
 
 export default createStore({
   modules: {
@@ -15,4 +16,4 @@ export default createStore({
     abilities,
     auth,  // Add the auth module
   },
-})
+});
