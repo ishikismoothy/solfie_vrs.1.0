@@ -1,25 +1,26 @@
 import { OPENAI_API_URL, OPENAI_API_KEY } from '../modules/openAI.js';
-//import { sendMessageToOpenAI } from '../modules/openAI.js';
+import { sendMessageToOpenAI } from '../modules/openAI.js';
 import axios from 'axios';
+
 // testing - uncomment testing code, comment out OpenAI code, run JSON server
 // type in console: json-server --watch db.json
 // const BASE_URL = 'http://localhost:3000';
 
-const assistantId = 'asst_KSSMgcyDczRL8ky2PhrWtPJw';
-export const getHeaders = () => ({
+const getHeaders = () => ({
   'Authorization': `Bearer ${OPENAI_API_KEY}`,
   'OpenAI-Beta': 'assistants=v2',
   'Content-Type': 'application/json',
 });
 
+const assistantId = 'asst_KSSMgcyDczRL8ky2PhrWtPJw';
 
 export default {
   namespaced: true,
   state: {
     chatMessages: [
-      { text: "Hello! How can I help you today?", sender: "ai", timestamp: "2024/03/01 20:44" },
-      { text: "I have a question about the weather.", sender: "user", timestamp: "2024/03/01 20:45" },
-      { text: "Certainly! What would you like to know about the weather?", sender: "ai", timestamp: "2024/03/01 20:50" },
+      // { text: "Hello! How can I help you today?", sender: "ai", timestamp: "2024/03/01 20:44" },
+      // { text: "I have a question about the weather.", sender: "user", timestamp: "2024/03/01 20:45" },
+      // { text: "Certainly! What would you like to know about the weather?", sender: "ai", timestamp: "2024/03/01 20:50" },
     ],
     chatMessagesExampleLibrary: [
       "1st message",
@@ -93,135 +94,74 @@ export default {
     //comment out following code for testing
 
     async startConversation({ commit, dispatch, state }, userMessage) {
-      let aiResponse = '';
-      commit('ADD_CHAT_MESSAGE', { text: userMessage, sender: 'user', timestamp: new Date().toISOString() });
-
+      console.log('Starting conversation with message:', userMessage);
       try {
         let threadId = state.currentThreadId;
+        console.log('Current Thread ID:', threadId);
 
-        //STEP01 CREATE NEWTHREADID
         if (!threadId) {
           const threadResponse = await dispatch('createNewThread');
           threadId = threadResponse.data.id;
           console.log('Thread created with ID:', threadId);
           commit('SET_THREAD_ID', threadId);
-
-          //STEP02 : Create Message
-          await dispatch('createMessage', { threadId, content: userMessage });
-
-          //STEP03 : Run Assistant
-          const runResponse = await dispatch ('runAssistant', {threadId});
-          const runId = runResponse.data.id;
-          console.log('Assistant run started with ID:', runId);
-
-          //STEP04 : Check Assistant Status
-          let status;
-          do {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          status = await dispatch ('checkRunStatus', {threadId, runId});
-          console.log('Run status:', status);
-          } while (status !== 'completed' && status !== 'failed');
-
-          if (status === 'failed') {
-          throw new Error('Assistant run failed');
-          }
-          console.log('Run completed, fetching messages');
-
-          //STEP05 : GET MESSAGE
-          const generatedMessage = await dispatch ('getMessages', { threadId });
-
-          if (generatedMessage.data && generatedMessage.data.length > 0) {
-            console.log('Number of messages received:', generatedMessage.data.length);
-            let assistantMessages = generatedMessage.data.filter(msg => msg.role === 'assistant');
-            console.log('Number of assistant messages:', assistantMessages.length);
-
-            if (assistantMessages.length > 0) {
-                const latestMessage = assistantMessages[0];
-                if (latestMessage.content && latestMessage.content.length > 0) {
-                aiResponse = latestMessage.content[0].text.value;
-                console.log("AI RESPONSE: ",aiResponse);
-                commit('ADD_CHAT_MESSAGE', { text: aiResponse, sender: 'ai', timestamp: new Date().toISOString() });
-                } else {
-                aiResponse = 'Assistant message has no content.';
-                }
-            } else {
-                aiResponse = 'No assistant messages found.';
-            }
-            } else {
-            aiResponse = 'No messages received from the thread.';
-          }
-        }else{
-          //SENCOND ATTEMPT
-          console.log("Starting second attempt...");
-          await dispatch('createMessage', { threadId, content: userMessage });
-          const runResponse02 = await dispatch('runAssistant', { threadId });
-          const runId02 = runResponse02.data.id;
-          console.log("RunResponse02:", runId02);
-
-          let status02;
-          do {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
-            // Fixed: Correctly pass runId02 to checkRunStatus
-            status02 = await dispatch('checkRunStatus', { threadId, runId: runId02 });
-
-            console.log('Run status (second attempt):', status02);
-          } while (status02 !== 'completed' && status02 !== 'failed');
-
-          if (status02 === 'failed') {
-            throw new Error('Second assistant run failed');
-          }
-          console.log('Second run completed, fetching messages');
-
-          // Fetch new messages after the second run
-          const generatedMessage02 = await dispatch('getMessages', { threadId });
-
-          if (generatedMessage02.data && generatedMessage02.data.length > 0) {
-            const assistantMessages02 = generatedMessage02.data.filter(msg => msg.role === 'assistant');
-            if (assistantMessages02.length > 0) {
-              const latestMessage02 = assistantMessages02[0];
-              if (latestMessage02.content && latestMessage02.content.length > 0) {
-                aiResponse = latestMessage02.content[0].text.value;
-                console.log("AI RESPONSE 02: ", aiResponse);
-                commit('ADD_CHAT_MESSAGE', { text: aiResponse, sender: 'ai', timestamp: new Date().toISOString() });
-              } else {
-                aiResponse = 'Second assistant message has no content.';
-              }
-            } else {
-              aiResponse = 'No assistant messages found in second attempt.';
-            }
-          } else {
-            aiResponse = 'No messages received from the thread in second attempt.';
-          }
+          console.log('new threadID:', threadId);
         }
+
+
+
+        commit('ADD_CHAT_MESSAGE', { text: userMessage, sender: 'user', timestamp: new Date().toISOString() });
+
+        console.log('User message:', userMessage);
 
         const messages = state.chatMessages.map(msg => ({
           role: msg.sender === 'user' ? 'user' : 'assistant',
           content: msg.text,
         }));
 
-
         // Add the new user message
         messages.push({ role: 'user', content: userMessage });
 
         // Send the entire message history to OpenAI
-        //const aiResponse = await sendMessageToOpenAI(messages);
-        //commit('ADD_CHAT_MESSAGE', { text: aiResponse, sender: 'ai', timestamp: new Date().toISOString() });
-
-
-
+        const aiResponse = await sendMessageToOpenAI(messages);
+        commit('ADD_CHAT_MESSAGE', { text: aiResponse, sender: 'ai', timestamp: new Date().toISOString() });
+        // await dispatch('createMessage', { threadId, userMessage }); // this line is causing the error
+        await dispatch('createMessage', { threadId, content: userMessage });
       } catch (error) {
         console.error('Conversation Error:', error);
       }
-
     },
 
-
-
     async createNewThread() {
+
       return axios.post('https://api.openai.com/v1/threads', {}, {
         headers: getHeaders(),
-      });
+    });
+
+      // const data = {
+      //   messages: [
+      //     { role: 'user', content: 'Hello!' } // Initial message to start the conversation
+      //   ],
+      //   model: 'gpt-3.5-turbo', // Specify the model
+      // };
+
+      // const options = {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //     'Authorization': `Bearer ${OPENAI_API_KEY}`,
+      //     'OpenAI-Beta': 'assistants=v2',
+      //   },
+      //   body: JSON.stringify(data),
+      // };
+
+      // const response = await fetch(OPENAI_API_URL, options);
+      // if (!response.ok) {
+      //   const errorText = await response.text();
+      //   console.error('Failed to create new thread:', errorText);
+      //   throw new Error('Network response was not ok.');
+      // }
+      // const result = await response.json();
+      // return result.id; // Return the new thread ID
     },
 
 
@@ -233,35 +173,6 @@ export default {
       }, {
         headers: getHeaders(),
       });
-    },
-
-    async runAssistant(_, { threadId }){
-      return axios.post(`https://api.openai.com/v1/threads/${threadId}/runs`, {
-        assistant_id: assistantId,
-      }, {
-          headers: getHeaders(),
-      });
-    },
-
-    async checkRunStatus(_, { threadId, runId } ) {
-
-      const response = await axios.get(`https://api.openai.com/v1/threads/${threadId}/runs/${runId}`, {
-          headers: getHeaders(),
-      });
-      return response.data.status;
-    },
-
-    async getMessages (_, { threadId }) {
-        try {
-            const response = await axios.get(`https://api.openai.com/v1/threads/${threadId}/messages`, {
-            headers: getHeaders(),
-            });
-            console.log('Full messages response:', JSON.stringify(response.data, null, 2));
-            return response.data;
-        } catch (error) {
-            console.error('Error fetching messages:', error);
-            throw error;
-        }
     },
 
     async getMessage(_, threadId) {
@@ -279,25 +190,33 @@ export default {
       const result = await response.json();
       return result.data[0].content[0].text.value;
     },
-/*
-    async runAssistant(_, threadId) {
-      const data = {
-        assistant_id: 'your_assistant_id_here',
-        tools: [{ type: 'file_search', file_search: { max_num_results: 20 } }]
-      };
-      const options = {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
-          'OpenAI-Beta': 'assistants=v2'
-        },
-        body: JSON.stringify(data)
-      };
-      const response = await fetch(`${OPENAI_API_URL}/${threadId}/runs`, options);
-      const result = await response.json();
-      return result.id;
-    }, */
+
+    async runAssistant (_, { threadId }){
+      return axios.post(`https://api.openai.com/v1/threads/${threadId}/runs`, {
+        assistant_id: assistantId,
+      }, {
+          headers: getHeaders(),
+      });
+    },
+
+    // async runAssistant(_, threadId) {
+    //   const data = {
+    //     assistant_id: 'your_assistant_id_here',
+    //     tools: [{ type: 'file_search', file_search: { max_num_results: 20 } }]
+    //   };
+    //   const options = {
+    //     method: 'POST',
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //       'Authorization': `Bearer ${OPENAI_API_KEY}`,
+    //       'OpenAI-Beta': 'assistants=v2'
+    //     },
+    //     body: JSON.stringify(data)
+    //   };
+    //   const response = await fetch(`${OPENAI_API_URL}/${threadId}/runs`, options);
+    //   const result = await response.json();
+    //   return result.id;
+    // },
 
     async checkRunCompletion({ dispatch }, { threadId, runId }) {
       let status = '';
