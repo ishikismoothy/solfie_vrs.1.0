@@ -1,0 +1,409 @@
+$primary-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+$background-color: #f0f0f0;
+$border-color: #000;
+$badge-colors: (
+  lightblue: #87CEEB,
+  pink: #FFC0CB,
+  green: #90EE90,
+  red: #FF6347,
+  yellow: #FFD700
+);
+
+// Styles for dragged items (when they're direct children of body)
+body > .app-item,
+body > .folder-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding-top: 10px;
+  
+  &.dragging {
+    opacity: 1;
+    transform: scale(1.1);
+    transition: none !important;
+    pointer-events: none;
+    z-index: 1000;
+
+    .icon-wrapper {
+      width: 77px;
+      height: 77px;
+      position: relative;
+
+      .icon-shadow-container {
+        top: 0px;
+        left: 0px;
+
+      }
+
+      .icon-shadow {
+        position: absolute;
+        top: 10px;
+        left: 0px;
+        width: 100%;
+        height: 100%;
+        opacity: 0.7;
+        transition: opacity 0.2s ease;
+        filter: blur(6px);
+      }
+    }
+
+    .icon-shape {
+      position: relative;
+      z-index: 1;
+    }
+
+    .item-name {
+      font-size: 13.2px;
+    }
+  }
+}
+
+.iphone-container {
+  display: flex;
+  flex-direction: column;
+  font-family: $primary-font;
+  width: 100%;
+  height: 100vh;
+  margin: 0;
+  background-color: $background-color;
+  position: relative;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  .status-bar {
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+
+    .time {
+      font-weight: bold;
+    }
+
+    .status-icons {
+      i {
+        margin-left: 5px;
+      }
+    }
+  }
+
+  .app-grid-container {
+    overflow: hidden;
+    width: 100%;
+    height: calc(80% - 100px);
+    position: relative;
+    
+    .edit-mode-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      //background-color: rgba(0, 0, 0, 0.5);
+      //z-index: 997;
+    }
+  }
+  
+  //NOT BEING DRAGGED
+  .app-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(5, 1fr);
+    gap: 20px;
+    padding-top: 20px;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    transition: transform 0.3s ease;
+    //z-index: 998;
+  
+    .app-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding-top: 10px;
+  
+      .icon-wrapper {
+        position: relative;
+        width: 70px;
+        height: 70px;
+        margin-bottom: 5px;
+
+        .icon-shadow-container {
+          pointer-events: none;
+        }
+
+        .icon-shadow,
+        .icon-shape {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+        }
+  
+        .icon-shadow {
+          opacity: 0;
+          transition: opacity 0.2s ease;
+        }
+
+        .icon-shape {
+          z-index: 1;
+        }
+      }
+  
+      .icon-shape {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        fill: url(#icon-gradient);
+      }
+  
+      .icon-content {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 30px;
+        color: white;
+      }
+  
+      .badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 12px;
+        z-index: 2;
+      }
+  
+      .item-name {
+        font-size: 12px;
+        color: #333;
+      }
+    }
+    
+    @each $color, $value in $badge-colors {
+      .badge.#{$color} {
+        background-color: $value;
+      }
+    }
+  }
+  
+  .add-item {
+    .icon-wrapper {
+      background-color: #f0f0f0;
+      border: 2px dashed #ccc;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+  
+    .icon-content {
+      color: #999;
+    }
+  }
+  
+  .icon-wrapper.folder-hover {
+    outline: 2px solid #007bff;
+    box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
+  }
+
+  //RESPONSIBLE FOR GHOST STYLE DURING THE DRAGGING
+  .app-item.placeholder {
+    opacity: 0.5;
+    //border: 2px dashed #ccc;
+    //background-color: rgba(200, 200, 200, 0.3);
+  }
+  
+  .app-item.placeholder .icon-wrapper {
+    filter: grayscale(100%);
+  }
+  
+  .app-item.placeholder .item-name {
+    color: #999;
+  }
+
+  .exit-edit-mode {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 1001;
+    padding: 8px 12px;
+    background-color: rgba(255, 255, 255, 0.8);
+    border: none;
+    border-radius: 5px;
+    font-family: $primary-font;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  
+    &:hover {
+      background-color: rgba(255, 255, 255, 1);
+    }
+  }
+  
+  .page-indicator {
+    padding: 10px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 30px;
+    z-index: 10;
+  
+    span {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #ccc;
+      margin: 0 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+  
+      &.active {
+        background-color: #333;
+      }
+  
+      &:hover {
+        background-color: #999;
+      }
+    }
+  }
+
+  .folder-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+  }
+
+  .folder-exit-area{
+    position: absolute;
+    height: 15%;
+    width: 90%;
+    top:20px;
+  }
+  
+  .folder-content {
+    width: 80%;
+    height: 60%;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 20px;
+    padding: 20px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .folder-content h3 {
+    margin-bottom: 20px;
+  }
+  
+  .folder-grid-container {
+    flex-grow: 1;
+    overflow: hidden;
+    position: relative;
+  }
+  
+  .folder-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(80px, 1fr));
+    grid-template-rows: repeat(4, 1fr);
+    gap: 20px;
+    padding-top: 20px;
+    position: absolute;
+    width: 100%;
+    transition: transform 0.3s ease;
+  }
+  
+  .folder-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: center;
+    height: 100px;
+  }
+  
+  .folder-item.empty {
+    visibility: hidden;
+  }
+  
+  
+  .icon-wrapper {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 5px;
+  }
+  
+  .icon-shape {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  
+  .item-name {
+    font-size: 12px;
+    word-break: break-word;
+  }
+  
+  .folder-page-indicator {
+    padding: 10px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    height: 30px;
+  }
+  
+  .folder-page-indicator span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #ccc;
+    margin: 0 5px;
+    cursor: pointer;
+  }
+  
+  .folder-page-indicator span.active {
+    background-color: #333;
+  }
+
+}
+
+.add-item-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}

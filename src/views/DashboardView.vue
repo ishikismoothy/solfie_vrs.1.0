@@ -24,3 +24,9 @@
 
   });
 </script>
+
+<style lang="scss">
+  @import '../assets/dashboardStyle.scss';
+  @import '../assets/todosStyle.scss';
+  @import '../assets/dockStyle.scss';
+</style>

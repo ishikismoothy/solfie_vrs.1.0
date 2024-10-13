@@ -434,7 +434,4 @@
   });
 </script>
 
-<style lang="scss">
-  @import '../assets/dashboardStyle.scss';
-  @import '../assets/todosStyle.scss';
-</style>
+

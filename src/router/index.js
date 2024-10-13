@@ -21,6 +21,12 @@ const routes = [
     component: () => import('../views/DashboardView.vue'),
     meta: { requiresAuth: true }
   },
+  {
+    path: '/mindspace',
+    name: 'mindspace',
+    component: () => import('../views/MindSpaceView.vue'),
+    meta: { requiresAuth: true }
+  },
 ]
 
 const router = createRouter({
