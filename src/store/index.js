@@ -4,8 +4,8 @@ import chat from '../modules/chat';
 import todos from '../modules/todos';
 import scores from '../modules/scores';
 import abilities from '../modules/abilities';
-import auth from '../modules/auth';  // Import the new auth module
-// import store from '@/Backups/20240729_01/store';
+import auth from '../modules/auth';
+import dataExtraction from '../modules/dataExtraction';
 
 export default createStore({
   modules: {
@@ -14,6 +14,7 @@ export default createStore({
     todos,
     scores,
     abilities,
-    auth,  // Add the auth module
+    auth,
+    dataExtraction,
   },
 });

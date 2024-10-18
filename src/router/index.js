@@ -27,6 +27,12 @@ const routes = [
     component: () => import('../views/MindSpaceView.vue'),
     meta: { requiresAuth: true }
   },
+  {
+    path: '/dataextract',
+    name: 'dataextract',
+    component: () => import('../views/dataExtractTestView.vue'),
+    meta: { requiresAuth: true }
+  },
 ]
 
 const router = createRouter({

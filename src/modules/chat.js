@@ -6,6 +6,7 @@ import axios from 'axios';
 // const BASE_URL = 'http://localhost:3000';
 
 const assistantId = 'asst_KSSMgcyDczRL8ky2PhrWtPJw';
+
 export const getHeaders = () => ({
   'Authorization': `Bearer ${OPENAI_API_KEY}`,
   'OpenAI-Beta': 'assistants=v2',
@@ -147,7 +148,7 @@ export default {
             } else {
                 aiResponse = 'No assistant messages found.';
             }
-            } else {
+          } else {
             aiResponse = 'No messages received from the thread.';
           }
         }else{
