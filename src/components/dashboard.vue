@@ -207,7 +207,10 @@
 
       const lerp = (start, end, t) => start * (1 - t) + end * t;
 
+      
       const initializeAnimatedScores = () => {
+        console.log("Starting initializieAnimated")
+
         Object.keys(scoresData.value).forEach(tab => {
           if (scoresData.value[tab]?.items) {
             animatedScores.value[tab] = Object.fromEntries(
@@ -216,8 +219,6 @@
           }
         });
       };
-
-
 
       watch([selectedScoreTab, isScoresLoading], ([newTab, isLoading]) => {
         if (!isLoading && scoresData.value[newTab]?.items) {

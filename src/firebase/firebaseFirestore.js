@@ -1,13 +1,31 @@
 // src/firebase/firebaseFirestore.js
 
 import {
+    collection,
     doc,
     setDoc,
     getDoc,
+    getDocs,//For multiple docs
     updateDoc,
     deleteDoc
   } from 'firebase/firestore';
   import { db } from './firebaseInit';
+
+  export const getUsersCollections = async () => {
+      console.log('Start Fetching users...');
+      let users; 
+      try {
+          const querySnapshot = await getDocs(collection(db, 'users'));
+          users = querySnapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data(),
+          }));
+          console.log('Fetched users:', users);
+          return users;
+      } catch (err) {
+          console.error('Error fetching users:', err);
+      }
+  };
 
   export const createUserDocument = (uid, data) => {
     const defaultData = {

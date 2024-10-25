@@ -1,0 +1,29 @@
+//LAYER MANAGEMENT
+
+//[Global]
+.indicator-wrapper {
+    z-index: 800;
+}
+
+.sticky-nav{
+    z-index: 998;
+}
+
+//[MindSpace View]
+//MindSpace > Add Item
+.add-item-popup {
+    z-index: 1001;
+}
+
+//MindSpace > Edit Mode
+.exit-edit-mode {
+    z-index: 1001;
+}
+
+//MindSpace > Folder
+.folder-content {
+    z-index: 1000;
+}
+.folder-overlay {
+    z-index: 999;
+}

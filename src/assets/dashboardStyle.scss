@@ -5,6 +5,9 @@
 
   position: relative; /* Added position relative */
   overflow: hidden;
+
+  /* Ensure the dashboard content doesn't get hidden behind the sticky nav */
+  padding-bottom: 100px;// Adjust this value based on the height of your sticky nav
 }
 
 .dashboard::before {
@@ -21,7 +24,38 @@
   transform: rotate(180deg); /* Flips the background image upside down */
   z-index: -1; /* Ensures the pseudo-element is behind the body content */
 }
+  
+.view-container {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
 
+.views-wrapper {
+  position: relative;
+  display: flex;
+  width: 200%;
+  height: 100%;
+  transition: transform 0.5s ease;
+}
+
+.view {
+  flex: 0 0 50%; // Each view takes exactly half of the wrapper width
+  width: 50%;
+  height: 100%;
+  overflow-y: auto;
+
+  &.dashboard-view {
+    position: relative;
+  }
+
+  &.mindspace-view {
+    position: relative;
+  }
+}
+
+//HEADER
 header {
   display: flex;
   justify-content: space-between;
@@ -393,7 +427,67 @@ transition: width 0.5s ease-out;
   background-color: #ddd;
 }
 
-/* Ensure the dashboard content doesn't get hidden behind the sticky nav */
-.dashboard {
-padding-bottom: 100px; /* Adjust this value based on the height of your sticky nav */
+//[PAGE-INDICATOR]
+.indicator-wrapper {
+  position: absolute;
+  width: 100px;
+  height: 20px;
+  bottom: 190px;
+  left: 45%;
+  //right: 0;
+  background: rgba(255, 255, 255, 0.521);
+  backdrop-filter: blur(5px);
+  padding: 10px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 30px;  
+}
+
+.page-indicator-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  
+  span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    &.active {
+      transform: scale(1.1);
+    }
+  }
+
+  // Regular page dots
+  span:not(.view-switcher):not(.separator) {
+    background-color: rgba(0, 0, 0, 0.2);
+    
+    &.active {
+      background-color: rgba(0, 0, 0, 0.6);
+    }
+  }
+
+  // View switcher dot
+  .view-switcher {
+    background-color: rgba(0, 0, 0, 0.2); // iOS blue
+    //opacity: 0.8;
+    
+    &.active {
+      background-color: #007AFF
+      //opacity: 1;
+    }
+  }
+
+  // Small separator
+  .separator {
+    width: 2px !important; // Override default span width
+    height: 6px;
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 1px;
+    cursor: default;
+  }
+ 
 }

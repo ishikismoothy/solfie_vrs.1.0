@@ -6,6 +6,7 @@ import scores from '../modules/scores';
 import abilities from '../modules/abilities';
 import auth from '../modules/auth';
 import dataExtraction from '../modules/dataExtraction';
+import mindspace from '../modules/mindspace';
 
 export default createStore({
   modules: {
@@ -16,5 +17,6 @@ export default createStore({
     abilities,
     auth,
     dataExtraction,
+    mindspace,
   },
 });

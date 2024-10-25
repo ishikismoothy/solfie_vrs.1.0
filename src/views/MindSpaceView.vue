@@ -13,6 +13,7 @@ ADD STATUS HEADER
 
 <template>
   <div class="iphone-container" :style="containerStyle">
+    <!-- 
     <div class="status-bar">
       <span class="time">{{ currentTime }}</span>
       <div class="status-icons">
@@ -20,7 +21,7 @@ ADD STATUS HEADER
         <i class="fas fa-wifi"></i>
         <i class="fas fa-battery-full"></i>
       </div>
-    </div>
+    </div>-->
 
     <!-- <header>
         <div class="profile-icon">
@@ -109,6 +110,7 @@ ADD STATUS HEADER
     </div>
 
     <!-- Page indicator -->
+    <!-- I WANT TO MAKE THIS AS SEPARATE COMPONETNS -->
     <div class="page-indicator">
         <span 
           v-for="(page, index) in appPages" 
@@ -117,6 +119,11 @@ ADD STATUS HEADER
           @click="selectPage(index)"
         ></span>
     </div>
+    <pageIndicator 
+      :total-pages="appPages.length"
+      :current-page="currentPage"
+      @page-selected="selectPage"
+    />
 
     <div 
       v-if="showFolder" 
@@ -226,6 +233,7 @@ ADD STATUS HEADER
   import folderSvg from '../assets/shapes/folder.svg';
   import AddItemPopup from '../components/addItemPopup.vue';
   import ChatBox from '@/components/chatBox.vue';
+  import pageIndicator from '@/components/pageIndicator.vue'
 
   export default defineComponent({
     name: 'iPhoneStyleMaestroUI',
@@ -233,6 +241,7 @@ ADD STATUS HEADER
     components: {
       AddItemPopup,
       ChatBox,
+      pageIndicator,
     },
     setup() {
       const store = useStore();
