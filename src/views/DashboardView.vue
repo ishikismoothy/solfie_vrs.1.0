@@ -153,7 +153,7 @@ export default defineComponent({
     };
 
     onMounted(() => {
-      store.dispatch('mindspace/setAppPages');
+      store.dispatch('mindspace/setMindSpacePages');
     });
 
     return {

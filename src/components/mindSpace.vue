@@ -1,4 +1,4 @@
-<!-- STILL WORKING ON THE FUNCTION FOR ADDING NEW APP GRID PAGE -->
+<!-- STILL WORKING ON THE FUNCTION FOR ADDING NEW MIND GRID PAGE -->
 <!-- TRIGGER UPON NO ROOM FOR EXTRA ITEM LISTED -->
 <!-- UPDATED 2024/09/10 18:07 -->
 
@@ -14,9 +14,9 @@ ADD STATUS HEADER
 <template>
     <div class="iphone-container" :style="containerStyle">
 
-      <!-- App grid container -->
+      <!-- Mind-Grid container -->
       <div 
-        class="app-grid-container" 
+        class="mind-grid-container" 
         @touchstart="startEditModeTimer"
         @touchend="cancelEditModeTimer"
         @mousedown="startEditModeTimer"
@@ -26,7 +26,7 @@ ADD STATUS HEADER
         <!-- Edit mode overlay -->
         <div v-if="isEditMode" class="edit-mode-overlay"></div>
         
-        <!-- App-Grid -->
+        <!-- Mind-Grid -->
         <div class="pages-container"
           @touchstart="handleTouchStartForPageShift"
           @touchmove="handleTouchMoveForPageShift"
@@ -35,7 +35,7 @@ ADD STATUS HEADER
           <div 
             v-for="(page, pageIndex) in mindSpacePages" 
             :key="pageIndex" 
-            class="app-grid" 
+            class="mind-grid" 
             :data-page-index1="pageIndex"
             :style="{ 
               transform: `translateX(${calculateTransform(pageIndex)}px)` ,
@@ -45,11 +45,11 @@ ADD STATUS HEADER
             @touchmove="handleTouchMoveForPageShift"
             @touchend="handleTouchEndForPageShift"
           >
-            <!-- App-Item -->
+            <!-- Mind-Item -->
             <div 
               v-for="(item, index) in page" 
               :key="item.id || index" 
-              class="app-item"
+              class="mind-Item"
               :data-id="item.id"
             >
             <div class="icon-wrapper"
@@ -80,8 +80,8 @@ ADD STATUS HEADER
             <!-- Add button only on the last page -->
             <div 
               v-if="page.length < ITEMS_PER_PAGE" 
-              class="app-item add-item" 
-              @click="showAddItemMenu('app', pageIndex)"
+              class="mind-Item add-item" 
+              @click="showAddItemMenu('mindSpace', pageIndex)"
             >
               <div class="icon-wrapper">
                 <div class="icon-content">
@@ -226,9 +226,7 @@ ADD STATUS HEADER
           value2: backgroundImage
         });
   
-        //[APP-GRID-CONTAINER] APP-GRID-PAGE
-        // New refs for rearrangement feature
-  
+        //[MIND-GRID-CONTAINER] MIND-GRID-PAGE
         const getBadgeIcon = (badge) => {
           const icons = {
             lightblue: 'fas fa-lightbulb',
@@ -245,7 +243,7 @@ ADD STATUS HEADER
           currentTime.value = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
         };
   
-        //[APP-GRID-CONTAINER] APP-GRID-PAGE Rendering
+        //[MIND-GRID-CONTAINER] MIND-GRID-PAGE Rendering
         const ITEMS_PER_PAGE = 20; // 4x5 layout
         
         // Get state from Vuex with safe access
@@ -282,10 +280,10 @@ ADD STATUS HEADER
             id: `item-${Date.now()}`,
             name: 'New Item',
             shape: squareSvg,
-            index: target === 'app' ? mindSpacePages.value[pageIndex].length : folderPages.value[pageIndex].length
+            index: target === 'mindSpace' ? mindSpacePages.value[pageIndex].length : folderPages.value[pageIndex].length
           };
   
-          if (target === 'app') {
+          if (target === 'mindSpace') {
             // Logic for adding to mindSpacePages
             if (mindSpacePages.value[pageIndex].length === ITEMS_PER_PAGE) {
               mindSpacePages.value.splice(pageIndex + 1, 0, []);
@@ -337,14 +335,14 @@ ADD STATUS HEADER
   
           // Debug logging
           console.log(`Added new item to ${target}:`, newItem);
-          if (target === 'app') {
+          if (target === 'mindSpace') {
             console.log('Updated mindSpacePages:', mindSpacePages.value);
           } else {
             console.log('Updated folderPages:', folderPages.value);
             console.log('Updated currentFolder:', currentFolder.value);
           }
   
-          //updateUsersAppSpace();
+          //updateusersMindSpace();
         };
   
         // Function to add a new folder
@@ -356,7 +354,7 @@ ADD STATUS HEADER
             items: []
           };
   
-          if (target === 'app') {
+          if (target === 'mindSpace') {
             // Logic for adding to mindSpacePages
             if (mindSpacePages.value[pageIndex].length === ITEMS_PER_PAGE) {
               mindSpacePages.value.splice(pageIndex + 1, 0, []);
@@ -408,14 +406,14 @@ ADD STATUS HEADER
   
           // Debug logging
           console.log(`Added new folder to ${target}:`, newFolder);
-          if (target === 'app') {
+          if (target === 'mindSpace') {
             console.log('Updated mindSpacePages:', mindSpacePages.value);
           } else {
             console.log('Updated folderPages:', folderPages.value);
             console.log('Updated currentFolder:', currentFolder.value);
           }
   
-          //updateUsersAppSpace();
+          //updateusersMindSpace();
         };
   
         const removeItem = (pageIndex, itemIndex) => {
@@ -470,7 +468,7 @@ ADD STATUS HEADER
         };
   
   
-        //[Drag&Drop]App grid Drag and Drop mode Handling
+        //[Drag&Drop]Mind-Grid Drag and Drop mode Handling
         const isEditMode = ref(false);
         const isMouseDown = ref(false);
         const editModeTimer = ref(null);
@@ -493,7 +491,7 @@ ADD STATUS HEADER
           isEditMode.value = false;
         };
   
-        //App grid Drag and Drop Interaction Handling
+        //Mind-Grid Drag and Drop Interaction Handling
         const draggingItem = ref(null);
         const dragStartIndex = ref(null);
         const dragStartPageIndex = ref(null);
@@ -583,7 +581,7 @@ ADD STATUS HEADER
   
         const handleItemClick = (item) => {
           //[DEBUG] 
-          console.log('[handleItemClick] App grid item clicked:', item);
+          console.log('[handleItemClick] Mind-Grid item clicked:', item);
           
           if (item.items) {
             //[DEBUG] 
@@ -610,7 +608,7 @@ ADD STATUS HEADER
             dragStartPageIndex.value = pageIndex;
             
             // Store the dragged element
-            draggedElement.value = event.target.closest('.app-item');
+            draggedElement.value = event.target.closest('.mind-Item');
   
             //[DEBUG] LOGGING DRAGGED ITEM
             console.log('[handleMouseDown] Focus Item: ',draggingItem.value);
@@ -671,7 +669,7 @@ ADD STATUS HEADER
             dragStartPageIndex.value = pageIndex;
             
             // Store the dragged element
-            draggedElement.value = event.target.closest('.app-item');
+            draggedElement.value = event.target.closest('.mind-Item');
             
             //[DEBUG] LOGGING DRAGGED ITEM
             console.log('[handleTouchStart] Focus Item: ',draggingItem.value);
@@ -752,7 +750,7 @@ ADD STATUS HEADER
           
           // Add null check for elementUnderCursor
           if (elementUnderCursor) {
-            const folderItem = elementUnderCursor.closest('.app-item');
+            const folderItem = elementUnderCursor.closest('.mind-Item');
   
             if (folderItem) {
               const folderId = folderItem.getAttribute('data-id');
@@ -812,19 +810,19 @@ ADD STATUS HEADER
                 initializeFolderPages();
               }
             } 
-            //DROP AT APP GIRD
+            //DROP AT Mind-GIRD
             else{
             // Find the element under the cursor
               const elementUnderCursor = document.elementFromPoint(mouseX, mouseY);
-              const targetAppItem = elementUnderCursor.closest('.app-item');
+              const targetMindItem = elementUnderCursor.closest('.mind-Item');
   
               let targetIndex, targetPage;
   
-              if (targetAppItem) {
-                // If we're over an app item, get its index
-                targetPage = parseInt(targetAppItem.closest('.app-grid').getAttribute('data-page-index1'));
-                const itemsInPage = Array.from(targetAppItem.closest('.app-grid').querySelectorAll('.app-item:not(.dragging)'));
-                targetIndex = itemsInPage.indexOf(targetAppItem);
+              if (targetMindItem) {
+                // If we're over an Mind-Item, get its index
+                targetPage = parseInt(targetMindItem.closest('.mind-grid').getAttribute('data-page-index1'));
+                const itemsInPage = Array.from(targetMindItem.closest('.mind-grid').querySelectorAll('.mind-Item:not(.dragging)'));
+                targetIndex = itemsInPage.indexOf(targetMindItem);
   
                 console.log('[endDrag] target Index: '+targetIndex);
   
@@ -836,11 +834,11 @@ ADD STATUS HEADER
                 }
                 
               } else {
-                // If we're not over an app item, find the nearest grid and append to the end
-                const nearestGrid = elementUnderCursor.closest('.app-grid');
+                // If we're not over an Mind-Item, find the nearest grid and append to the end
+                const nearestGrid = elementUnderCursor.closest('.mind-grid');
                 if (nearestGrid) {
                   //targetPage = parseInt(nearestGrid.getAttribute('data-page-index'));
-                  //targetIndex = nearestGrid.querySelectorAll('.app-item:not(.dragging)').length;
+                  //targetIndex = nearestGrid.querySelectorAll('.mind-Item:not(.dragging)').length;
                   targetPage = dragStartPageIndex.value;
                   targetIndex = dragStartIndex.value;
                 } else {
@@ -860,8 +858,8 @@ ADD STATUS HEADER
   
               // Update the DOM
               // THIS LOGIC IS NEEDED TO RENDER DROP AND DELETING GHOST ITEM PROPERLY
-              const targetGrid = document.querySelectorAll('.app-grid')[targetPage];
-              const targetItems = targetGrid.querySelectorAll('.app-item:not(.dragging):not(.add-item)');
+              const targetGrid = document.querySelectorAll('.mind-grid')[targetPage];
+              const targetItems = targetGrid.querySelectorAll('.mind-Item:not(.dragging):not(.add-item)');
               const addItemButton = targetGrid.querySelector('.add-item');
               
               if (targetIndex < targetItems.length) {
@@ -905,13 +903,13 @@ ADD STATUS HEADER
   
           // Check if we're moving from a folder (dragStartPageIndex will be null)
           if (dragStartPageIndex.value === null) {
-            console.log('[updateItemPosition] Moving item from folder to app grid');
-            // In this case, we're adding a new item to the app grid
+            console.log('[updateItemPosition] Moving item from folder to Mind-Grid');
+            // In this case, we're adding a new item to the Mind-Grid
             movedItem = draggingFolderItem.value; // Assuming draggingFolderItem contains the item being moved
             console.log('[updateItemPosition] Moved item from folder:', movedItem);
           } else {
-            console.log('[updateItemPosition] Moving items within the app grid.');
-            // We're moving within the app grid
+            console.log('[updateItemPosition] Moving items within the Mind-Grid.');
+            // We're moving within the Mind-Grid
             const oldPageIndex = dragStartPageIndex.value;
             const oldItemIndex = dragStartIndex.value;
   
@@ -975,12 +973,12 @@ ADD STATUS HEADER
   
           // Use nextTick to ensure DOM updates after all data changes
           nextTick(() => {
-            console.log(`[updateItemPosition] App item moved to page ${newPageIndex}, End-index ${newItemIndex}`);          //console.log('Updated App-gridItems: ' + formatItemList(mindSpacePages.value));
+            console.log(`[updateItemPosition] Mind-Item moved to page ${newPageIndex}, End-index ${newItemIndex}`);
           });
           
-          //Update usersAppSpace.
-          console.log('[updateItemPosition] Initiate updating usersAppSpace with,', mindSpacePages.value);
-          //updateUsersAppSpace();
+          //Update usersMindSpace.
+          console.log('[updateItemPosition] Initiate updating usersMindSpace with,', mindSpacePages.value);
+          //updateusersMindSpace();
         };
         
         const removeItemFromMindSpacePages = (item) => {
@@ -988,7 +986,7 @@ ADD STATUS HEADER
           console.log('[removeItemFromMindSpacePages] TRIGGERED');
           mindSpacePages.value = mindSpacePages.value.map(page => page.filter(i => i !== item));
           //[DEBUG]
-          console.log('[removeItemFromMindSpacePages] Item removed from App pages', item);
+          console.log('[removeItemFromMindSpacePages] Item removed from Mind pages', item);
         };
   
         const removeItemFromFolderPages = (item) => {
@@ -1096,7 +1094,7 @@ ADD STATUS HEADER
         };
 
         
-        //[App-Grid] Hover Over Folder
+        //[Mind-Grid] Hover Over Folder
         // Add these new reactive references
         const hoveredFolderId = ref(null);
         const folderHoverTimer = ref(null);
@@ -1461,11 +1459,11 @@ ADD STATUS HEADER
   
             cancelFolderCloseTimer();
   
-            //COLSE FOLDER AND DROP ITEM IN APP GIRD
+            //COLSE FOLDER AND DROP ITEM IN MIND-GIRD
             if (!showFolder.value) {
               //[DEBUG] 
               console.log('[endFolderDrag] DROP OUT OF FOLDER');
-              // Logic for dropping the item in the app grid
+              // Logic for dropping the item in the Mind-Grid
               // Find the element under the cursor
   
               // Remove placeholder
@@ -1476,26 +1474,26 @@ ADD STATUS HEADER
   
               
               const elementUnderCursor = document.elementFromPoint(mouseX, mouseY);
-              const targetAppItem = elementUnderCursor.closest('.app-item');
+              const targetMindItem = elementUnderCursor.closest('.mind-Item');
   
               let targetIndex, targetPage;
   
-              if (targetAppItem) {              
+              if (targetMindItem) {              
                 // Remove the item from the folder
                 removeItemFromFolderPages(draggingFolderItem.value);
                 
-                // If we're over an app item, get its index
-                targetPage = parseInt(targetAppItem.closest('.app-grid').getAttribute('data-page-index1'));
-                const itemsInPage = Array.from(targetAppItem.closest('.app-grid').querySelectorAll('.app-item:not(.dragging)'));
-                targetIndex = itemsInPage.indexOf(targetAppItem);
+                // If we're over an Mind-Item, get its index
+                targetPage = parseInt(targetMindItem.closest('.mind-grid').getAttribute('data-page-index1'));
+                const itemsInPage = Array.from(targetMindItem.closest('.mind-grid').querySelectorAll('.mind-Item:not(.dragging)'));
+                targetIndex = itemsInPage.indexOf(targetMindItem);
   
                 //[DEBUG] 
                 console.log('[endFolderDrag] target Index: '+targetIndex);
                 //initializePages();
                 
               } else {
-                // If we're not over an app item, find the nearest grid and append to the end
-                const nearestGrid = elementUnderCursor.closest('.app-grid');
+                // If we're not over an Mind-Item, find the nearest grid and append to the end
+                const nearestGrid = elementUnderCursor.closest('.mind-grid');
                 if (nearestGrid) {
                   targetPage = dragStartPageIndex.value;
                   targetIndex = dragStartIndex.value;
@@ -1543,8 +1541,8 @@ ADD STATUS HEADER
                   targetIndex = targetFolderGrid.querySelectorAll('.folder-item:not(.dragging):not(.empty):not(.add-item)').length;
                 }
               } else {
-                // If we're not over an app item, find the nearest grid and append to the end
-                const nearestGrid = elementUnderCursor.closest('.app-grid');
+                // If we're not over an Mind-Item, find the nearest grid and append to the end
+                const nearestGrid = elementUnderCursor.closest('.mind-grid');
                 if(nearestGrid){
                   const nearestItemsInFolder = Array.from(nearestGrid.querySelectorAll('.folder-item:not(.dragging):not(.empty):not(.add-item)'));
                   targetPageIndex = folderDragStartPageIndex.value;
@@ -1685,9 +1683,9 @@ ADD STATUS HEADER
             console.log(`[updateFolderItemPosition] Folder item moved from page ${oldPageIndex}, Start-index ${oldItemIndex} to page ${newPageIndex}, End-index ${newItemIndex}`);
           });
   
-          //Update usersAppSpace.
-          console.log('[updateItemPosition] Initiate updating usersAppSpace with,', folderPages.value);
-          //updateUsersAppSpace();
+          //Update usersMindSpace.
+          console.log('[updateItemPosition] Initiate updating usersMindSpace with,', folderPages.value);
+          
         };
   
         const resetFolderDraggedElementStyle = () => {
@@ -1751,7 +1749,7 @@ ADD STATUS HEADER
           background,
           containerStyle,
   
-          // App grid related
+          // Mind-Grid related
           //gridItems,
           mindSpacePages,
           currentPage,
@@ -1773,13 +1771,13 @@ ADD STATUS HEADER
           startEditModeTimer,
           cancelEditModeTimer,
   
-          //addNewItem,
+          // addNewItem,
           showAddItemPopup,
           addItemTarget,  // Make sure to return this
           showAddItemMenu,
           handleAddItemSelection,
   
-          // App grid functions
+          // Mind-Grid functions
           removeItem,
           selectPage,
           getBadgeIcon,

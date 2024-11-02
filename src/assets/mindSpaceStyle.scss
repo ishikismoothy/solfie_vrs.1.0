@@ -10,7 +10,7 @@ $badge-colors: (
 );
 
 // Styles for dragged items (when they're direct children of body)
-body > .app-item,
+body > .mind-Item,
 body > .folder-item {
   display: flex;
   flex-direction: column;
@@ -73,7 +73,7 @@ body > .folder-item {
   background-position: center;
   background-repeat: no-repeat;
 
-  .app-grid-container {
+  .mind-grid-container {
     overflow: hidden;
     width: 100%;
     height: calc(80% - 100px);
@@ -97,7 +97,7 @@ body > .folder-item {
     touch-action: pan-y pinch-zoom;
   }
 
-  .app-grid {
+  .mind-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     grid-template-rows: repeat(5, 1fr);
@@ -112,7 +112,7 @@ body > .folder-item {
     will-change: transform;
     position: absolute;
   
-    .app-item {
+    .mind-Item {
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -216,17 +216,17 @@ body > .folder-item {
   }
 
   //RESPONSIBLE FOR GHOST STYLE DURING THE DRAGGING
-  .app-item.placeholder {
+  .mind-Item.placeholder {
     opacity: 0.5;
     //border: 2px dashed #ccc;
     //background-color: rgba(200, 200, 200, 0.3);
   }
   
-  .app-item.placeholder .icon-wrapper {
+  .mind-Item.placeholder .icon-wrapper {
     filter: grayscale(100%);
   }
   
-  .app-item.placeholder .item-name {
+  .mind-Item.placeholder .item-name {
     color: #999;
   }
 
