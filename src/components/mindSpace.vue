@@ -17,9 +17,8 @@ ADD STATUS HEADER
       <!-- App grid container -->
       <div 
         class="app-grid-container" 
-        @touchstart="touchStart"
-        @touchmove="touchMove"
-        @touchend="touchEnd"
+        @touchstart="startEditModeTimer"
+        @touchend="cancelEditModeTimer"
         @mousedown="startEditModeTimer"
         @mouseup="cancelEditModeTimer"
         @mouseleave="cancelEditModeTimer"
@@ -28,59 +27,71 @@ ADD STATUS HEADER
         <div v-if="isEditMode" class="edit-mode-overlay"></div>
         
         <!-- App-Grid -->
-        <div 
-          v-for="(page, pageIndex) in appPages" 
-          :key="pageIndex" 
-          class="app-grid" 
-          :data-page-index1="pageIndex"
-          :style="{ transform: `translateX(${(pageIndex - currentPage) * 100}%)` }"
+        <div class="pages-container"
+          @touchstart="handleTouchStartForPageShift"
+          @touchmove="handleTouchMoveForPageShift"
+          @touchend="handleTouchEndForPageShift"
         >
-          <!-- App-Item -->
           <div 
-            v-for="(item, index) in page" 
-            :key="item.id || index" 
-            class="app-item"
-            :data-id="item.id"
+            v-for="(page, pageIndex) in mindSpacePages" 
+            :key="pageIndex" 
+            class="app-grid" 
+            :data-page-index1="pageIndex"
+            :style="{ 
+              transform: `translateX(${calculateTransform(pageIndex)}px)` ,
+              transition: isDraggingForPageShift ? 'none' : 'transform 0.3s ease'
+              }"
+            @touchstart="handleTouchStartForPageShift"
+            @touchmove="handleTouchMoveForPageShift"
+            @touchend="handleTouchEndForPageShift"
           >
-          <div class="icon-wrapper"
-            :class="{ 
-              'dragging': draggingItem === item,
-              'folder-hover': item.items && isDragging && hoveredFolderId === item.id
-            }"
-            @click="handleItemClick(item)"
-            @mousedown.prevent="handleMouseDown($event, item, pageIndex, index)"
-            @touchstart.prevent="handleTouchStart($event, item, pageIndex, index)"
-            @mouseover="handleItemHover(item)"
-            @mouseleave="handleItemLeave()"
-          >
-              <div class="icon-shadow-container">
-                <div class="icon-shadow" v-html="createShadowSvg(item.shape)"></div>
+            <!-- App-Item -->
+            <div 
+              v-for="(item, index) in page" 
+              :key="item.id || index" 
+              class="app-item"
+              :data-id="item.id"
+            >
+            <div class="icon-wrapper"
+              :class="{ 
+                'dragging': draggingItem === item,
+                'folder-hover': item.items && isDragging && hoveredFolderId === item.id
+              }"
+              @click="handleItemClick(item)"
+              @mousedown.prevent="handleMouseDown($event, item, pageIndex, index)"
+              @touchstart.prevent="handleTouchStart($event, item, pageIndex, index)"
+              @mouseover="handleItemHover(item)"
+              @mouseleave="handleItemLeave()"
+            >
+                <div class="icon-shadow-container">
+                  <div class="icon-shadow" v-html="createShadowSvg(item.shape)"></div>
+                </div>
+                <img :src="item.shape" class="icon-shape" :alt="item.name">
+                <div class="icon-content">
+                  <i v-if="item.icon" :class="item.icon"></i>
+                </div>
+                <div v-if="item.badge" class="badge" :class="item.badge">
+                  <i :class="getBadgeIcon(item.badge)"></i>
+                </div>
               </div>
-              <img :src="item.shape" class="icon-shape" :alt="item.name">
-              <div class="icon-content">
-                <i v-if="item.icon" :class="item.icon"></i>
-              </div>
-              <div v-if="item.badge" class="badge" :class="item.badge">
-                <i :class="getBadgeIcon(item.badge)"></i>
-              </div>
+              <span class="item-name">{{ item.name }}</span>
             </div>
-            <span class="item-name">{{ item.name }}</span>
-          </div>
-          
-          <!-- Add button only on the last page -->
-          <div 
-            v-if="page.length < ITEMS_PER_PAGE" 
-            class="app-item add-item" 
-            @click="showAddItemMenu('app', pageIndex)"
-          >
-            <div class="icon-wrapper">
-              <div class="icon-content">
-                <i class="fas fa-plus"></i>
+            
+            <!-- Add button only on the last page -->
+            <div 
+              v-if="page.length < ITEMS_PER_PAGE" 
+              class="app-item add-item" 
+              @click="showAddItemMenu('app', pageIndex)"
+            >
+              <div class="icon-wrapper">
+                <div class="icon-content">
+                  <i class="fas fa-plus"></i>
+                </div>
               </div>
+              <span class="item-name">Add New</span>
             </div>
-            <span class="item-name">Add New</span>
+            
           </div>
-          
         </div>
       </div>
   
@@ -88,7 +99,7 @@ ADD STATUS HEADER
       <!-- I WANT TO MAKE THIS AS SEPARATE COMPONETNS -->
       <div class="page-indicator">
           <span 
-            v-for="(page, index) in appPages" 
+            v-for="(page, index) in mindSpacePages" 
             :key="index" 
             :class="{ active: index === currentPage }"
             @click="selectPage(index)"
@@ -204,7 +215,7 @@ ADD STATUS HEADER
       components: {
         AddItemPopup,
       },
-      setup() {
+      setup(props, { emit }) {
         const store = useStore();
         const currentTime = ref('');
         
@@ -217,7 +228,6 @@ ADD STATUS HEADER
   
         //[APP-GRID-CONTAINER] APP-GRID-PAGE
         // New refs for rearrangement feature
-        const touchStartX = ref(0);
   
         const getBadgeIcon = (badge) => {
           const icons = {
@@ -240,7 +250,7 @@ ADD STATUS HEADER
         
         // Get state from Vuex with safe access
         const currentPage = computed(() => store.getters['mindspace/getCurrentPage']);
-        const appPages = computed(() => store.getters['mindspace/getAppPages']);
+        const mindSpacePages = computed(() => store.getters['mindspace/getMindSpacePages']);
 
         // Update page selection to use Vuex
         const selectPage = (index) => {
@@ -272,20 +282,20 @@ ADD STATUS HEADER
             id: `item-${Date.now()}`,
             name: 'New Item',
             shape: squareSvg,
-            index: target === 'app' ? appPages.value[pageIndex].length : folderPages.value[pageIndex].length
+            index: target === 'app' ? mindSpacePages.value[pageIndex].length : folderPages.value[pageIndex].length
           };
   
           if (target === 'app') {
-            // Logic for adding to appPages
-            if (appPages.value[pageIndex].length === ITEMS_PER_PAGE) {
-              appPages.value.splice(pageIndex + 1, 0, []);
+            // Logic for adding to mindSpacePages
+            if (mindSpacePages.value[pageIndex].length === ITEMS_PER_PAGE) {
+              mindSpacePages.value.splice(pageIndex + 1, 0, []);
               pageIndex++;
             }
-            appPages.value[pageIndex].push(newItem);
+            mindSpacePages.value[pageIndex].push(newItem);
             currentPage.value = pageIndex;
   
-            if (appPages.value[appPages.value.length - 1].length === ITEMS_PER_PAGE) {
-              appPages.value.push([]);
+            if (mindSpacePages.value[mindSpacePages.value.length - 1].length === ITEMS_PER_PAGE) {
+              mindSpacePages.value.push([]);
             }
           } else {
             // Logic for adding to folderPages
@@ -309,9 +319,9 @@ ADD STATUS HEADER
               };
             }
   
-            // Update the corresponding folder in appPages
+            // Update the corresponding folder in mindSpacePages
             if (currentFolder.value) {
-              appPages.value = appPages.value.map(page => 
+              mindSpacePages.value = mindSpacePages.value.map(page => 
                 page.map(item => {
                   if (item.id === currentFolder.value.id) {
                     return {
@@ -328,7 +338,7 @@ ADD STATUS HEADER
           // Debug logging
           console.log(`Added new item to ${target}:`, newItem);
           if (target === 'app') {
-            console.log('Updated appPages:', appPages.value);
+            console.log('Updated mindSpacePages:', mindSpacePages.value);
           } else {
             console.log('Updated folderPages:', folderPages.value);
             console.log('Updated currentFolder:', currentFolder.value);
@@ -347,16 +357,16 @@ ADD STATUS HEADER
           };
   
           if (target === 'app') {
-            // Logic for adding to appPages
-            if (appPages.value[pageIndex].length === ITEMS_PER_PAGE) {
-              appPages.value.splice(pageIndex + 1, 0, []);
+            // Logic for adding to mindSpacePages
+            if (mindSpacePages.value[pageIndex].length === ITEMS_PER_PAGE) {
+              mindSpacePages.value.splice(pageIndex + 1, 0, []);
               pageIndex++;
             }
-            appPages.value[pageIndex].push(newFolder);
+            mindSpacePages.value[pageIndex].push(newFolder);
             currentPage.value = pageIndex;
   
-            if (appPages.value[appPages.value.length - 1].length === ITEMS_PER_PAGE) {
-              appPages.value.push([]);
+            if (mindSpacePages.value[mindSpacePages.value.length - 1].length === ITEMS_PER_PAGE) {
+              mindSpacePages.value.push([]);
             }
           } else {
             // Logic for adding to folderPages
@@ -380,9 +390,9 @@ ADD STATUS HEADER
               };
             }
   
-            // Update the corresponding folder in appPages
+            // Update the corresponding folder in mindSpacePages
             if (currentFolder.value) {
-              appPages.value = appPages.value.map(page => 
+              mindSpacePages.value = mindSpacePages.value.map(page => 
                 page.map(item => {
                   if (item.id === currentFolder.value.id) {
                     return {
@@ -399,7 +409,7 @@ ADD STATUS HEADER
           // Debug logging
           console.log(`Added new folder to ${target}:`, newFolder);
           if (target === 'app') {
-            console.log('Updated appPages:', appPages.value);
+            console.log('Updated mindSpacePages:', mindSpacePages.value);
           } else {
             console.log('Updated folderPages:', folderPages.value);
             console.log('Updated currentFolder:', currentFolder.value);
@@ -409,53 +419,33 @@ ADD STATUS HEADER
         };
   
         const removeItem = (pageIndex, itemIndex) => {
-          appPages.value[pageIndex].splice(itemIndex, 1);
+          mindSpacePages.value[pageIndex].splice(itemIndex, 1);
           
           // Redistribute items from next pages if they exist
-          for (let i = pageIndex; i < appPages.value.length - 1; i++) {
-            if (appPages.value[i].length < ITEMS_PER_PAGE && appPages.value[i + 1].length > 0) {
-              appPages.value[i].push(appPages.value[i + 1].shift());
+          for (let i = pageIndex; i < mindSpacePages.value.length - 1; i++) {
+            if (mindSpacePages.value[i].length < ITEMS_PER_PAGE && mindSpacePages.value[i + 1].length > 0) {
+              mindSpacePages.value[i].push(mindSpacePages.value[i + 1].shift());
             } else {
               break;
             }
           }
   
           // Remove empty pages, except the last one
-          appPages.value = appPages.value.filter((page, index) => 
-            page.length > 0 || index === appPages.value.length - 1
+          mindSpacePages.value = mindSpacePages.value.filter((page, index) => 
+            page.length > 0 || index === mindSpacePages.value.length - 1
           );
   
           // Ensure there's always an empty page at the end if all others are full
-          if (appPages.value[appPages.value.length - 1].length === ITEMS_PER_PAGE) {
-            appPages.value.push([]);
+          if (mindSpacePages.value[mindSpacePages.value.length - 1].length === ITEMS_PER_PAGE) {
+            mindSpacePages.value.push([]);
           }
   
           // Adjust currentPage if necessary
-          if (currentPage.value >= appPages.value.length) {
-            currentPage.value = appPages.value.length - 1;
+          if (currentPage.value >= mindSpacePages.value.length) {
+            currentPage.value = mindSpacePages.value.length - 1;
           }
         };
   
-        const touchStart = (event) => {
-          touchStartX.value = event.touches[0].clientX;
-        };
-  
-        const touchMove = (/*event*/) => {
-          // Implement swipe logic here if needed
-        };
-  
-        const touchEnd = (event) => {
-          const touchEndX = event.changedTouches[0].clientX;
-          const diffX = touchStartX.value - touchEndX;
-  
-          if (Math.abs(diffX) > 50) { // Minimum swipe distance
-            if (diffX > 0 && currentPage.value < appPages.value.length - 1) {
-              currentPage.value++;
-            } else if (diffX < 0 && currentPage.value > 0) {
-              currentPage.value--;
-            }
-          }
-        };
   
         //Icon Graphics - Shadow
         const createShadowSvg = (originalSvgUrl) => {
@@ -489,7 +479,7 @@ ADD STATUS HEADER
           if (isEditMode.value) return;
           editModeTimer.value = setTimeout(() => {
             isEditMode.value = true;
-          }, 3000);
+          }, 2000);
         };
   
         const cancelEditModeTimer = () => {
@@ -511,6 +501,11 @@ ADD STATUS HEADER
         const dragStartTime = ref(0);
         const dragStartX = ref(0);
         const dragStartY = ref(0);
+
+        //const currentXForPageShift = ref(0);
+        const isDraggingForPageShift = ref(false);
+        const currentDragOffset = ref(0);
+        const pageWidth = ref(window.innerWidth);
   
         const draggedElement = ref(null);
         const isDragging = ref(false);
@@ -519,7 +514,66 @@ ADD STATUS HEADER
   
         const dragThreshold = 10; // pixels
         const pageChangeTimer = ref(null);
-        
+
+        watch(isEditMode, (newValue) => {
+          console.log("[mindSapce.vue] Disable handleTouchStart from Dashboard.",newValue)
+          emit('edit-mode-change', newValue);
+        });
+
+        //PageShift Touch Swipe
+        const calculateTransform = (pageIndex) => {
+          const baseTransform = (pageIndex - currentPage.value) * pageWidth.value;
+          return isDraggingForPageShift.value 
+            ? baseTransform + currentDragOffset.value 
+            : baseTransform;
+        };
+
+        const handleTouchStartForPageShift = (event) => {
+          //Disable when Dragging items.
+          if (draggedElement.value) return;
+          
+          isDraggingForPageShift.value = true;
+          dragStartX.value = event.touches[0].clientX;
+          currentDragOffset.value = 0;
+          
+          // Disable transition when starting drag
+          event.currentTarget.style.transition = 'none';
+        };
+
+        const handleTouchMoveForPageShift = (event) => {
+          if (!isDraggingForPageShift.value) return;
+          
+          const currentX = event.touches[0].clientX;
+          currentDragOffset.value = currentX - dragStartX.value;
+          
+          // Add resistance at the edges
+          if ((currentPage.value === 0 && currentDragOffset.value > 0) || 
+              (currentPage.value === mindSpacePages.value.length - 1 && currentDragOffset.value < 0)) {
+            currentDragOffset.value *= 0.3;
+          }
+          
+          event.preventDefault();
+        };
+
+        const handleTouchEndForPageShift = () => {
+          if (!isDraggingForPageShift.value) return;
+          
+          const swipeThreshold = pageWidth.value * 0.1; // 20% of page width
+          
+          if (Math.abs(currentDragOffset.value) > swipeThreshold) {
+            if (currentDragOffset.value > 0 && currentPage.value > 0) {
+              store.dispatch('mindspace/setCurrentPage', currentPage.value - 1);
+              console.log("[handleTouchEndForPageShift] currentPage: ",currentPage.value);
+            } else if (currentDragOffset.value < 0 && currentPage.value < mindSpacePages.value.length - 1) {
+              store.dispatch('mindspace/setCurrentPage', currentPage.value + 1);
+              console.log("[handleTouchEndForPageShift] currentPage: ",currentPage.value);
+            }
+          }
+          
+          isDraggingForPageShift.value = false;
+          currentDragOffset.value = 0;
+        };
+
         //For console Use. List up items in the string.
         const formatItemList = (pages) => {
           return pages.map((page, pageIndex) => {
@@ -683,7 +737,7 @@ ADD STATUS HEADER
           document.body.appendChild(draggedElement.value);
   
           console.log('[startDrag] GridItems Drag Started Index: '+ dragStartIndex.value);
-          console.log('[startDrag] Initial Grid-Items-Order : ' + formatItemList(appPages.value));
+          console.log('[startDrag] Initial Grid-Items-Order : ' + formatItemList(mindSpacePages.value));
         };
   
         const moveDraggedElement = (mouseX, mouseY) => {
@@ -703,7 +757,7 @@ ADD STATUS HEADER
             if (folderItem) {
               const folderId = folderItem.getAttribute('data-id');
               console.log(folderId);
-              const folder = appPages.value.flat().find(item => item.id === folderId && item.items);
+              const folder = mindSpacePages.value.flat().find(item => item.id === folderId && item.items);
               if (folder) {
                 handleItemHover(folder);
               } else {
@@ -754,7 +808,7 @@ ADD STATUS HEADER
                 //const targetIndex = folderGrid.children.length;
                 currentFolder.value.items.push(draggingItem.value);
                 //updateFolderItemPosition({ page: 0, index: targetIndex });
-                removeItemFromAppPages(draggingItem.value);
+                removeItemFromMindSpacePages(draggingItem.value);
                 initializeFolderPages();
               }
             } 
@@ -827,7 +881,7 @@ ADD STATUS HEADER
             dragStartIndex.value = null;
             dragStartPageIndex.value = null;
   
-            console.log('[endDrag] GridItems Drag Ended Index: ' + formatItemList(appPages.value));
+            console.log('[endDrag] GridItems Drag Ended Index: ' + formatItemList(mindSpacePages.value));
           }
 
           
@@ -838,14 +892,14 @@ ADD STATUS HEADER
   
           const { page: newPageIndex, index: newItemIndex } = newPosition;
   
-          // Check if appPages is properly initialized
-          if (!Array.isArray(appPages.value) || appPages.value.length === 0) {
-            console.error('[updateItemPosition] appPages is not properly initialized');
+          // Check if mindSpacePages is properly initialized
+          if (!Array.isArray(mindSpacePages.value) || mindSpacePages.value.length === 0) {
+            console.error('[updateItemPosition] mindSpacePages is not properly initialized');
             return;
           }
   
           // Create a new array to trigger reactivity
-          const updatedAppPages = [...appPages.value];
+          const updatedMindSpacePages = [...mindSpacePages.value];
   
           let movedItem;
   
@@ -866,13 +920,13 @@ ADD STATUS HEADER
               return;
             }
   
-            if (!updatedAppPages[oldPageIndex]) {
+            if (!updatedMindSpacePages[oldPageIndex]) {
               console.error(`[updateItemPosition] Old page index ${oldPageIndex} does not exist`);
               return;
             }
   
             // Remove the item from its original position
-            [movedItem] = updatedAppPages[oldPageIndex].splice(oldItemIndex, 1);
+            [movedItem] = updatedMindSpacePages[oldPageIndex].splice(oldItemIndex, 1);
           }
   
           if (!movedItem) {
@@ -883,25 +937,25 @@ ADD STATUS HEADER
           console.log('[updateItemPosition] MovedItem: ', movedItem);
   
           // Insert the item at its new position
-          while (updatedAppPages.length <= newPageIndex) {
-            updatedAppPages.push([]);
+          while (updatedMindSpacePages.length <= newPageIndex) {
+            updatedMindSpacePages.push([]);
           }
-          updatedAppPages[newPageIndex].splice(newItemIndex, 0, movedItem);
+          updatedMindSpacePages[newPageIndex].splice(newItemIndex, 0, movedItem);
   
           // Remove empty pages, except the last one
-          for (let i = updatedAppPages.length - 2; i >= 0; i--) {
-            if (updatedAppPages[i].length === 0) {
-              updatedAppPages.splice(i, 1);
+          for (let i = updatedMindSpacePages.length - 2; i >= 0; i--) {
+            if (updatedMindSpacePages[i].length === 0) {
+              updatedMindSpacePages.splice(i, 1);
             }
           }
   
           // Ensure there's always an empty page at the end if all others are full
-          if (updatedAppPages[updatedAppPages.length - 1].length === ITEMS_PER_PAGE - 1) {
-            updatedAppPages.push([]);
+          if (updatedMindSpacePages[updatedMindSpacePages.length - 1].length === ITEMS_PER_PAGE - 1) {
+            updatedMindSpacePages.push([]);
           }
   
           // Update the indices of items in all pages
-          updatedAppPages.forEach((page, pageIndex) => {
+          updatedMindSpacePages.forEach((page, pageIndex) => {
             page.forEach((item, index) => {
               if (item.id) {
                 item.index = pageIndex * ITEMS_PER_PAGE + index;
@@ -910,8 +964,8 @@ ADD STATUS HEADER
           });
   
           // Update the reactive references
-          appPages.value = updatedAppPages;
-          console.log('[updateItemPosition] appPages is Updadate.');
+          mindSpacePages.value = updatedMindSpacePages;
+          console.log('[updateItemPosition] mindSpacePages is Updadate.');
   
   
           // Ensure the current page is updated if necessary
@@ -921,20 +975,20 @@ ADD STATUS HEADER
   
           // Use nextTick to ensure DOM updates after all data changes
           nextTick(() => {
-            console.log(`[updateItemPosition] App item moved to page ${newPageIndex}, End-index ${newItemIndex}`);          //console.log('Updated App-gridItems: ' + formatItemList(appPages.value));
+            console.log(`[updateItemPosition] App item moved to page ${newPageIndex}, End-index ${newItemIndex}`);          //console.log('Updated App-gridItems: ' + formatItemList(mindSpacePages.value));
           });
           
           //Update usersAppSpace.
-          console.log('[updateItemPosition] Initiate updating usersAppSpace with,', appPages.value);
+          console.log('[updateItemPosition] Initiate updating usersAppSpace with,', mindSpacePages.value);
           //updateUsersAppSpace();
         };
         
-        const removeItemFromAppPages = (item) => {
+        const removeItemFromMindSpacePages = (item) => {
           //[DEBUG]
-          console.log('[removeItemFromAppPages] TRIGGERED');
-          appPages.value = appPages.value.map(page => page.filter(i => i !== item));
+          console.log('[removeItemFromMindSpacePages] TRIGGERED');
+          mindSpacePages.value = mindSpacePages.value.map(page => page.filter(i => i !== item));
           //[DEBUG]
-          console.log('[removeItemFromAppPages] Item removed from App pages', item);
+          console.log('[removeItemFromMindSpacePages] Item removed from App pages', item);
         };
   
         const removeItemFromFolderPages = (item) => {
@@ -1683,8 +1737,12 @@ ADD STATUS HEADER
             updateTime();
             setInterval(updateTime, 60000); // Update time every minute
             initializeFolderPages();
-
             console.log("[mindspace.vue] :",currentPage.value);
+
+            //PageShiftForTouch
+            window.addEventListener('resize', () => {
+              pageWidth.value = window.innerWidth;
+            });
         });
   
         return {
@@ -1695,7 +1753,7 @@ ADD STATUS HEADER
   
           // App grid related
           //gridItems,
-          appPages,
+          mindSpacePages,
           currentPage,
           ITEMS_PER_PAGE,
           draggingItem,
@@ -1703,6 +1761,13 @@ ADD STATUS HEADER
           // EditMode related
           isEditMode,
           isDragging,
+
+          //PageShiftForTouch
+          isDraggingForPageShift,
+          handleTouchStartForPageShift,
+          handleTouchMoveForPageShift,
+          handleTouchEndForPageShift,
+          calculateTransform,
   
           // EditMode functions
           startEditModeTimer,
@@ -1730,11 +1795,6 @@ ADD STATUS HEADER
           handleItemHover,
           handleItemLeave,
           openFolder,
-  
-          // Touch events for app grid
-          touchStart,
-          touchMove,
-          touchEnd,
   
           // Folder related
           showFolder,

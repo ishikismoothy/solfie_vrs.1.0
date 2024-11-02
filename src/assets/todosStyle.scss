@@ -52,14 +52,14 @@
 }
 
 .todo-section {
-  background-color: #ffeccc;
+  //background-color: #ffeccc;
   //border-radius: 30px;
   padding: 20px;
   margin-bottom: 20px;
 }
 
 .todo-section h2 {
-  color: #4d4d4d;
+  color: #ffffff;
   margin-bottom: 15px;
 }
 
@@ -154,6 +154,8 @@
 }
 
 .modal-content {
+  position: fixed;
+  top: 20%;
   background-color: white;
   padding: 20px;
   border-radius: 15px;

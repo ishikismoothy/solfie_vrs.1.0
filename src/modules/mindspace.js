@@ -9,14 +9,15 @@ export default {
     namespaced: true,
     
     state: {
-      appPages: [[]],
+      mindSpacePages: [[]],
       currentPage: 0,
       totalPage: 0,
+      item:{},
     },
     
     mutations: {
       SET_APP_PAGES(state, pages) {
-        state.appPages = pages;
+        state.mindSpacePages = pages;
       },
       SET_CURRENT_PAGE(state, page) {
         state.currentPage = page;
@@ -25,31 +26,31 @@ export default {
         state.totalPage = page.length;
       },
       ADD_NEW_PAGE(state) {
-        state.appPages.push([]);
+        state.mindSpacePages.push([]);
       },
       CLEANUP_EMPTY_PAGES(state) {
         // Don't remove the first page even if empty
-        if (state.appPages.length <= 1) return;
+        if (state.mindSpacePages.length <= 1) return;
         
         // Filter out empty pages except the first one
-        state.appPages = state.appPages.filter((page, index) => {
+        state.mindSpacePages = state.mindSpacePages.filter((page, index) => {
             if (index === 0) return true; // Always keep first page
             // Check if the array has any items using Object.keys()
             return !Array.isArray(page) || Object.values(page).length > 0;
         });
     
         // Adjust currentPage if needed
-        if (state.currentPage >= state.appPages.length) {
-            state.currentPage = state.appPages.length - 1;
+        if (state.currentPage >= state.mindSpacePages.length) {
+            state.currentPage = state.mindSpacePages.length - 1;
         }
-        console.log("[CLEANUP_EMPTY_PAGES] appPages :", state.appPages);
+        console.log("[CLEANUP_EMPTY_PAGES] mindSpacePages :", state.mindSpacePages);
       }
     },
     
     actions: {
-      setAppPages({ commit, state }) {
+      setMindSpacePages({ commit, state }) {
         //Use firebase to retrieve app list.
-        console.log("[setAppPages] TRIGGERED");
+        console.log("[setMindSpacePages] TRIGGERED");
         const usersMindSpace = [
           [
             { id:'0000', name: '0', shape: circleSvg },
@@ -113,17 +114,17 @@ export default {
       },
       addNewPage({ commit, state }) {
         commit('ADD_NEW_PAGE');
-        commit('SET_TOTAL_PAGES', state.appPages);
+        commit('SET_TOTAL_PAGES', state.mindSpacePages);
       },
       cleanupEmptyPages({ commit, state }) {
         console.log("[CleanupEmptyPages] TRIGGERED");
         commit('CLEANUP_EMPTY_PAGES');
-        commit('SET_TOTAL_PAGES', state.appPages);
+        commit('SET_TOTAL_PAGES', state.mindSpacePages);
       }
     },
     
     getters: {
-      getAppPages: state => state.appPages,
+      getMindSpacePages: state => state.mindSpacePages,
       getCurrentPage: state => state.currentPage,
       getTotalPages: state => state.totalPage
     }

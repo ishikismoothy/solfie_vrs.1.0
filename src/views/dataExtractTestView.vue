@@ -236,6 +236,7 @@
             errorMessage.value = error.message || 'An error occurred while uploading the file.';
             } finally {
             isUploading.value = false;
+            handleDataExtraction();
             }
         }
         };

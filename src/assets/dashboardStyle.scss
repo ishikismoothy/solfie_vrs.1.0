@@ -1,13 +1,17 @@
 /* dashboard.css */
+.dashboard-view {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .dashboard {
-  font-family: Arial, sans-serif;
   margin: 0 auto;
 
   position: relative; /* Added position relative */
   overflow: hidden;
 
   /* Ensure the dashboard content doesn't get hidden behind the sticky nav */
-  padding-bottom: 100px;// Adjust this value based on the height of your sticky nav
+  padding-bottom: 200px;// Adjust this value based on the height of your sticky nav
 }
 
 .dashboard::before {
@@ -429,10 +433,10 @@ transition: width 0.5s ease-out;
 
 //[PAGE-INDICATOR]
 .indicator-wrapper {
-  position: absolute;
+  position: fixed;
   width: 100px;
   height: 20px;
-  bottom: 190px;
+  bottom: 200px;
   left: 45%;
   //right: 0;
   background: rgba(255, 255, 255, 0.521);

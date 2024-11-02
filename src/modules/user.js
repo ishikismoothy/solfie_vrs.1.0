@@ -3,6 +3,7 @@ export default {
   state: {
     user: {
       name: '寺岡 佑記',
+      uid: null,
       planType: 'Free Account',
       notifications: 3
     },
@@ -11,6 +12,10 @@ export default {
       questCleared: 0,
       averageScore: 0
     },
+    data: {
+      focusId: null,
+      mindSpaceId: null,
+    }
   },
   mutations: {
   },
