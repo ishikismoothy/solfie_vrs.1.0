@@ -3,14 +3,18 @@
   <header class="header-container">
     <div class="left-section">
       <div class="globe-icon">
-        <button class="icon-button">
-         <img src="../assets/icons/utility/globeIcon.svg" alt="globe" />
+        <button class="icon-button" 
+          @click="toggleMenu"
+        >
+          <img src="../assets/icons/utility/globeIcon.svg" alt="globe" />
         </button>
       </div>
-      <span class="app-name">mindspace 1</span>
+      <span class="mindspace-name" v-if="!isLoading">{{mindSpaceName}}</span>
+      <span class="mindspace-name" v-else>Loading...</span>
     </div>
     <div class="center-section">
-      <h1 class="page-title">自分が満たされる働き方</h1>
+      <h1 class="theme-title" v-if="!isLoading">{{themeName}}</h1>
+      <h1 class="theme-title" v-else>Loading...</h1>
     </div>
     <div class="right-section">
       <button class="icon-button">
@@ -24,14 +28,58 @@
       </button>
     </div>
   </header>
+
+  <SlideMenu 
+      :is-open="isMenuOpen"
+      :user-id="userId"
+      :theme-id="themeId"
+      :is-loading="isLoading"
+      @close="closeMenu"
+  />
 </template>
 
 <script>
+import { ref, computed } from 'vue';
+import { useStore } from 'vuex';
+import SlideMenu from './mindSpaceMenu.vue';
 
 export default {
-  name: 'HeaderNav'
-}
+  name: 'HeaderNav',
+  components: {
+    SlideMenu
+  },
+  setup() {
+    const store = useStore();
+    const isMenuOpen = ref(false);
+    
+    const themeName = computed(() => store.getters['mindspace/getThemeName']);
+    const mindSpaceName = computed(() => store.getters['mindspace/getMindSpaceName']);
+    const isLoading = computed(() => store.getters['mindspace/isLoading']);
+    const themeId = computed(() => store.getters['mindspace/getThemeId']);
+    const userId = computed(() => store.getters['mindspace/getUserId']);
 
+    console.log("[HeaderNav.vue] Reading",userId.value);
+
+    const toggleMenu = () => {
+      isMenuOpen.value = !isMenuOpen.value;
+    };
+
+    const closeMenu = () => {
+      isMenuOpen.value = false;
+    };
+
+    return {
+      isLoading,
+      themeName,
+      mindSpaceName,
+      userId,
+      themeId,
+      isMenuOpen,
+      toggleMenu,
+      closeMenu
+    };
+  }
+};
 </script>
 
 <style scoped>
@@ -54,7 +102,7 @@ export default {
   height: 20px;
 }
 
-.app-name {
+.mindspace-name {
   font-size: 16px;
   font-weight: 500;
   color: #333;
@@ -65,7 +113,7 @@ export default {
   text-align: center;
 }
 
-.page-title {
+.theme-title {
   font-size: 16px;
   font-weight: 500;
   color: #333;

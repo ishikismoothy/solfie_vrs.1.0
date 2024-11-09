@@ -9,62 +9,66 @@ $badge-colors: (
   yellow: #FFD700
 );
 
-// Styles for dragged items (when they're direct children of body)
-body > .mind-Item,
-body > .folder-item {
+// Common styles for both mind-Item and folder-item when being dragged
+%dragged-item {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   padding-top: 10px;
-  
-  &.dragging {
-    opacity: 1;
-    transform: scale(1.1);
-    transition: none !important;
-    pointer-events: none;
-    z-index: 1000;
+  position: fixed;
+  pointer-events: none;
+  z-index: 1005;
 
-    .icon-wrapper {
-      width: 77px;
-      height: 77px;
-      position: relative;
+  .icon-wrapper {
+    width: 77px;
+    height: 77px;
+    position: relative;
 
-      .icon-shadow-container {
-        top: 0px;
-        left: 0px;
+    .icon-shadow-container {
+      top: 0;
+      left: 0;
+    }
 
-      }
-
-      .icon-shadow {
-        position: absolute;
-        top: 10px;
-        left: 0px;
-        width: 100%;
-        height: 100%;
-        opacity: 0.7;
-        transition: opacity 0.2s ease;
-        filter: blur(6px);
-      }
+    .icon-shadow {
+      position: absolute;
+      top: 10px;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.7;
+      transition: opacity 0.2s ease;
+      filter: blur(6px);
     }
 
     .icon-shape {
       position: relative;
       z-index: 1;
     }
+  }
 
-    .item-name {
-      font-size: 13.2px;
-    }
+  .item-name {
+    font-size: 13.2px;
+    margin-top: 5px;
   }
 }
 
-.iphone-container {
+// Apply common dragged styles
+body > .mind-Item.dragging,
+body > .folder-item.dragging {
+  @extend %dragged-item;
+  transform: scale(1.5);
+  transition: none !important;
+}
+
+.mindspace-container {
   display: flex;
   flex-direction: column;
   font-family: $primary-font;
-  width: 100%;
-  height: 100vh;
+  //width: 100%;
+  padding: 0 20px;
+  //height: 100vh;
+  height: 94vh;
   margin: 0;
   background-color: $background-color;
   position: relative;
@@ -118,33 +122,89 @@ body > .folder-item {
       align-items: center;
       text-align: center;
       padding-top: 10px;
+      transition: transform 0.2s ease;
+
+      &:not(.empty):not(.add-item):hover {
+        transform: scale(1.05);
+      }
   
       .icon-wrapper {
         position: relative;
-        width: 70px;
-        height: 70px;
+        width: 60px;
+        height: 60px;
         margin-bottom: 5px;
 
-        .icon-shadow-container {
-          pointer-events: none;
+        .delete-button {
+          position: absolute;
+          top: -8px;
+          right: -8px;
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background: rgb(170, 170, 170);
+          color: rgb(255, 255, 255);
+          border: none;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          z-index: 10;
+          padding: 0;
+          font-size: 14px;
+          opacity: 0.4;
+          transition: opacity 0.2s ease;
+        }
+  
+        &:hover .delete-button {
+          opacity: 0.9;
         }
 
-        .icon-shadow,
-        .icon-shape {
+        .icon-shadow-container {
           position: absolute;
-          top: 0;
-          left: 0;
+          top: 4px;
+          left: 4px;
           width: 100%;
           height: 100%;
+          pointer-events: none;
         }
   
         .icon-shadow {
-          opacity: 0;
+          opacity: 0.3;
           transition: opacity 0.2s ease;
         }
 
         .icon-shape {
-          z-index: 1;
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          transition: transform 0.2s ease;
+        }
+
+        &:hover .icon-shape {
+          transform: scale(1.1);
+        }
+      }
+
+      &.add-item {
+        opacity: 0.6;
+        transition: opacity 0.3s ease;
+
+        .item-name{
+          color: #6e6e6e;
+        }
+
+        &:hover {
+          opacity: 1;
+        }
+
+        .icon-wrapper {
+          border: 2px dashed #ccc;
+          border-radius: 12px;
+          background-color: rgba(255, 255, 255, 0.4);
+
+          .icon-content {
+            color: #666;
+          }
         }
       }
   
@@ -165,7 +225,7 @@ body > .folder-item {
         display: flex;
         justify-content: center;
         align-items: center;
-        font-size: 30px;
+        //font-size: 30px;
         color: white;
       }
   
@@ -173,8 +233,8 @@ body > .folder-item {
         position: absolute;
         top: -5px;
         right: -5px;
-        width: 30px;
-        height: 30px;
+        width: 20px;
+        height: 20px;
         border-radius: 50%;
         display: flex;
         justify-content: center;
@@ -193,20 +253,6 @@ body > .folder-item {
       .badge.#{$color} {
         background-color: $value;
       }
-    }
-  }
-  
-  .add-item {
-    .icon-wrapper {
-      background-color: #f0f0f0;
-      border: 2px dashed #ccc;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-  
-    .icon-content {
-      color: #999;
     }
   }
   
@@ -262,97 +308,233 @@ body > .folder-item {
     transform: translateX(100%);
   }
 
-  .folder-exit-area{
+  .folder-exit-area {
     position: absolute;
     height: 15%;
     width: 90%;
-    top:20px;
+    top: 20px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    transition: background-color 0.3s ease;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
   }
   
   .folder-content {
     width: 80%;
-    height: 60%;
-    background-color: rgba(255, 255, 255, 0.9);
+    height: 50%;
+    background-color: rgba(255, 255, 255, 0.95);
     border-radius: 20px;
     padding: 20px;
-    overflow-y: auto;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
-    margin-bottom: 20%;
-  }
-  
-  .folder-content h3 {
-    margin-bottom: 20px;
+    margin-bottom: 30%;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+
+    h3 {
+      margin-bottom: 20px;
+      text-align: center;
+      font-size: 1.2em;
+      color: #333;
+    }
   }
   
   .folder-grid-container {
     flex-grow: 1;
-    overflow: hidden;
+    //overflow: hidden;
     position: relative;
+    margin: 10px 0;
   }
-  
+
   .folder-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(80px, 1fr));
     grid-template-rows: repeat(4, 1fr);
     gap: 20px;
-    padding-top: 20px;
+    //padding: 20px;
     position: absolute;
     width: 100%;
+    height: 100%;
     transition: transform 0.3s ease;
+    will-change: transform;
+
+    .folder-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      text-align: center;
+      height: 100px;
+      transition: transform 0.2s ease;
+
+      &:not(.empty):not(.add-item):hover {
+        transform: scale(1.05);
+      }
+
+      .icon-wrapper {
+        width: 50px;
+        height: 50px;
+        margin-bottom: 5px;
+        position: relative;
+
+        .delete-button {
+          position: absolute;
+          top: -8px;
+          right: -8px;
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background: rgb(170, 170, 170);
+          color: rgb(255, 255, 255);
+          border: none;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          z-index: 10;
+          padding: 0;
+          font-size: 14px;
+          opacity: 0.4;
+          transition: opacity 0.2s ease;
+        }
+  
+        &:hover .delete-button {
+          opacity: 0.9;
+        }
+
+        .icon-shadow-container {
+          position: absolute;
+          top: 4px;
+          left: 4px;
+          width: 100%;
+          height: 100%;
+          pointer-events: none;
+        }
+
+        .icon-shadow {
+          opacity: 0.3;
+          transition: opacity 0.2s ease;
+        }
+
+        .icon-shape {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          transition: transform 0.2s ease;
+        }
+
+        &:hover .icon-shape {
+          transform: scale(1.1);
+        }
+      }
+
+      &.dragging {
+        opacity: 0.5;
+        transform: scale(1.1);
+
+        .icon-wrapper {
+          transform: scale(1.1);
+        }
+      }
+
+      &.empty {
+        visibility: hidden;
+        pointer-events: none;
+      }
+
+      &.add-item {
+        opacity: 0.6;
+        transition: opacity 0.3s ease;
+
+        &:hover {
+          opacity: 1;
+        }
+
+        .icon-wrapper {
+          border: 2px dashed #ccc;
+          border-radius: 12px;
+          background-color: rgba(0, 0, 0, 0.05);
+
+          .icon-content {
+            color: #666;
+          }
+        }
+      }
+      .badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 12px;
+        z-index: 2;
+      }
+    }
+    @each $color, $value in $badge-colors {
+      .badge.#{$color} {
+        background-color: $value;
+      }
+    }
   }
   
-  .folder-item {
+  .folder-page-indicator {
+    padding: 15px 0;
     display: flex;
-    flex-direction: column;
+    justify-content: center;
     align-items: center;
-    justify-content: flex-start;
-    text-align: center;
-    height: 100px;
+    gap: 8px;
+
+    span {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      transition: all 0.3s ease;
+
+      &.active {
+        background-color: rgba(0, 0, 0, 0.6);
+        transform: scale(1.2);
+      }
+
+      &.has-items {
+        background-color: rgba(0, 0, 0, 0.4);
+      }
+
+      &:hover {
+        transform: scale(1.2);
+      }
+    }
+  }
+
+  // Update placeholder styles
+  .folder-item.placeholder {
+    opacity: 0.5;
+    pointer-events: none;
+
+    .icon-wrapper {
+      filter: grayscale(100%);
+    }
+
+    .item-name {
+      color: #999;
+    }
+  }
+
+  .empty-slots {
+    display: contents; // This makes the container behave as if it wasn't there
   }
   
   .folder-item.empty {
     visibility: hidden;
-  }
-  
-  
-  .icon-wrapper {
-    width: 60px;
-    height: 60px;
-    margin-bottom: 5px;
-  }
-  
-  .icon-shape {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-  }
-  
-  .item-name {
-    font-size: 12px;
-    word-break: break-word;
-  }
-  
-  .folder-page-indicator {
-    padding: 10px 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-top: 20px;
-    height: 30px;
-  }
-  
-  .folder-page-indicator span {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background-color: #ccc;
-    margin: 0 5px;
-    cursor: pointer;
-  }
-  
-  .folder-page-indicator span.active {
-    background-color: #333;
+    pointer-events: none;
   }
 
 }

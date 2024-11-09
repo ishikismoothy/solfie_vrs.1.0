@@ -11,6 +11,9 @@
 
 //[MindSpace View]
 //MindSpace > Add Item
+.item-window-overlay{
+    z-index: 1001;
+}
 .add-item-popup {
     z-index: 1001;
 }
@@ -26,4 +29,9 @@
 }
 .folder-overlay {
     z-index: 999;
+}
+
+//Shadow of the items
+.icon-shadow-container{
+    z-index: -1;  
 }

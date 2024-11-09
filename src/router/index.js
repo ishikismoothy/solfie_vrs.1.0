@@ -33,6 +33,12 @@ const routes = [
     component: () => import('../views/dataExtractTestView.vue'),
     meta: { requiresAuth: true }
   },
+  {
+    path: '/testItem',
+    name: 'testItem',
+    component: () => import('@/components/itemContentsWindow.vue'),
+    meta: { requiresAuth: true }
+  },
 ]
 
 const router = createRouter({

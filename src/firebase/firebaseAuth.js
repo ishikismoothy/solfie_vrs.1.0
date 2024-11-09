@@ -5,7 +5,8 @@ import {
     signInWithEmailAndPassword,
     signOut,
     onAuthStateChanged,
-    sendPasswordResetEmail  // Add this import
+    sendPasswordResetEmail,  // Add this import
+    getAuth,
   } from 'firebase/auth';
 import { auth } from './firebaseInit';
 
@@ -43,4 +44,15 @@ export const onAuthStateChange = (callback) => {
 // Add this new function for password reset
 export const resetPassword = (email) => {
 return sendPasswordResetEmail(auth, email);
+};
+
+export const getCurrentUserId = async () => {
+  const auth = getAuth();
+  const userId = auth.currentUser?.uid;
+  
+  if (!userId) {
+    throw new Error('No user authenticated');
+  }
+
+  return userId;
 };

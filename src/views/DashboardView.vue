@@ -35,6 +35,10 @@
     </div>
 
     <ChatBox />
+    <itemWindow 
+      :is-open="showItemWindow"
+      @close="closeItemWindow"
+    />
   </div>
 </template>
 
@@ -46,6 +50,7 @@ import Dashboard from '@/components/dashboard.vue';
 import { useStore } from 'vuex';
 import mindSpace from '@/components/mindSpace.vue';
 import PageIndicator from '@/components/pageIndicator.vue';
+import itemWindow from '@/components/itemContentsWindow.vue';
 
 export default defineComponent({
   name: 'DashboardView',
@@ -54,7 +59,8 @@ export default defineComponent({
     Dashboard,
     mindSpace,
     PageIndicator,
-    Header
+    Header,
+    itemWindow
   },
   setup() {
     const store = useStore();
@@ -152,6 +158,12 @@ export default defineComponent({
       }
     };
 
+    //Item Window
+    const showItemWindow = computed(() => store.getters['mindspace/getShowItemWindow']);
+    const closeItemWindow = () => {
+        store.dispatch('mindspace/triggerItemWindow', false);
+    };
+
     onMounted(() => {
       store.dispatch('mindspace/setMindSpacePages');
     });
@@ -166,6 +178,8 @@ export default defineComponent({
       handleTouchEnd,
       isEditing,
       handleEditModeChange,
+      closeItemWindow,
+      showItemWindow
     };
   }
 });

@@ -13,8 +13,9 @@ export default {
       averageScore: 0
     },
     data: {
-      focusId: null,
-      mindSpaceId: null,
+      themeId: null,// Focused theme
+      recordId: null,//Latest recordId
+      mindSpaceId: null,// Focused mindSpace    
     }
   },
   mutations: {

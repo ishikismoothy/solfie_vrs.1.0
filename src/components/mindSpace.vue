@@ -12,7 +12,7 @@ ADD STATUS HEADER
 -->
 
 <template>
-    <div class="iphone-container" :style="containerStyle">
+    <div class="mindspace-container" :style="containerStyle">
 
       <!-- Mind-Grid container -->
       <div 
@@ -38,35 +38,46 @@ ADD STATUS HEADER
             class="mind-grid" 
             :data-page-index1="pageIndex"
             :style="{ 
-              transform: `translateX(${calculateTransform(pageIndex)}px)` ,
+              transform: `translateX(${calculateTransform(pageIndex)}px)`,
               transition: isDraggingForPageShift ? 'none' : 'transform 0.3s ease'
-              }"
+            }"
             @touchstart="handleTouchStartForPageShift"
             @touchmove="handleTouchMoveForPageShift"
             @touchend="handleTouchEndForPageShift"
           >
             <!-- Mind-Item -->
             <div 
-              v-for="(item, index) in page" 
+              v-for="(item, index) in page.items" 
               :key="item.id || index" 
               class="mind-Item"
               :data-id="item.id"
             >
-            <div class="icon-wrapper"
-              :class="{ 
-                'dragging': draggingItem === item,
-                'folder-hover': item.items && isDragging && hoveredFolderId === item.id
-              }"
-              @click="handleItemClick(item)"
-              @mousedown.prevent="handleMouseDown($event, item, pageIndex, index)"
-              @touchstart.prevent="handleTouchStart($event, item, pageIndex, index)"
-              @mouseover="handleItemHover(item)"
-              @mouseleave="handleItemLeave()"
-            >
+              <div class="icon-wrapper"
+                :class="{ 
+                  'dragging': draggingItem === item,
+                  'folder-hover': item.items && isDragging && hoveredFolderId === item.id
+                }"
+                :data-item-id="item.id"
+                @click="handleItemClick(item)"
+                @mousedown.prevent="handleMouseDown($event, item, pageIndex, index)"
+                @touchstart.prevent="handleTouchStart($event, item, pageIndex, index)"
+                @touchend.prevent="handleTouchEnd"
+                @mouseover="handleItemHover(item)"
+                @mouseleave="handleItemLeave()"
+              >
+                <!-- Add delete button -->
+                <button 
+                  v-if="isEditMode && !isDragging" 
+                  class="delete-button"
+                  @click.stop.prevent="handleItemDelete(item)"
+                >
+                  <i class="fas fa-times-circle">X</i>
+                </button>
+                <!-- icon Shadow -->
                 <div class="icon-shadow-container">
                   <div class="icon-shadow" v-html="createShadowSvg(item.shape)"></div>
                 </div>
-                <img :src="item.shape" class="icon-shape" :alt="item.name">
+                  <img :src="item.shape" class="icon-shape" :alt="item.name">
                 <div class="icon-content">
                   <i v-if="item.icon" :class="item.icon"></i>
                 </div>
@@ -79,7 +90,7 @@ ADD STATUS HEADER
             
             <!-- Add button only on the last page -->
             <div 
-              v-if="page.length < ITEMS_PER_PAGE" 
+              v-if="page.items.length < ITEMS_PER_PAGE" 
               class="mind-Item add-item" 
               @click="showAddItemMenu('mindSpace', pageIndex)"
             >
@@ -90,27 +101,16 @@ ADD STATUS HEADER
               </div>
               <span class="item-name">Add New</span>
             </div>
-            
           </div>
         </div>
       </div>
-  
-      <!-- Page indicator -->
-      <!-- I WANT TO MAKE THIS AS SEPARATE COMPONETNS -->
-      <div class="page-indicator">
-          <span 
-            v-for="(page, index) in mindSpacePages" 
-            :key="index" 
-            :class="{ active: index === currentPage }"
-            @click="selectPage(index)"
-          ></span>
-      </div>
       
-  
       <div 
         v-if="showFolder" 
         class="folder-overlay" 
         @click.self="closeFolder"
+        @touchstart="startEditModeTimer"
+        @touchend="cancelEditModeTimer"
         @mousedown="startEditModeTimer"
         @mouseup="cancelEditModeTimer"
         @mouseleave="cancelEditModeTimer"
@@ -133,25 +133,45 @@ ADD STATUS HEADER
             >
               <!-- Folder-Item -->
               <div 
-                v-for="(item, index) in page" 
+                v-for="(item, index) in page.items" 
                 :key="item.id || index"
                 class="folder-item"
                 :data-id="item.id"
               >
                 <div class="icon-wrapper"
-                  :class="{ 'dragging': draggingFolderItem === item }"
+                  :class="{ 
+                    'dragging': draggingFolderItem === item,
+                    'empty': !item
+                  }"
                   @click="handleFolderItemClick(item)"
                   @mousedown.prevent="handleFolderMouseDown($event, item, pageIndex, index)"
                   @touchstart.prevent="handleFolderTouchStart($event, item, pageIndex, index)"
                 >
+                  <!-- Add delete button -->
+                  <button 
+                    v-if="isEditMode" 
+                    class="delete-button"
+                    @click.stop.prevent="handleItemDelete(item)"
+                  >
+                  <i class="fas fa-times-circle">X</i>
+                  </button>
+                  <div class="icon-shadow-container">
+                    <div class="icon-shadow" v-html="createShadowSvg(item.shape)"></div>
+                  </div>
                   <img :src="item.shape" class="icon-shape" :alt="item.name">
+                  <div class="icon-content">
+                    <i v-if="item.icon" :class="item.icon"></i>
+                  </div>
+                  <div v-if="item.badge" class="badge" :class="item.badge">
+                    <i :class="getBadgeIcon(item.badge)"></i>
+                  </div>
                 </div>
                 <span class="item-name">{{ item.name }}</span>
               </div>
               
               <!-- Add button on every page -->
               <div
-                v-if="page.length < ITEMS_PER_FOLDER_PAGE" 
+                v-if="page.items.length < ITEMS_PER_FOLDER_PAGE" 
                 class="folder-item add-item" 
                 @click="showAddItemMenu('folder', pageIndex)"
               >
@@ -162,6 +182,22 @@ ADD STATUS HEADER
                 </div>
                 <span class="item-name">Add New</span>
               </div>
+
+              <!-- Empty slots to maintain grid layout -->
+              <div v-if="getEmptySlotCount(page) > 0" class="empty-slots">
+                <div 
+                  v-for="n in getEmptySlotCount(page)"
+                  :key="`empty-${pageIndex}-${n}`"
+                  class="folder-item empty"
+                >
+                  <div class="icon-wrapper empty">
+                    <div class="icon-shadow-container">
+                      <div class="icon-shadow"></div>
+                    </div>
+                  </div>
+                  <span class="item-name"></span>
+                </div>
+              </div>
             </div>
           </div>
           
@@ -170,7 +206,10 @@ ADD STATUS HEADER
             <span 
               v-for="(page, index) in folderPages" 
               :key="index" 
-              :class="{ active: index === currentFolderPage }"
+              :class="{ 
+                'active': index === currentFolderPage,
+                'has-items': page.items.length > 0 
+              }"
               @click="selectFolderPage(index)"
             ></span>
           </div>
@@ -192,7 +231,7 @@ ADD STATUS HEADER
         @add="handleAddItemSelection" 
         @close="showAddItemPopup = false"
       />
-  
+
     </div>
   
   </template>
@@ -206,9 +245,9 @@ ADD STATUS HEADER
     //import circleSvg from '../assets/shapes/circle.svg';
     //import octagonSvg from '../assets/shapes/octagon.svg';
     //import cloudSvg from '../assets/shapes/cloud.svg';
-    import folderSvg from '../assets/shapes/folder.svg';
+    //import folderSvg from '../assets/shapes/folder.svg';
     import AddItemPopup from '../components/addItemPopup.vue';
-  
+
     export default defineComponent({
       name: 'iPhoneStyleMaestroUI',
       
@@ -247,16 +286,30 @@ ADD STATUS HEADER
         const ITEMS_PER_PAGE = 20; // 4x5 layout
         
         // Get state from Vuex with safe access
+        //const isLoading = computed(() => store.getters['mindspace/isLoading']);
+        //const error = computed(() => store.getters['mindspace/getError']);
+        //const userId = computed(() => store.getters['mindspace/getUserId']);
+        //const themeId = computed(() => store.getters['mindspace/getThemeId']);
+        //const mindSpaceId = computed(() => store.getters['mindspace/getMindSpaceId']);
+        
         const currentPage = computed(() => store.getters['mindspace/getCurrentPage']);
         const mindSpacePages = computed(() => store.getters['mindspace/getMindSpacePages']);
 
-        // Update page selection to use Vuex
-        const selectPage = (index) => {
-            store.dispatch('mindspace/setCurrentPage', index);
-        };
+        watch(
+          () => store.state.mindspace.mindSpacePages,
+          () => {
+            if (showFolder.value && currentFolder.value) {
+              nextTick(() => {
+                initializeFolderPages();
+              });
+            }
+          },
+          { deep: true }
+        );
 
         //[ADD-ITEM]
         const showAddItemPopup = ref(false);
+        
         const addItemTarget = ref(null);
         const addItemPageIndex = ref(null);
   
@@ -267,180 +320,148 @@ ADD STATUS HEADER
         };
   
         const handleAddItemSelection = (type) => {
+          console.log('[handleAddItemSelection] Adding item type:', type);
+          
           if (type === 'item') {
             addNewItemImpl(addItemTarget.value, addItemPageIndex.value);
           } else if (type === 'folder') {
             addNewFolderImpl(addItemTarget.value, addItemPageIndex.value);
           }
+          
           showAddItemPopup.value = false;
+          
+          // Re-initialize pages if needed
+          if (addItemTarget.value === 'folder') {
+            nextTick(() => {
+              initializeFolderPages();
+            });
+          }
         };
   
-        const addNewItemImpl = (target, pageIndex) => {
+        const addNewItemImpl = async (target, pageIndex) => {
           const newItem = {
-            id: `item-${Date.now()}`,
             name: 'New Item',
             shape: squareSvg,
-            index: target === 'mindSpace' ? mindSpacePages.value[pageIndex].length : folderPages.value[pageIndex].length
           };
-  
+
+          console.log('[addNewItemImpl] Adding new item:', { target, pageIndex, newItem });
+
           if (target === 'mindSpace') {
-            // Logic for adding to mindSpacePages
-            if (mindSpacePages.value[pageIndex].length === ITEMS_PER_PAGE) {
-              mindSpacePages.value.splice(pageIndex + 1, 0, []);
-              pageIndex++;
-            }
-            mindSpacePages.value[pageIndex].push(newItem);
-            currentPage.value = pageIndex;
-  
-            if (mindSpacePages.value[mindSpacePages.value.length - 1].length === ITEMS_PER_PAGE) {
-              mindSpacePages.value.push([]);
-            }
-          } else {
-            // Logic for adding to folderPages
-            if (folderPages.value[pageIndex].length === ITEMS_PER_FOLDER_PAGE) {
-              folderPages.value.splice(pageIndex + 1, 0, []);
-              pageIndex++;
-            }
-            folderPages.value[pageIndex].push(newItem);
-            currentFolderPage.value = pageIndex;
-  
-            if (folderPages.value[pageIndex].length === ITEMS_PER_FOLDER_PAGE &&
-                pageIndex === folderPages.value.length - 1) {
-              folderPages.value.push([]);
-            }
-  
-            // Update the currentFolder.value
-            if (currentFolder.value) {
-              currentFolder.value = {
-                ...currentFolder.value,
-                items: folderPages.value.flat()
+            const currentPageItems = store.getters['mindspace/getPageItems'](pageIndex);
+            try {
+              const newItem = {
+                name: 'New Item',
+                shape: squareSvg,
               };
+
+              if (currentPageItems.length < ITEMS_PER_PAGE) {
+                await store.dispatch('mindspace/addItemToPage', {
+                  pageIndex,
+                  index: currentPageItems.length,
+                  item: newItem
+                });
+              } else {
+                await store.dispatch('mindspace/addItemToPage', {
+                  pageIndex: pageIndex + 1,
+                  index: 0,
+                  item: newItem
+                });
+                store.dispatch('mindspace/setCurrentPage', pageIndex + 1);
+              }
+            } catch (error) {
+              console.error('Error adding new item:', error);
+              // Handle error appropriately
             }
-  
-            // Update the corresponding folder in mindSpacePages
-            if (currentFolder.value) {
-              mindSpacePages.value = mindSpacePages.value.map(page => 
-                page.map(item => {
-                  if (item.id === currentFolder.value.id) {
-                    return {
-                      ...item,
-                      items: folderPages.value.flat()
-                    };
-                  }
-                  return item;
-                })
-              );
+          } else if (target === 'folder' && currentFolder.value) {
+            try {
+              const newItem = {
+                name: 'New Item',
+                shape: squareSvg,
+              };
+
+              await store.dispatch('mindspace/addNewItemToFolder', {
+                folderId: currentFolder.value.id,
+                item: newItem
+              });
+
+              initializeFolderPages();
+            } catch (error) {
+              console.error('Error adding new item to folder:', error);
+              // Handle error
             }
           }
-  
-          // Debug logging
-          console.log(`Added new item to ${target}:`, newItem);
-          if (target === 'mindSpace') {
-            console.log('Updated mindSpacePages:', mindSpacePages.value);
-          } else {
-            console.log('Updated folderPages:', folderPages.value);
-            console.log('Updated currentFolder:', currentFolder.value);
-          }
-  
-          //updateusersMindSpace();
+          console.log(`[addNewItemImpl] Added new item to ${target}:`, newItem);
         };
+
+        /*
+        // New function to add multiple items at once
+        const addMultipleItems = (items, targetPageIndex = null) => {
+          const startPageIndex = targetPageIndex ?? store.getters['mindspace/getCurrentPage'];
+          
+          store.dispatch('mindspace/distributeItemsAcrossPages', {
+            startPageIndex,
+            items: items.map(item => ({
+              id: `item-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              name: item.name || 'New Item',
+              shape: item.shape || squareSvg,
+              ...item
+            })),
+            itemsPerPage: ITEMS_PER_PAGE
+          });
+        };*/
   
         // Function to add a new folder
-        const addNewFolderImpl = (target, pageIndex) => {
-          const newFolder = {
-            id: `f${Date.now()}`,
-            name: 'New Folder',
-            shape: folderSvg,
-            items: []
-          };
-  
+        const addNewFolderImpl = async (target, pageIndex) => {
           if (target === 'mindSpace') {
-            // Logic for adding to mindSpacePages
-            if (mindSpacePages.value[pageIndex].length === ITEMS_PER_PAGE) {
-              mindSpacePages.value.splice(pageIndex + 1, 0, []);
-              pageIndex++;
-            }
-            mindSpacePages.value[pageIndex].push(newFolder);
-            currentPage.value = pageIndex;
-  
-            if (mindSpacePages.value[mindSpacePages.value.length - 1].length === ITEMS_PER_PAGE) {
-              mindSpacePages.value.push([]);
-            }
-          } else {
-            // Logic for adding to folderPages
-            if (folderPages.value[pageIndex].length === ITEMS_PER_FOLDER_PAGE) {
-              folderPages.value.splice(pageIndex + 1, 0, []);
-              pageIndex++;
-            }
-            folderPages.value[pageIndex].push(newFolder);
-            currentFolderPage.value = pageIndex;
-  
-            if (folderPages.value[pageIndex].length === ITEMS_PER_FOLDER_PAGE &&
-                pageIndex === folderPages.value.length - 1) {
-              folderPages.value.push([]);
-            }
-  
-            // Update the currentFolder.value
-            if (currentFolder.value) {
-              currentFolder.value = {
-                ...currentFolder.value,
-                items: folderPages.value.flat()
-              };
-            }
-  
-            // Update the corresponding folder in mindSpacePages
-            if (currentFolder.value) {
-              mindSpacePages.value = mindSpacePages.value.map(page => 
-                page.map(item => {
-                  if (item.id === currentFolder.value.id) {
-                    return {
-                      ...item,
-                      items: folderPages.value.flat()
-                    };
-                  }
-                  return item;
-                })
-              );
+            const currentPageItems = store.getters['mindspace/getPageItems'](pageIndex);
+            
+            try {
+              if (currentPageItems.length < ITEMS_PER_PAGE) {
+                await store.dispatch('mindspace/addNewFolder', {
+                  pageIndex,
+                  index: currentPageItems.length
+                });
+              } else {
+                await store.dispatch('mindspace/addNewFolder', {
+                  pageIndex: pageIndex + 1,
+                  index: 0
+                });
+                store.dispatch('mindspace/setCurrentPage', pageIndex + 1);
+              }
+            } catch (error) {
+              console.error('Error adding new folder:', error);
+              // Handle error
             }
           }
-  
-          // Debug logging
-          console.log(`Added new folder to ${target}:`, newFolder);
-          if (target === 'mindSpace') {
-            console.log('Updated mindSpacePages:', mindSpacePages.value);
-          } else {
-            console.log('Updated folderPages:', folderPages.value);
-            console.log('Updated currentFolder:', currentFolder.value);
-          }
-  
-          //updateusersMindSpace();
         };
-  
-        const removeItem = (pageIndex, itemIndex) => {
-          mindSpacePages.value[pageIndex].splice(itemIndex, 1);
-          
-          // Redistribute items from next pages if they exist
-          for (let i = pageIndex; i < mindSpacePages.value.length - 1; i++) {
-            if (mindSpacePages.value[i].length < ITEMS_PER_PAGE && mindSpacePages.value[i + 1].length > 0) {
-              mindSpacePages.value[i].push(mindSpacePages.value[i + 1].shift());
-            } else {
-              break;
+
+        const handleItemDelete = async (item) => {
+          try {
+            if (!item || !item.id) {
+              console.error('Invalid item for deletion');
+              return;
             }
-          }
-  
-          // Remove empty pages, except the last one
-          mindSpacePages.value = mindSpacePages.value.filter((page, index) => 
-            page.length > 0 || index === mindSpacePages.value.length - 1
-          );
-  
-          // Ensure there's always an empty page at the end if all others are full
-          if (mindSpacePages.value[mindSpacePages.value.length - 1].length === ITEMS_PER_PAGE) {
-            mindSpacePages.value.push([]);
-          }
-  
-          // Adjust currentPage if necessary
-          if (currentPage.value >= mindSpacePages.value.length) {
-            currentPage.value = mindSpacePages.value.length - 1;
+
+            // Optional: Add confirmation dialog
+            if (!confirm('Are you sure you want to delete this item?')) {
+              return;
+            }
+
+            console.log('[handleItemDelete] Deleting item:', item);
+            
+            await store.dispatch('mindspace/deleteItem', item.id);
+            
+            // If the deleted item was in a folder, refresh folder pages
+            if (showFolder.value && currentFolder.value) {
+              nextTick(() => {
+                initializeFolderPages();
+              });
+            }
+
+            console.log('[handleItemDelete] Successfully deleted item');
+          } catch (error) {
+            console.error('[handleItemDelete] Error deleting item:', error);
+            // Optionally show error to user
           }
         };
   
@@ -486,9 +507,21 @@ ADD STATUS HEADER
             }
         };
   
-        const exitEditMode = () => {
-          isEditMode.value = false;
-          isEditMode.value = false;
+        const  exitEditMode = async () => {
+          try {
+            isEditMode.value = false;
+            
+            // First update the mindspace in Firestore
+            await store.dispatch('mindspace/updateMindSpace');
+            
+            // Then refresh the pages from Firestore
+            await store.dispatch('mindspace/setMindSpacePages');
+            
+            console.log('Successfully exited edit mode and updated mindspace');
+          } catch (error) {
+            console.error('Error exiting edit mode:', error);
+            // Handle error (show message to user, etc.)
+          }
         };
   
         //Mind-Grid Drag and Drop Interaction Handling
@@ -575,22 +608,37 @@ ADD STATUS HEADER
         //For console Use. List up items in the string.
         const formatItemList = (pages) => {
           return pages.map((page, pageIndex) => {
-            return `Page ${pageIndex}: ${page.map(item => item.name).join(', ')}`;
+            // Check if page has items array
+            if (page && page.items && Array.isArray(page.items)) {
+              return `Page ${pageIndex}: ${page.items.map(item => item.name).join(', ')}`;
+            }
+            // Fallback for empty or invalid pages
+            return `Page ${pageIndex}: empty`;
           }).join('\n');
         };
   
-        const handleItemClick = (item) => {
-          //[DEBUG] 
-          console.log('[handleItemClick] Mind-Grid item clicked:', item);
+        // Update handleItemClick to include safety checks
+        const handleItemClick = async (item) => {
+          //console.log('[handleItemClick] Mind-Grid item clicked:', item);
           
+          if (!item) {
+            console.warn('[handleItemClick] No valid item provided');
+            return;
+          }
+
           if (item.items) {
-            //[DEBUG] 
-            console.log('[handleItemClick] Opening folder:', item.name);
+            console.log('[handleItemClick] Opening folder:', item);
             showFolder.value = true;
             currentFolder.value = item;
+            initializeFolderPages();
           } else {
-            //[DEBUG] 
             console.log('[handleItemClick] Clicked on non-folder item:', item.name);
+            
+            if(!isEditMode.value){
+              await store.dispatch('mindspace/setItemId', item.id);
+              await store.dispatch('mindspace/triggerItemWindow', true);
+            }
+              
             // Here you can add any additional functionality for non-folder items
           }
         };
@@ -598,28 +646,32 @@ ADD STATUS HEADER
         const handleMouseDown = (event, item, pageIndex, index) => {
           //[DEBUG] 
           console.log('[handleMouseDown] TRIGGERED');
+
           if (isEditMode.value) {
             isMouseDown.value = true;
             dragStartX.value = event.clientX;
             dragStartY.value = event.clientY;
             dragStartTime.value = Date.now();
+
             draggingItem.value = item;
             dragStartIndex.value = index;
             dragStartPageIndex.value = pageIndex;
             
             // Store the dragged element
             draggedElement.value = event.target.closest('.mind-Item');
-  
+
             //[DEBUG] LOGGING DRAGGED ITEM
-            console.log('[handleMouseDown] Focus Item: ',draggingItem.value);
-  
+            console.log('[handleMouseDown] Focus Item: ', draggingItem.value);
+            console.log('[handleMouseDown] draggedElement: ', draggedElement.value);
+            console.log('[handleMouseDown] Original Item index:', index,' / Original Page index:', pageIndex );
+            
             // Calculate and store the offset within the dragged element
             const rect = draggedElement.value.getBoundingClientRect();
             dragOffset.value = {
-              x: dragStartX.value - rect.left,
+              x: dragStartX.value - rect.left*1.1,
               y: dragStartY.value - rect.top
             };
-  
+
             document.addEventListener('mousemove', handleMouseMove);
             document.addEventListener('mouseup', handleMouseUp);
           }
@@ -651,14 +703,22 @@ ADD STATUS HEADER
           }
           document.removeEventListener('mousemove', handleMouseMove);
           document.removeEventListener('mouseup', handleMouseUp);
-
-          store.dispatch('mindspace/cleanupEmptyPages');
-          //initializePages();
         };
+
+        // Add these refs if you don't have them
+        const touchStartTime = ref(0);
+        const touchStartX = ref(0);
+        const touchStartY = ref(0);
+        const TAP_THRESHOLD = 200; // milliseconds
+        const MOVE_THRESHOLD = 10; // pixels
   
         const handleTouchStart = (event, item, pageIndex, index) => {
-          //[DEBUG] 
           console.log('[handleTouchStart] TRIGGERED');
+          
+          touchStartTime.value = Date.now();
+          touchStartX.value = event.touches[0].clientX;
+          touchStartY.value = event.touches[0].clientY;
+
           if (isEditMode.value) {
             isMouseDown.value = true;
             dragStartX.value = event.touches[0].clientX;
@@ -668,45 +728,70 @@ ADD STATUS HEADER
             dragStartIndex.value = index;
             dragStartPageIndex.value = pageIndex;
             
-            // Store the dragged element
             draggedElement.value = event.target.closest('.mind-Item');
             
-            //[DEBUG] LOGGING DRAGGED ITEM
-            console.log('[handleTouchStart] Focus Item: ',draggingItem.value);
-  
-            // Calculate and store the offset within the dragged element
+            console.log('[handleTouchStart] Focus Item:', draggingItem.value);
+
             const rect = draggedElement.value.getBoundingClientRect();
             dragOffset.value = {
               x: dragStartX.value - rect.left,
               y: dragStartY.value - rect.top
             };
-  
+
             document.addEventListener('touchmove', handleTouchMove, { passive: false });
             document.addEventListener('touchend', handleTouchEnd);
           }
         };
-  
+
         const handleTouchMove = (event) => {
           if (isEditMode.value && isMouseDown.value) {
             const currentX = event.touches[0].clientX;
             const currentY = event.touches[0].clientY;
-            const distance = Math.sqrt(Math.pow(currentX - dragStartX.value, 2) + Math.pow(currentY - dragStartY.value, 2));
+            const distance = Math.sqrt(
+              Math.pow(currentX - dragStartX.value, 2) + 
+              Math.pow(currentY - dragStartY.value, 2)
+            );
             const timeDiff = Date.now() - dragStartTime.value;
             
             if (!isDragging.value && (distance > dragThreshold || timeDiff > 500)) {
               startDrag(event);
             }
-  
+
             if (isDragging.value) {
               moveDraggedElement(currentX, currentY);
               event.preventDefault(); // Prevent scrolling while dragging
             }
           }
         };
-  
+
         const handleTouchEnd = (event) => {
-          //[DEBUG] 
           console.log('[handleTouchEnd] TRIGGERED');
+          
+          // Calculate touch duration and movement
+          const touchDuration = Date.now() - touchStartTime.value;
+          const touchEndX = event.changedTouches[0].clientX;
+          const touchEndY = event.changedTouches[0].clientY;
+          const moveDistance = Math.sqrt(
+            Math.pow(touchEndX - touchStartX.value, 2) + 
+            Math.pow(touchEndY - touchStartY.value, 2)
+          );
+
+          // If it was a short touch with minimal movement, treat it as a tap
+          if (touchDuration < TAP_THRESHOLD && moveDistance < MOVE_THRESHOLD) {
+            const itemElement = event.target.closest('.mind-Item');
+            if (itemElement) {
+              // Find the actual item from mindSpacePages using the data-id
+              const itemId = itemElement.getAttribute('data-id');
+              const item = findItemById(itemId);
+              
+              if (item) {
+                console.log('[handleTouchEnd] Tap detected, triggering click for item:', item);
+                handleItemClick(item);
+              }
+            }
+          }
+
+          // Normal touch end handling for drag operations
           isMouseDown.value = false;
           if (isDragging.value) {
             endDrag(event);
@@ -714,15 +799,32 @@ ADD STATUS HEADER
           document.removeEventListener('touchmove', handleTouchMove);
           document.removeEventListener('touchend', handleTouchEnd);
 
-          store.dispatch('mindspace/cleanupEmptyPages');
-          //initializePages();
-        };    
-        
+          // Reset touch tracking values
+          touchStartTime.value = 0;
+          touchStartX.value = 0;
+          touchStartY.value = 0;
+        };
+
+        // Add this helper function to find items by ID
+        const findItemById = (id) => {
+          // Search through mindSpacePages
+          for (const page of mindSpacePages.value) {
+            for (const item of page.items) {
+              if (item.id === id) {
+                return item;
+              }
+            }
+          }
+          return null;
+        };
+
+
         const startDrag = () => {
+          //[DEBUG]
           console.log('[startDrag] TRIGGERED');
           isDragging.value = true;
           draggedElement.value.classList.add('dragging');
-  
+
           // Create placeholder (GHOST WHILE DRAGGING)
           ghostItem.value = draggedElement.value.cloneNode(true);
           ghostItem.value.classList.add('placeholder');
@@ -731,16 +833,16 @@ ADD STATUS HEADER
           
           // Insert placeholder at the original position
           draggedElement.value.parentNode.insertBefore(ghostItem.value, draggedElement.value);
-  
+
           document.body.appendChild(draggedElement.value);
-  
-          console.log('[startDrag] GridItems Drag Started Index: '+ dragStartIndex.value);
-          console.log('[startDrag] Initial Grid-Items-Order : ' + formatItemList(mindSpacePages.value));
+
+          // Use the new formatItemList
+          console.log('[startDrag] Initial Grid-Items-Order:\n' + formatItemList(mindSpacePages.value));
         };
-  
+        
         const moveDraggedElement = (mouseX, mouseY) => {
-          if (!draggedElement.value) return; // Add this check
-  
+          if (!draggedElement.value) return;
+
           draggedElement.value.style.position = 'fixed';
           draggedElement.value.style.zIndex = '1000';
           draggedElement.value.style.left = `${mouseX - dragOffset.value.x}px`;
@@ -748,29 +850,32 @@ ADD STATUS HEADER
           
           const elementUnderCursor = document.elementFromPoint(mouseX, mouseY);
           
-          // Add null check for elementUnderCursor
           if (elementUnderCursor) {
-            const folderItem = elementUnderCursor.closest('.mind-Item');
-  
-            if (folderItem) {
-              const folderId = folderItem.getAttribute('data-id');
-              console.log(folderId);
-              const folder = mindSpacePages.value.flat().find(item => item.id === folderId && item.items);
-              if (folder) {
-                handleItemHover(folder);
-              } else {
-                handleItemLeave();
+            const detectedItem = elementUnderCursor.closest('.mind-Item');
+
+            if (detectedItem) {
+              const detectedItemId = detectedItem.getAttribute('data-id');
+              //console.log('[moveDraggedElement] Found folder:', detectedItemId);
+              
+              // Find the folder in mindSpacePages
+              for (const page of mindSpacePages.value) {
+                const item = page.items.find(item => item.id === detectedItemId && item.items);
+                if (item) {
+                  //console.log('[moveDraggedElement] Found matching folder:', folder);
+                  handleItemHover(item);
+                  return;
+                }
               }
+              handleItemLeave();
             } else {
               handleItemLeave();
             }
           } else {
-            // Handle the case when the cursor is outside the browser window
             handleItemLeave();
           }
-  
+
           // Check for edge proximity to trigger page change
-          const edgeThreshold = 50; // pixels from edge to trigger page change
+          const edgeThreshold = 50;
           if (mouseX < edgeThreshold) {
             startPageChangeTimer('prev');
           } else if (mouseX > window.innerWidth - edgeThreshold) {
@@ -781,94 +886,148 @@ ADD STATUS HEADER
         };
   
         // Only touches UI/ DOM Manipulation
-        const endDrag = (event) => {
-          //DEBUG
+        const endDrag = async (event) => {
           console.log('[endDrag] TRIGGERED'); 
-  
+
           if (isDragging.value && draggedElement.value) {
-            const mouseX = event.clientX || event.changedTouches[0].clientX;
-            const mouseY = event.clientY || event.changedTouches[0].clientY;
+            const mouseX = event.clientX || event.changedTouches?.[0]?.clientX;
+            const mouseY = event.clientY || event.changedTouches?.[0]?.clientY;
             
             clearFolderHoverTimer();
-  
+
             //OPEN FOLDER AND DROP ITEM
             if (showFolder.value) {
+              //[DEBUG] 
+              console.log('[endDrag] DROP IN THE FOLDER');
+
               // Remove placeholder
-              if (ghostItem.value && ghostItem.value.parentNode) {
+              if (ghostItem.value?.parentNode) {
                 ghostItem.value.parentNode.removeChild(ghostItem.value);
               }
               ghostItem.value = null;
-  
+
               // Drop the item into the open folder
               const folderGrid = document.querySelector('.folder-grid');
-  
-              if (folderGrid) {
-                //const targetIndex = folderGrid.children.length;
-                currentFolder.value.items.push(draggingItem.value);
-                //updateFolderItemPosition({ page: 0, index: targetIndex });
-                removeItemFromMindSpacePages(draggingItem.value);
-                initializeFolderPages();
+
+              // Template usage (remains the same)
+              if (folderGrid && currentFolder.value) {
+                try {
+                  // Ensure draggingItem.value exists and has an id
+                  if (!draggingItem.value?.id) {
+                    console.error('[endDrag] Invalid dragging item:', draggingItem.value);
+                    return;
+                  }
+
+                  await store.dispatch('mindspace/moveItemToFolder', {
+                    pageIndex: dragStartPageIndex.value,
+                    folderId: currentFolder.value.id,
+                    item: draggingItem.value // Pass the full item
+                  });
+
+                  nextTick(() => {
+                    initializeFolderPages();
+                  });
+                } catch (error) {
+                  console.error('[endDrag] Error moving item to folder:', error);
+                }
               }
             } 
-            //DROP AT Mind-GIRD
-            else{
-            // Find the element under the cursor
+            //DROP AT Mind-GRID
+            else {
+
+              // Find the element under the cursor
               const elementUnderCursor = document.elementFromPoint(mouseX, mouseY);
+              if (!elementUnderCursor) {
+                console.warn('[endDrag] No element found under cursor');
+                return;
+              }
+
               const targetMindItem = elementUnderCursor.closest('.mind-Item');
-  
+
               let targetIndex, targetPage;
-  
+
               if (targetMindItem) {
-                // If we're over an Mind-Item, get its index
+
+                // If we're over a mind-Item, get its Page index.
                 targetPage = parseInt(targetMindItem.closest('.mind-grid').getAttribute('data-page-index1'));
+                // If fail to get page index.
+                if (isNaN(targetPage)) {
+                  targetPage = dragStartPageIndex.value;
+                }
+                
+                // Get its position index.
                 const itemsInPage = Array.from(targetMindItem.closest('.mind-grid').querySelectorAll('.mind-Item:not(.dragging)'));
                 targetIndex = itemsInPage.indexOf(targetMindItem);
-  
-                console.log('[endDrag] target Index: '+targetIndex);
-  
-                // Insert before the target item when the item moved right
-                if(targetIndex < dragStartIndex.value && targetPage === dragStartPageIndex.value){
-                  targetIndex;
+                
+                console.log('[endDrag] Start Item index:', dragStartIndex.value,' / Start Page index:', dragStartPageIndex.value );
+                console.log('[endDrag] Target Item index:', targetIndex,' / Target Page index:', targetPage );
+
+                // Insert before the target item when the item moved left
+                if (targetPage === dragStartPageIndex.value){
+                  if (targetIndex < dragStartIndex.value) {
+                    targetIndex;
+                  } else if (targetIndex > dragStartIndex.value) {
+                    targetIndex++;
+                    
+                  } else if (targetIndex === dragStartIndex.value) {
+                    targetIndex++;
+                    // Update the DOM
+                    // THIS LOGIC IS NEEDED TO RENDER DROP AND DELETING GHOST ITEM PROPERLY
+                    const targetGrid = document.querySelectorAll('.mind-grid')[targetPage];
+                    const targetItems = targetGrid.querySelectorAll('.mind-Item:not(.dragging):not(.add-item)');
+                    const addItemButton = targetGrid.querySelector('.add-item');
+                    
+                    if (targetIndex < targetItems.length) {
+                      targetGrid.insertBefore(draggedElement.value, targetItems[targetIndex]);
+                    } else if (addItemButton) {
+                      targetGrid.insertBefore(draggedElement.value, addItemButton);
+                    } else {
+                      targetGrid.appendChild(draggedElement.value);
+                    }
+                  }
                 }else{
-                  targetIndex++;
+                  targetIndex;
                 }
                 
               } else {
-                // If we're not over an Mind-Item, find the nearest grid and append to the end
-                const nearestGrid = elementUnderCursor.closest('.mind-grid');
-                if (nearestGrid) {
-                  //targetPage = parseInt(nearestGrid.getAttribute('data-page-index'));
-                  //targetIndex = nearestGrid.querySelectorAll('.mind-Item:not(.dragging)').length;
-                  targetPage = dragStartPageIndex.value;
-                  targetIndex = dragStartIndex.value;
+                targetPage = dragStartPageIndex.value;
+                targetIndex = dragStartIndex.value;
+                
+                // Update the DOM
+                // THIS LOGIC IS NEEDED TO RENDER DROP AND DELETING GHOST ITEM PROPERLY
+                const targetGrid = document.querySelectorAll('.mind-grid')[targetPage];
+                const targetItems = targetGrid.querySelectorAll('.mind-Item:not(.dragging):not(.add-item)');
+                const addItemButton = targetGrid.querySelector('.add-item');
+                
+                if (targetIndex < targetItems.length) {
+                  targetGrid.insertBefore(draggedElement.value, targetItems[targetIndex]);
+                } else if (addItemButton) {
+                  targetGrid.insertBefore(draggedElement.value, addItemButton);
                 } else {
-                  // If we're not over a grid at all, return the item to its original position
-                  targetPage = dragStartPageIndex.value;
-                  targetIndex = dragStartIndex.value;
+                  targetGrid.appendChild(draggedElement.value);
                 }
+                console.log('[endDrag] No valid target found, returning to original position');
               }
               // Remove placeholder
-              if (ghostItem.value && ghostItem.value.parentNode) {
+              if (ghostItem.value?.parentNode) {
                 ghostItem.value.parentNode.removeChild(ghostItem.value);
               }
               ghostItem.value = null;
-  
+
               // Update the item's position in the data structure
-              updateItemPosition({ page: targetPage, index: targetIndex });
-  
-              // Update the DOM
-              // THIS LOGIC IS NEEDED TO RENDER DROP AND DELETING GHOST ITEM PROPERLY
-              const targetGrid = document.querySelectorAll('.mind-grid')[targetPage];
-              const targetItems = targetGrid.querySelectorAll('.mind-Item:not(.dragging):not(.add-item)');
-              const addItemButton = targetGrid.querySelector('.add-item');
+              console.log('[endDrag] Updating position to:', { targetPage, targetIndex });
               
-              if (targetIndex < targetItems.length) {
-                targetGrid.insertBefore(draggedElement.value, targetItems[targetIndex]);
-              } else if (addItemButton) {
-                targetGrid.insertBefore(draggedElement.value, addItemButton);
+              if (!isNaN(targetPage) && !isNaN(targetIndex)) {
+                store.dispatch('mindspace/moveItemBetweenPages', {
+                  fromPageIndex: dragStartPageIndex.value,
+                  toPageIndex: targetPage,
+                  fromIndex: dragStartIndex.value,
+                  toIndex: targetIndex
+                });
               } else {
-                targetGrid.appendChild(draggedElement.value);
+                console.error('[endDrag] Invalid target position:', { targetPage, targetIndex });
               }
+
             }
             
             // Reset styles and clean up
@@ -878,166 +1037,87 @@ ADD STATUS HEADER
             draggedElement.value = null;
             dragStartIndex.value = null;
             dragStartPageIndex.value = null;
-  
-            console.log('[endDrag] GridItems Drag Ended Index: ' + formatItemList(mindSpacePages.value));
+
+            console.log('[endDrag] Final Grid-Items-Order:\n' + formatItemList(mindSpacePages.value));
+          }
+          // Clean up empty pages
+          store.dispatch('mindspace/cleanupEmptyPages');
+        };
+
+        /*
+        // Update this function to work with the new data structure
+        const updateItemPosition = async (newPosition) => {
+          console.log('[updateItemPosition] TRIGGERED - Moving to...', newPosition);
+
+          const { page: newPageIndex, index: newItemIndex } = newPosition;
+
+          // Validate inputs
+          if (isNaN(newPageIndex) || isNaN(newItemIndex)) {
+            console.error('[updateItemPosition] Invalid position:', { newPageIndex, newItemIndex });
+            return;
           }
 
-          
-        };
-  
-        const updateItemPosition = (newPosition) => {
-          console.log('[updateItemPosition] TRIGGERED - Moving to...', newPosition);
-  
-          const { page: newPageIndex, index: newItemIndex } = newPosition;
-  
-          // Check if mindSpacePages is properly initialized
-          if (!Array.isArray(mindSpacePages.value) || mindSpacePages.value.length === 0) {
-            console.error('[updateItemPosition] mindSpacePages is not properly initialized');
-            return;
-          }
-  
-          // Create a new array to trigger reactivity
-          const updatedMindSpacePages = [...mindSpacePages.value];
-  
-          let movedItem;
-  
-          // Check if we're moving from a folder (dragStartPageIndex will be null)
-          if (dragStartPageIndex.value === null) {
-            console.log('[updateItemPosition] Moving item from folder to Mind-Grid');
-            // In this case, we're adding a new item to the Mind-Grid
-            movedItem = draggingFolderItem.value; // Assuming draggingFolderItem contains the item being moved
-            console.log('[updateItemPosition] Moved item from folder:', movedItem);
-          } else {
-            console.log('[updateItemPosition] Moving items within the Mind-Grid.');
-            // We're moving within the Mind-Grid
-            const oldPageIndex = dragStartPageIndex.value;
-            const oldItemIndex = dragStartIndex.value;
-  
-            if (oldPageIndex === newPageIndex && oldItemIndex === newItemIndex) {
-              console.log('[updateItemPosition] Item dropped at original position, no changes needed.');
-              return;
-            }
-  
-            if (!updatedMindSpacePages[oldPageIndex]) {
-              console.error(`[updateItemPosition] Old page index ${oldPageIndex} does not exist`);
-              return;
-            }
-  
-            // Remove the item from its original position
-            [movedItem] = updatedMindSpacePages[oldPageIndex].splice(oldItemIndex, 1);
-          }
-  
-          if (!movedItem) {
-            console.error('[updateItemPosition] Failed to get item to move');
-            return;
-          }
-  
-          console.log('[updateItemPosition] MovedItem: ', movedItem);
-  
-          // Insert the item at its new position
-          while (updatedMindSpacePages.length <= newPageIndex) {
-            updatedMindSpacePages.push([]);
-          }
-          updatedMindSpacePages[newPageIndex].splice(newItemIndex, 0, movedItem);
-  
-          // Remove empty pages, except the last one
-          for (let i = updatedMindSpacePages.length - 2; i >= 0; i--) {
-            if (updatedMindSpacePages[i].length === 0) {
-              updatedMindSpacePages.splice(i, 1);
-            }
-          }
-  
-          // Ensure there's always an empty page at the end if all others are full
-          if (updatedMindSpacePages[updatedMindSpacePages.length - 1].length === ITEMS_PER_PAGE - 1) {
-            updatedMindSpacePages.push([]);
-          }
-  
-          // Update the indices of items in all pages
-          updatedMindSpacePages.forEach((page, pageIndex) => {
-            page.forEach((item, index) => {
-              if (item.id) {
-                item.index = pageIndex * ITEMS_PER_PAGE + index;
+          try {
+            // Moving from folder to Mind-Grid
+            if (dragStartPageIndex.value === null) {
+              console.log('[updateItemPosition] Moving item from folder to Mind-Grid');
+              if (!draggingFolderItem.value) {
+                console.error('[updateItemPosition] No folder item to move');
+                return;
               }
+
+              await store.dispatch('mindspace/moveItemFromFolderToPage', {
+                folderId: currentFolder.value.id,
+                itemId: draggingFolderItem.value.id,
+                targetPageIndex: newPageIndex,
+                targetIndex: newItemIndex,
+                item: draggingFolderItem.value
+              });
+            } 
+            // Moving within Mind-Grid
+            else {
+              console.log('[updateItemPosition] Moving items within the Mind-Grid');
+              await store.dispatch('mindspace/moveItemBetweenPages', {
+                fromPageIndex: dragStartPageIndex.value,
+                toPageIndex: newPageIndex,
+                fromIndex: dragStartIndex.value,
+                toIndex: newItemIndex
+              });
+            }
+
+            // Update current page if necessary
+            if (newPageIndex !== currentPage.value) {
+              store.dispatch('mindspace/setCurrentPage', newPageIndex);
+            }
+
+            // Log the update
+            nextTick(() => {
+              console.log(`[updateItemPosition] Mind-Item moved to page ${newPageIndex}, End-index ${newItemIndex}`);
+              console.log('[updateItemPosition] Updated structure:', debugPageStructure(mindSpacePages.value));
             });
-          });
-  
-          // Update the reactive references
-          mindSpacePages.value = updatedMindSpacePages;
-          console.log('[updateItemPosition] mindSpacePages is Updadate.');
-  
-  
-          // Ensure the current page is updated if necessary
-          if (newPageIndex !== currentPage.value) {
-            currentPage.value = newPageIndex;
+          } catch (error) {
+            console.error('[updateItemPosition] Error updating position:', error);
           }
-  
-          // Use nextTick to ensure DOM updates after all data changes
-          nextTick(() => {
-            console.log(`[updateItemPosition] Mind-Item moved to page ${newPageIndex}, End-index ${newItemIndex}`);
+        };
+        */
+        
+        /*
+        // Helper function to remove item from MindSpace pages
+        const removeItemFromMindSpacePages = (item) => {
+          console.log('[removeItemFromMindSpacePages] TRIGGERED');
+          
+          mindSpacePages.value.forEach((page, pageIndex) => {
+            const itemIndex = page.items.findIndex(i => i === item);
+            if (itemIndex !== -1) {
+              store.dispatch('mindspace/removeItemFromPage', {
+                pageIndex,
+                itemIndex
+              });
+            }
           });
           
-          //Update usersMindSpace.
-          console.log('[updateItemPosition] Initiate updating usersMindSpace with,', mindSpacePages.value);
-          //updateusersMindSpace();
-        };
-        
-        const removeItemFromMindSpacePages = (item) => {
-          //[DEBUG]
-          console.log('[removeItemFromMindSpacePages] TRIGGERED');
-          mindSpacePages.value = mindSpacePages.value.map(page => page.filter(i => i !== item));
-          //[DEBUG]
           console.log('[removeItemFromMindSpacePages] Item removed from Mind pages', item);
-        };
-  
-        const removeItemFromFolderPages = (item) => {
-          //[DEBUG]
-          console.log('[removeItemFromFolderPages] TRIGGERED', item);
-  
-          if (!item || !item.id) {
-            //[DEBUG]
-            console.error('Invalid item provided to removeItemFromFolderPages');
-            return;
-          }
-  
-          let itemRemoved = false;
-          const updatedFolderPages = folderPages.value.map(page => {
-            const updatedPage = page.filter(i => i.id !== item.id);
-            if (updatedPage.length !== page.length) {
-              itemRemoved = true;
-            }
-            return updatedPage;
-          });
-  
-          if (!itemRemoved) {
-            //[DEBUG]
-            console.warn('[removeItemFromFolderPages] Item not found in folder pages', item);
-            return;
-          }
-  
-          // Remove any empty pages, except the last one
-          while (updatedFolderPages.length > 1 && updatedFolderPages[updatedFolderPages.length - 2].length === 0) {
-            updatedFolderPages.pop();
-          }
-  
-          // Ensure there's always at least one page, even if it's empty
-          if (updatedFolderPages.length === 0) {
-            updatedFolderPages.push([]);
-          }
-  
-          // Update the reactive references
-          folderPages.value = updatedFolderPages;
-  
-          // Update the currentFolder.items
-          if (currentFolder.value) {
-            currentFolder.value.items = updatedFolderPages.flat();
-          } else {
-            //[DEBUG]
-            console.warn('[removeItemFromFolderPages] currentFolder is null or undefined, unable to update items');
-          }
-          //[DEBUG]
-          console.log('[removeItemFromFolderPages] Item removed from folder pages', item);
-          console.log('[removeItemFromFolderPages] Updated folder pages', folderPages.value);
-        };
+        };*/
   
         // Helper function to reset the dragged element's style
         const resetDraggedElementStyle = () => {
@@ -1096,12 +1176,18 @@ ADD STATUS HEADER
         
         //[Mind-Grid] Hover Over Folder
         // Add these new reactive references
-        const hoveredFolderId = ref(null);
+        const hoveredFolder = ref(null);
         const folderHoverTimer = ref(null);
+        const hoveredFolderId = ref(null);
   
         const handleItemHover = (item) => {
+          console.log("[handleItemHover] TRIGGERED.", item);
+          //console.log("[handleItemHover] isDragging: ",isDragging.value)
           if (isDragging.value && item.items) {
             hoveredFolderId.value = item.id;
+            hoveredFolder.value = item;
+            //console.log("[handleItemHover] FolderId:", hoveredFolderId.value);
+            //console.log("[handleItemHover] Folder:", hoveredFolder.value);
             startFolderHoverTimer(item);
           }
         };
@@ -1111,15 +1197,28 @@ ADD STATUS HEADER
           clearFolderHoverTimer();
         };
   
-        const startFolderHoverTimer = (folder) => {
+        const startFolderHoverTimer = () => {
+          //console.log("[startFolderHoverTimer] TRIGGERED");
           clearFolderHoverTimer();
+          
+          // Make sure we have a valid folder before starting the timer
+          if (!hoveredFolder.value || !hoveredFolder.value.items) {
+            console.warn("[startFolderHoverTimer] No valid folder to open");
+            return;
+          }
+
           folderHoverTimer.value = setTimeout(() => {
-            openFolder(folder);
+            console.log("[startFolderHoverTimer] Timer completed, opening folder", hoveredFolder.value);
+            if (hoveredFolder.value && isDragging.value) {
+              openFolder(hoveredFolder.value);
+            }
           }, 1000);
         };
   
         const clearFolderHoverTimer = () => {
+          //console.log("[clearFolderHoverTimer] TRIGGERED");
           if (folderHoverTimer.value) {
+            //console.log("[clearFolderHoverTimer] TRIGGERED");
             clearTimeout(folderHoverTimer.value);
             folderHoverTimer.value = null;
           }
@@ -1129,15 +1228,27 @@ ADD STATUS HEADER
         const showFolder = ref(false);
   
         //[Folder] Get opened folder Items
-        const currentFolder = ref(null);
+        const currentFolder = computed({
+          get: () => store.state.mindspace.currentFolder,
+          set: (value) => store.commit('mindspace/UPDATE_CURRENT_FOLDER', value)
+        });
   
         //[Folder] Function to open or close a folder
         const openFolder = (folder) => {
-          //[DEBUG]
-          console.log('[openFolder] TRIGGERED');
+          console.log('[openFolder] TRIGGERED with folder:', folder);
+          
+          if (!folder || !folder.items) {
+            console.warn('[openFolder] Invalid folder provided');
+            return;
+          }
+
           showFolder.value = true;
           currentFolder.value = folder;
-          //initializeFolderPages();
+          
+          // Initialize folder pages after setting the current folder
+          nextTick(() => {
+            initializeFolderPages();
+          });
         };
   
         const closeFolder = () => {
@@ -1151,45 +1262,47 @@ ADD STATUS HEADER
   
         // Load Folder items
         // Folder-related reactive references
-        const ITEMS_PER_FOLDER_PAGE = 16; // Adjust this value based on your folder layout
+        const ITEMS_PER_FOLDER_PAGE = 12; // Adjust this value based on your folder layout
         const folderPages = ref([]);
         const currentFolderPage = ref(0);
   
         // Initialize folder pages
+        // Updated initialization function
         const initializeFolderPages = () => {
-          //[DEBUG]
           console.log('[initializeFolderPages] TRIGGERED');
           
           if (!currentFolder.value || !Array.isArray(currentFolder.value.items)) {
-            console.log('Current folder is invalid or has no items. Initializing with an empty page.');
-            folderPages.value = [[]];
+            console.log('[initializeFolderPages] Current folder is invalid or has no items. Initializing with an empty page.');
+            folderPages.value = [{ items: [] }];
             return;
           }
-  
+
+          // Get fresh data from store
+          const folder = store.getters['mindspace/getFolderById'](currentFolder.value.id);
+          if (folder) {
+            currentFolder.value = folder; // Update current folder with fresh data
+          }
+
+          const allItems = [...currentFolder.value.items]; // Create a copy of items
           folderPages.value = [];
-          let currentPageHolder = [];
-  
-          currentFolder.value.items.forEach((item, index) => {
-            currentPageHolder.push(item);
-            
-            if ((index + 1) % ITEMS_PER_FOLDER_PAGE === 0) {
-              folderPages.value.push(currentPageHolder);
-              currentPageHolder = [];
-            }
-          });
-  
-          // Add the last page if it has any items
-          if (currentPageHolder.length > 0) {
-            folderPages.value.push(currentPageHolder);
+          
+          // Split items into pages
+          while (allItems.length > 0 || folderPages.value.length === 0) {
+            const pageItems = allItems.splice(0, ITEMS_PER_FOLDER_PAGE);
+            folderPages.value.push({ items: pageItems });
           }
-  
-          // Always ensure there's an empty page at the end if all others are full
-          if (folderPages.value.length === 0 || folderPages.value[folderPages.value.length - 1].length === ITEMS_PER_FOLDER_PAGE) {
-            folderPages.value.push([]);
+
+          // Ensure there's always at least one page
+          if (folderPages.value.length === 0) {
+            folderPages.value.push({ items: [] });
           }
-  
-          //[DEBUG]
-          console.log(`[initializeFolderPages] Folder pages initialized. Total pages: ${folderPages.value.length}`);
+
+          // Add empty page if the last page is full
+          if (folderPages.value[folderPages.value.length - 1].items.length === ITEMS_PER_FOLDER_PAGE) {
+            folderPages.value.push({ items: [] });
+          }
+
+          console.log('[initializeFolderPages] Initialized pages:', folderPages.value);
         };
 
         // Watch for changes in the currentFolder and reinitialize pages
@@ -1202,7 +1315,7 @@ ADD STATUS HEADER
             //console.log('Clearing folder pages');
             folderPages.value = []; // Clear pages when folder is closed
           }
-        });
+        },{ deep: true });
   
         const selectFolderPage = (index) => {
           currentFolderPage.value = index;
@@ -1231,10 +1344,13 @@ ADD STATUS HEADER
         const folderCloseTimer = ref(null);
   
   
-        const handleFolderItemClick = (item) => {
+        const handleFolderItemClick = async (item) => {
           //[DEBUG]
-          console.log('[handleFolderItemClick] Folder item clicked: ', item);
-          // Implement additional functionality as needed
+          console.log('[handleFolderItemClick] Clicked on Folder item clicked:', item.name);
+          if(!isEditMode.value){
+            await store.dispatch('mindspace/setItemId', item.id);
+            await store.dispatch('mindspace/triggerItemWindow', true);
+          }
         };
   
         const startFolderPageChangeTimer = (direction) => {
@@ -1262,26 +1378,29 @@ ADD STATUS HEADER
           console.log('[handleFolderMouseDown] TRIGGERED');
   
           if (isEditMode.value) {
-            dragStartPageIndex.value = null;
-            dragStartIndex.value = null;
-  
             isFolderMouseDown.value = true;
             folderDragStartX.value = event.clientX;
             folderDragStartY.value = event.clientY;
             folderDragStartTime.value = Date.now();
+
             draggingFolderItem.value = item;
             folderDragStartIndex.value = index;
             folderDragStartPageIndex.value = pageIndex;
-            folderDragStartIndex.value = index;
-  
-            //[DEBUG] LOGGING DRAGGED ITEM
-            console.log('[handleFolderMouseDown] Focus Item: ',draggingFolderItem.value);
-            
+
+            //Make sure to null mindspace item detection.
+            dragStartPageIndex.value = null;
+            dragStartIndex.value = null;
+
             // Store the dragged element
             folderDraggedElement.value = event.target.closest('.folder-item');
   
+            //[DEBUG] LOGGING DRAGGED ITEM
+            console.log('[handleFolderMouseDown] Focus Item: ',draggingFolderItem.value);
+            console.log('[handleFolderMouseDown] draggedElement: ', folderDraggedElement.value);
+            console.log('[handleFolderMouseDown] Original Item index:', index,' / Original Page index:', pageIndex );
+            
+  
             // Calculate and store the offset within the dragged element
-            //console.log('About to start getBoundingClientRect');
             const rect = folderDraggedElement.value.getBoundingClientRect();
             folderDragOffset.value = {
               x: folderDragStartX.value - rect.left,
@@ -1302,13 +1421,15 @@ ADD STATUS HEADER
             draggingFolderItem.value = item;
             folderDragStartIndex.value = index;
             folderDragStartPageIndex.value = pageIndex;
-            folderDragStartIndex.value = index;
-  
-            //[DEBUG] LOGGING DRAGGED ITEM
-            console.log('[handleFolderTouchStart] Focus Item: ',draggingFolderItem.value)
             
             // Store the dragged element
             folderDraggedElement.value = event.target.closest('.folder-item');
+
+            //[DEBUG] LOGGING DRAGGED ITEM
+            console.log('[handleFolderTouchStart] Focus Item: ',draggingFolderItem.value)
+            console.log('[handleFolderTouchStart] draggedElement: ', folderDraggedElement.value);
+            console.log('[handleFolderTouchStart] Original Item index:', index,' / Original Page index:', pageIndex );
+            
   
             // Calculate and store the offset within the dragged element
             const rect = folderDraggedElement.value.getBoundingClientRect();
@@ -1350,8 +1471,7 @@ ADD STATUS HEADER
             }
   
             if (isFolderDragging.value) {
-              const touch = event.touches[0];
-              moveFolderDraggedElement(touch.currentX, touch.currentY);
+              moveFolderDraggedElement(currentX, currentY);
               event.preventDefault(); // Prevent scrolling while dragging
             }
           }
@@ -1385,7 +1505,6 @@ ADD STATUS HEADER
         const startFolderDrag = () => {
           //[DEBUG]
           console.log('[startFolderDrag] TRIGGERED');
-  
           isFolderDragging.value = true;
           folderDraggedElement.value.classList.add('dragging');
   
@@ -1407,8 +1526,6 @@ ADD STATUS HEADER
   
         const moveFolderDraggedElement = (mouseX, mouseY) => {
           if (!folderDraggedElement.value) return;
-          
-          //if (!isFolderDragging.value || !showFolder.value) return;
   
           folderDraggedElement.value.style.position = 'fixed';
           folderDraggedElement.value.style.zIndex = '1000';
@@ -1449,7 +1566,7 @@ ADD STATUS HEADER
           }
         };
   
-        const endFolderDrag = (event) => {
+        const endFolderDrag = async (event) => {
           //[DEBUG]
           console.log('[endFolderDrag] TRIGGERED');
   
@@ -1463,33 +1580,38 @@ ADD STATUS HEADER
             if (!showFolder.value) {
               //[DEBUG] 
               console.log('[endFolderDrag] DROP OUT OF FOLDER');
-              // Logic for dropping the item in the Mind-Grid
-              // Find the element under the cursor
-  
+              
               // Remove placeholder
               if (folderGhostItem.value && folderGhostItem.value.parentNode) {
                 folderGhostItem.value.parentNode.removeChild(folderGhostItem.value);
               }
               folderGhostItem.value = null;
   
-              
+              // Find the element under the cursor
               const elementUnderCursor = document.elementFromPoint(mouseX, mouseY);
+              if (!elementUnderCursor) {
+                console.warn('[endDrag] No element found under cursor');
+                return;
+              }
+
               const targetMindItem = elementUnderCursor.closest('.mind-Item');
   
               let targetIndex, targetPage;
-  
+              
               if (targetMindItem) {              
-                // Remove the item from the folder
+                // Remove the item from the folder in state.mindSpacePages
                 removeItemFromFolderPages(draggingFolderItem.value);
-                
+                console.log("[endFolderDrag/vuex] Removal",store.getters['mindspace/getMindSpacePages']);
+
                 // If we're over an Mind-Item, get its index
                 targetPage = parseInt(targetMindItem.closest('.mind-grid').getAttribute('data-page-index1'));
                 const itemsInPage = Array.from(targetMindItem.closest('.mind-grid').querySelectorAll('.mind-Item:not(.dragging)'));
                 targetIndex = itemsInPage.indexOf(targetMindItem);
+                
+                
   
                 //[DEBUG] 
                 console.log('[endFolderDrag] target Index: '+targetIndex);
-                //initializePages();
                 
               } else {
                 // If we're not over an Mind-Item, find the nearest grid and append to the end
@@ -1507,8 +1629,20 @@ ADD STATUS HEADER
               if (folderDraggedElement.value && document.body.contains(folderDraggedElement.value)) {
                 document.body.removeChild(folderDraggedElement.value);
               }
-  
-              updateItemPosition({ page: targetPage, index: targetIndex });
+
+              if (!isNaN(targetPage) && !isNaN(targetIndex)) {
+                //updateItemPosition({ page: targetPage, index: targetIndex });
+                
+                await store.dispatch('mindspace/moveItemFromFolderToPage', {
+                  folderId: currentFolder.value.id,
+                  itemId: draggingFolderItem.value.id,
+                  targetPageIndex: targetPage,
+                  targetIndex: targetIndex,
+                  item: draggingFolderItem.value
+                });
+              } else {
+                console.error('[endDrag] Invalid target position:', { targetPage, targetIndex });
+              }
             }
             // DROP IT IN THE FOLDER
             else {
@@ -1559,9 +1693,15 @@ ADD STATUS HEADER
                 folderGhostItem.value.parentNode.removeChild(folderGhostItem.value);
               }
               folderGhostItem.value = null;
-  
+
               // Update the item's position in the data structure
-              updateFolderItemPosition({ page: targetPageIndex, index: targetIndex });
+              if (!isNaN(targetPageIndex) && !isNaN(targetIndex)) {
+               
+                updateFolderItemPosition({ page: targetPageIndex, index: targetIndex });
+              } else {
+                console.error('[endDrag] Invalid target position:', { targetPageIndex, targetIndex });
+              }
+              
               //[DEBUG] 
               console.log('[endFolderDrag] Updated Folder-gridItems: ' + formatItemList(folderPages.value));
   
@@ -1590,104 +1730,66 @@ ADD STATUS HEADER
             isDragging.value = false;
             isDraggingOutOfFolder.value = false;
           }
+          store.dispatch('mindspace/cleanupEmptyPages');
         };
   
         // Update the existing folder-related functions to work with pages
+        // Update folder item position handler
         const updateFolderItemPosition = (newPosition) => {
-          //[DEBUG]
           console.log('[updateFolderItemPosition] TRIGGERED - Moving to...', newPosition);
-  
+
           const { page: newPageIndex, index: newItemIndex } = newPosition;
           const oldPageIndex = folderDragStartPageIndex.value;
           const oldItemIndex = folderDragStartIndex.value;
-  
-          // Check if folderPages is properly initialized
-          if (!Array.isArray(folderPages.value) || folderPages.value.length === 0) {
-            //[DEBUG] 
-            console.error('[updateFolderItemPosition] folderPages is not properly initialized');
-            return;
-          }
-  
-          // If the item hasn't moved, do nothing
-          if (oldPageIndex === newPageIndex && oldItemIndex === newItemIndex) {
-            //[DEBUG] 
-            console.log('[updateFolderItemPosition] Item dropped at original position, no changes needed.');
-            return;
-          }
-  
-          // Check if the old page exists
-          if (!folderPages.value[oldPageIndex]) {
-            //[DEBUG] 
-            console.error(`[updateFolderItemPosition] Old page index ${oldPageIndex} does not exist`);
-            return;
-          }
-  
-          // Create a new array to trigger reactivity
-          const updatedFolderPages = [...folderPages.value];
-  
-          // Remove the item from its original position
-          const [movedItem] = updatedFolderPages[oldPageIndex].splice(oldItemIndex, 1);
-  
-          if (!movedItem) {
-            //[DEBUG] 
-            console.error('[updateFolderItemPosition] Failed to remove item from original position');
-            return;
-          }
-  
-          // Insert the item at its new position
-          if (!updatedFolderPages[newPageIndex]) {
-            updatedFolderPages[newPageIndex] = [];
-          }
-          updatedFolderPages[newPageIndex].splice(newItemIndex, 0, movedItem);
-  
-          // Remove empty pages, except the last one
-          for (let i = updatedFolderPages.length - 2; i >= 0; i--) {
-            if (updatedFolderPages[i].length === 0) {
-              updatedFolderPages.splice(i, 1);
-            }
-          }
-  
-          // Ensure there's always an empty page at the end if all others are full
-          if (updatedFolderPages[updatedFolderPages.length - 1].length === ITEMS_PER_FOLDER_PAGE) {
-            updatedFolderPages.push([]);
-          }
-  
-          // Update the indices of items in all pages based on id
-          updatedFolderPages.forEach((page, pageIndex) => {
-            page.forEach((item, index) => {
-              if (item.id) {
-                item.index = pageIndex * ITEMS_PER_FOLDER_PAGE + index;
-              }
+
+          if (oldPageIndex === newPageIndex) {
+            // Reorder within the same folder page
+            store.dispatch('mindspace/reorderFolderItems', {
+              folderId: currentFolder.value.id,
+              fromIndex: oldItemIndex,
+              toIndex: newItemIndex
             });
-          });
-  
-          // Update the reactive references
-          folderPages.value = updatedFolderPages;
-          console.log('[updateFolderItemPosition] folderPages is Updadate.');
-          
-  
-          // Check if currentFolder exists before updating its items
-          if (currentFolder.value) {
-            currentFolder.value.items = updatedFolderPages.flat();
           } else {
-            console.warn('[updateFolderItemPosition] currentFolder is null or undefined, skipping item update');
+            // Move between folder pages
+            store.dispatch('mindspace/moveItemBetweenFolders', {
+              fromFolderId: currentFolder.value.id,
+              toFolderId: currentFolder.value.id, // Same folder, different pages
+              fromIndex: oldItemIndex + (oldPageIndex * ITEMS_PER_FOLDER_PAGE),
+              toIndex: newItemIndex + (newPageIndex * ITEMS_PER_FOLDER_PAGE)
+            });
           }
-  
-          // Ensure the current page is updated if necessary
+
+          // Ensure the current folder page is updated if necessary
           if (newPageIndex !== currentFolderPage.value) {
             currentFolderPage.value = newPageIndex;
           }
-  
+
           // Use nextTick to ensure DOM updates after all data changes
           nextTick(() => {
-            console.log(`[updateFolderItemPosition] Folder item moved from page ${oldPageIndex}, Start-index ${oldItemIndex} to page ${newPageIndex}, End-index ${newItemIndex}`);
+            console.log(`[updateFolderItemPosition] Folder item moved to page ${newPageIndex}, End-index ${newItemIndex}`);
+            console.log('[updateFolderItemPosition] Updated folder structure:', currentFolder.value);
           });
-  
-          //Update usersMindSpace.
-          console.log('[updateItemPosition] Initiate updating usersMindSpace with,', folderPages.value);
-          
         };
-  
+
+        // Helper function to remove item from folder pages
+        const removeItemFromFolderPages = (item) => {
+          console.log('[removeItemFromFolderPages] TRIGGERED', item);
+
+          if (!item || !item.id) {
+            console.error('Invalid item provided to removeItemFromFolderPages');
+            return;
+          }
+
+          if (currentFolder.value) {
+            store.dispatch('mindspace/removeItemFromFolder', {
+              folderId: currentFolder.value.id,
+              itemId: item.id
+            });
+          } else {
+            console.warn('[removeItemFromFolderPages] currentFolder is null or undefined, unable to remove item');
+          }
+        };
+
         const resetFolderDraggedElementStyle = () => {
           if (folderDraggedElement.value) {
             folderDraggedElement.value.style.position = '';
@@ -1720,6 +1822,14 @@ ADD STATUS HEADER
             console.log('[cancelFolderCloseTimer] Folder close timer canceled');
           }
         };
+
+        const getEmptySlotCount = (page) => {
+          if (!page?.items) return 0;
+          const itemCount = page.items.length;
+          const hasAddButton = itemCount < ITEMS_PER_FOLDER_PAGE;
+          const emptySlots = ITEMS_PER_FOLDER_PAGE - itemCount - (hasAddButton ? 1 : 0);
+          return Math.max(0, emptySlots);
+        };
   
         
   
@@ -1731,12 +1841,12 @@ ADD STATUS HEADER
             }
         });
   
-        onMounted(() => {
+        onMounted(async () => {
+            await store.dispatch('mindspace/setUserId');
             updateTime();
             setInterval(updateTime, 60000); // Update time every minute
             initializeFolderPages();
-            console.log("[mindspace.vue] :",currentPage.value);
-
+            console.log("[mindspace.vue] CurrentPage:",currentPage.value);
             //PageShiftForTouch
             window.addEventListener('resize', () => {
               pageWidth.value = window.innerWidth;
@@ -1771,19 +1881,25 @@ ADD STATUS HEADER
           startEditModeTimer,
           cancelEditModeTimer,
   
-          // addNewItem,
+          // Add New Item
           showAddItemPopup,
           addItemTarget,  // Make sure to return this
           showAddItemMenu,
           handleAddItemSelection,
+          handleItemDelete,
+
+          // Add Item To Folder
+          getEmptySlotCount,
   
-          // Mind-Grid functions
-          removeItem,
-          selectPage,
+          // Mind-Grid Interaction functions
           getBadgeIcon,
+
           handleItemClick,
           handleMouseDown,
           handleTouchStart,
+          handleTouchEnd,  // Add this
+          handleTouchMove, // Add this if you're using it directly in template
+
           exitEditMode,
           startDrag,
           createShadowSvg,
@@ -1804,7 +1920,7 @@ ADD STATUS HEADER
           
           // Folder functions
           closeFolder,
-          //addItemToFolder,
+          
           initializeFolderPages,
           selectFolderPage,
           startFolderPageChangeTimer,
