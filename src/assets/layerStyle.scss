@@ -1,11 +1,15 @@
 //LAYER MANAGEMENT
 
 //[Global]
-.indicator-wrapper {
+.page-indicator {
     z-index: 800;
 }
 
 .sticky-nav{
+    z-index: 998;
+}
+
+.header-container{
     z-index: 998;
 }
 

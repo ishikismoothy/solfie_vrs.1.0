@@ -1,17 +1,16 @@
 <template>
   <!-- header Menu -->
-
-  <!-- Theme library -->
-  <!-- Assign Theme Id -->
-  <!-- set mindspace Id -->
-  <Header />
+  <HeaderNav />
 
   <div class="view-container">
     <!-- Page indicator - moved outside views-wrapper -->
-    <PageIndicator 
-      :is-app-view="isMindSpaceView"
-      @view-switch="toggleView"
-    />
+    <div class="page-indicator">
+      <PageIndicator 
+        :is-app-view="isMindSpaceView"
+        @view-switch="toggleView"
+      />
+    </div>
+   
     <!-- Container for sliding views -->
     <div 
       class="views-wrapper"
@@ -34,32 +33,34 @@
       </div>
     </div>
 
-    <ChatBox />
+    <DockNav />
+    
     <itemWindow 
       :is-open="showItemWindow"
       @close="closeItemWindow"
     />
+    
   </div>
 </template>
 
 <script>
 import { defineComponent, computed, ref, onMounted } from 'vue';
-import ChatBox from '@/components/chatBox.vue';
-import Header from '@/components/HeaderNav.vue';
-import Dashboard from '@/components/dashboard.vue';
 import { useStore } from 'vuex';
-import mindSpace from '@/components/mindSpace.vue';
-import PageIndicator from '@/components/pageIndicator.vue';
-import itemWindow from '@/components/itemContentsWindow.vue';
+import DockNav from '@/components/dockNav.vue';
+import HeaderNav from '@/components/Header/HeaderNav.vue';
+import Dashboard from '@/components/DashBoard/dashboard.vue';
+import mindSpace from '@/components/DashBoard/mindSpace.vue';
+import PageIndicator from '@/components/DashBoard/pageIndicator.vue';
+import itemWindow from '@/components/ItemWindow/itemWindow.vue';
 
 export default defineComponent({
   name: 'DashboardView',
   components: {
-    ChatBox,
+    DockNav,
     Dashboard,
     mindSpace,
     PageIndicator,
-    Header,
+    HeaderNav,
     itemWindow
   },
   setup() {
@@ -186,8 +187,19 @@ export default defineComponent({
 </script>
 
 <style lang="scss">
+@mixin responsive($breakpoint) {
+  @if $breakpoint == iPhonePro {
+    @media (min-width: 390px) { @content; }
+  } 
+  @if $breakpoint == tablet {
+    @media (min-width: 768px) { @content; }
+  } @else if $breakpoint == desktop {
+    @media (min-width: 1024px) { @content; }
+  }
+}
+
 @import '../assets/dashboardStyle.scss';
 @import '../assets/mindSpaceStyle.scss';
 @import '../assets/todosStyle.scss';
-@import '../assets/layerStyle.scss';
+@import '../assets/dockStyle.scss';
 </style>

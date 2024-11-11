@@ -19,6 +19,7 @@ import {
   getListOfMindSpace,
   getItemData,
   updateItemData,
+  changeUserThemeId,
 } from '@/firebase/firebaseMindSpace';
 import { getCurrentUserId } from '@/firebase/firebaseAuth';
 
@@ -33,6 +34,7 @@ export default {
       currentMindSpaceId: null,
       currentMindSpaceName: null,
       currentItemId: null,
+      currentItemName: null,
       mindSpacePages: [{
         items: []
       }],
@@ -372,6 +374,9 @@ export default {
       TRIGGER_ITEM_WINDOW (state, boolean) {
         state.showItemWindow = boolean;
       },
+      SET_ITEM_NAME (state, name) {
+        state.currentItemName = name;
+      },
       SET_BLOCKS(state, itemBlocks) {
         state.itemBlocks = itemBlocks;
       },
@@ -447,12 +452,35 @@ export default {
           commit('SET_ERROR', error.message);
         }
       },
+      async changeThemeId({ /*commit,*/ state, dispatch }, themeId) {
+        console.log("[changeThemeId] TRIGGERED");
+        try {
+          const result = await changeUserThemeId(state.userId, themeId);
+          //commit('SET_THEME_ID', themeId);
+          
+          if(result.success) {
+            console.log(result.message);
+
+            await dispatch('setThemeId');
+
+            // 2. Load theme data to get theme name
+            //await dispatch('setThemeData');
+            
+            // 3. Load theme data to get defaultMindSpace
+            //await dispatch('setMindSpaceId');  
+          }else{
+            console.log(result.message);
+          }
+        } catch (error) {
+          console.log(error.message);
+        }
+      },
       // Load theme's mindspace data
       async setMindSpaceId({ commit, state, dispatch }) {
         console.log("[setMindSpaceId] TRIGGERED");
         try {
           // Get theme document to find defaultMindSpace
-          const defaultMindSpaceId = await getDefaultMindSpaceId(state.currentThemeId);
+          const defaultMindSpaceId = await getDefaultMindSpaceId(state.currentThemeId, state.userId);
           
           commit('SET_MINDSPACE_ID', defaultMindSpaceId);
           console.log("[setMindSpaceId]",state.currentMindSpaceId);
@@ -937,7 +965,17 @@ export default {
       triggerItemWindow({ commit, state }, boolean) {
         commit('TRIGGER_ITEM_WINDOW', boolean);
         console.log("Item Window Set to: ", state.showItemWindow);
-      },  
+      },
+      async getItemName({ commit, state }, itemName) {
+        commit('SET_ITEM_NAME', itemName);
+        console.log("[getItemName/mindspace.js] itemName:", state.currentItemName);
+      },
+      async setItemName({ commit, state, dispatch }, itemName) {
+        commit('SET_ITEM_NAME', itemName);
+        console.log("[setItemName/mindspace.js] itemName:", state.currentItemName);
+        updateItemData(state.currentItemId, state.currentItemName, state.itemBlocks );
+        await dispatch('setMindSpacePages');
+      },
       async setBlocks({ commit }, itemId) {
         const itemData = await getItemData(itemId);
 
@@ -952,21 +990,21 @@ export default {
       addBlock({ commit, state }, block) {
         commit('ADD_BLOCK', block);
         console.log("[mindspace.js/itemBlocks] Currently: ", state.itemBlocks);
-        updateItemData(state.currentItemId, state.itemBlocks );
+        updateItemData(state.currentItemId, state.currentItemName, state.itemBlocks );
       },
       updateBlock({ commit, state }, { id, content }) {
         commit('UPDATE_BLOCK', { id, content });
-        updateItemData(state.currentItemId, state.itemBlocks );
+        updateItemData(state.currentItemId, state.currentItemName, state.itemBlocks );
       },
       deleteBlock({ commit, state }, id) {
         commit('DELETE_BLOCK', id);
         console.log("[mindspace.js/itemBlocks] Currently: ", state.itemBlocks);
-        updateItemData(state.currentItemId, state.itemBlocks );
+        updateItemData(state.currentItemId, state.currentItemName, state.itemBlocks );
       },
       moveBlock({ commit, state }, { id, direction }) {
         commit('MOVE_BLOCK', { id, direction });
         console.log("[mindspace.js/itemBlocks] Currently: ", state.itemBlocks);
-        updateItemData(state.currentItemId, state.itemBlocks );
+        updateItemData(state.currentItemId, state.currentItemName, state.itemBlocks );
       },
       setEditingBlock({ commit }, id) {
         commit('SET_EDITING_BLOCK', id);
@@ -989,6 +1027,7 @@ export default {
       getMindSpacePages: state => state.mindSpacePages,
       getCurrentPage: state => state.currentPage,
       getTotalPages: state => state.totalPages,
+      getItemName: state => state.currentItemName,
       getShowItemWindow: state => state.showItemWindow,
       isLoading: state => state.loading,
       getError: state => state.error,

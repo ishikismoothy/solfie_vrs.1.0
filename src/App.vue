@@ -11,15 +11,12 @@
 </template>
 
 <style lang="scss">
-
-@import './assets/dockStyle.scss';
+@import './assets/layerStyle.scss';
 
 #app {
   font-family: Helvetica, Avenir, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
 }
 
 </style>

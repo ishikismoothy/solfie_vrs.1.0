@@ -9,14 +9,14 @@
 
     <button v-if="!isAuthenticated && isSigningUp && !isForgetPassword" @click="toggleForgetPassword">Forgot Password</button>
 
-    <LogoutButton v-if="isAuthenticated" />
+    <logoutButton v-if="isAuthenticated" />
   </div>
 </template>
 
 <script>
 import signingIn from '@/components/signingIn.vue'
 import signingUp from '@/components/signingUp.vue'
-import LogoutButton from '@/components/logoutButton.vue'
+import logoutButton from '@/components/logoutButton.vue'
 import ForgotPassword from '@/components/ForgetPassword.vue'
 import { computed, ref } from 'vue'
 import { useStore } from 'vuex'
@@ -25,7 +25,7 @@ export default {
   components: {
     signingIn,
     signingUp,
-    LogoutButton,
+    logoutButton,
     ForgotPassword,
   },
   setup() {

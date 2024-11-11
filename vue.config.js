@@ -1,7 +1,7 @@
 const { defineConfig } = require('@vue/cli-service');
 
 module.exports = defineConfig({
-  transpileDependencies: true,
+  transpileDependencies: [],
   chainWebpack: config => {
     config.plugin('define').tap(args => {
       if (args[0].__VUE_OPTIONS_API__ === undefined) {
@@ -25,4 +25,7 @@ module.exports = defineConfig({
       },
     },
   },
+  css: {
+    sourceMap: true,
+  }
 });

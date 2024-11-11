@@ -22,21 +22,15 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
-    path: '/mindspace',
-    name: 'mindspace',
-    component: () => import('../views/MindSpaceView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
     path: '/dataextract',
     name: 'dataextract',
-    component: () => import('../views/dataExtractTestView.vue'),
+    component: () => import('../views/DataExtractTestView.vue'),
     meta: { requiresAuth: true }
   },
   {
-    path: '/testItem',
-    name: 'testItem',
-    component: () => import('@/components/itemContentsWindow.vue'),
+    path: '/themespace',
+    name: 'themespace',
+    component: () => import('@/views/ThemeSpaceView.vue'),
     meta: { requiresAuth: true }
   },
 ]

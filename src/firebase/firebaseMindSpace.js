@@ -14,6 +14,9 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebaseInit';
 import { formatMindSpaceForFirestore } from '@/utility/mindSpaceDataFormatter.js'
+//import { useStore } from 'vuex';
+
+//const store = useStore();
 
 const generateRandomId = (length = 10) => {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -45,7 +48,38 @@ export const getUserThemeId = async (userId) => {
     }
 };
 
-export const getDefaultMindSpaceId = async (themeId) => {
+export const changeUserThemeId = async (userId, themeId) => {
+  try {
+    console.log('[changeUserThemeId/firebaseMindSpace.js] Starting update...');
+    if (!userId) {
+      throw new Error('User ID is not set');
+    }
+
+    const userRef = doc(db, 'users', userId);
+    
+    await updateDoc(userRef, 
+      {
+        focusTheme: themeId
+      }
+    );
+    
+    console.log('[updateMindSpaceInFirestore] Successfully updated mindspace');
+    
+    return {
+      message: "successfully updated focus theme.",
+      success: true,
+    };
+
+  } catch (error) {
+    return {
+      message: error.message,
+      success: false,
+    };
+    
+  }
+};
+
+export const getDefaultMindSpaceId = async (themeId, uid) => {
     try {
         // Get theme document to find defaultMindSpace
         const themeDoc = await getDoc(doc(db, 'themes', themeId));
@@ -58,9 +92,20 @@ export const getDefaultMindSpaceId = async (themeId) => {
         const defaultMindSpaceId = themeData.defaultMindSpace;
         
         if (!defaultMindSpaceId) {
-          throw new Error('No default mindspace set for theme');
-        }
-        return defaultMindSpaceId;
+          //throw new Error('No default mindspace set for theme');
+          //create mindspace and set mindspace Id.
+          
+          const result = await createMindspace({
+            uid, 
+            themeId, 
+            name: 'welcome to solfie!',
+            privacy: false
+          });
+          await setDefaultMindspace(themeId, result.mindspaceId);
+          return result.mindspaceId;
+        }else{
+          return defaultMindSpaceId;
+        }  
     } catch (error) {
         console.error('Error loading default mindspace ID:', error);
         return error.message;
@@ -391,11 +436,9 @@ export const getItemData = async (itemId) => {
     }
   }
   
-
-
 }
 
-export const updateItemData = async (itemId, itemBlockData) => {
+export const updateItemData = async (itemId, itemName, itemBlockData) => {
   console.log('[updateItemInFirestore] Starting update...');
     
     if (!itemId) {
@@ -405,6 +448,8 @@ export const updateItemData = async (itemId, itemBlockData) => {
     const itemRef = doc(db, 'items', itemId);
     
     await updateDoc(itemRef, {
+        updatedAt: serverTimestamp(),
+        name: itemName,
         contents: itemBlockData
       }
     );
@@ -413,8 +458,6 @@ export const updateItemData = async (itemId, itemBlockData) => {
 // Function to add item to Firestore and update mindspace
 export const addItemToMindspace = async (userId, mindSpaceId, pageIndex, index, newItem) => {
     
-  
-
   try {
     // 1. Create new item in items collection
     const itemRef = doc(collection(db, 'items'));

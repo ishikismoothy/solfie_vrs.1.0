@@ -1,0 +1,130 @@
+.header-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 94vw;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+
+    // By default (mobile), center section is hidden
+    .center-section {
+      display: none;
+      width: 0;
+      padding: 0;
+      margin: 0;
+    }
+}
+
+// Show center section from tablet up
+// Responsive is defiened in HeaderNav.vue
+@include responsive(tablet) {
+  .header-container {
+    width: 97vw;
+
+    .center-section {
+      display: block;
+      width: auto;
+      flex: 1;
+      text-align: center;
+      padding: 0 1rem;
+      margin: 0;
+
+      .theme-title {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+      }
+    }
+  }
+}
+
+@include responsive(desktop) {
+  .header-container {
+    width: 98.5vw;
+
+    .center-section {
+      display: block;
+      width: auto;
+      flex: 1;
+      text-align: center;
+      padding: 0 1rem;
+      margin: 0;
+
+      .theme-title {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+      }
+    }
+  }
+}
+  
+  .left-section {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .globe-icon img {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .mindspace-name {
+    font-size: 16px;
+    font-weight: 500;
+    color: #333;
+  }
+  
+  .center-section {
+    flex: 1;
+    text-align: center;
+  }
+  
+  .theme-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: #333;
+    margin: 0;
+  }
+  
+  .right-section {
+    display: flex;
+    gap: 16px;
+  }
+  
+  .icon-button {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .icon-button img {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .icon-button:hover {
+    opacity: 0.8;
+  }
+
+  .notifications {
+    position: relative;
+  }
+  
+  .notification-count {
+    position: absolute;
+    top: 8px;
+    right: 108px;
+    background-color: red;
+    color: white;
+    border-radius: 50%;
+    padding: 2px 5px;
+    font-size: 10px;
+  }

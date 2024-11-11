@@ -6,7 +6,7 @@
         <button class="icon-button" 
           @click="toggleMenu"
         >
-          <img src="../assets/icons/utility/globeIcon.svg" alt="globe" />
+          <img src="@//assets/icons/utility/globeIcon.svg" alt="globe" />
         </button>
       </div>
       <span class="mindspace-name" v-if="!isLoading">{{mindSpaceName}}</span>
@@ -18,13 +18,14 @@
     </div>
     <div class="right-section">
       <button class="icon-button">
-        <img src="../assets/icons/utility/eyeIcon.svg" alt="view" />
+        <img src="@/assets/icons/utility/bellIcon.svg" alt="view" />
+      </button>
+      <span class="notification-count">{{ user.notifications }}</span>
+      <button class="icon-button">
+        <img src="@//assets/icons/utility/shareIcon.svg" alt="share" />
       </button>
       <button class="icon-button">
-        <img src="../assets/icons/utility/shareIcon.svg" alt="share" />
-      </button>
-      <button class="icon-button">
-        <img src="../assets/icons/utility/moreIcon.svg" alt="more options" />
+        <img src="@//assets/icons/utility/moreIcon.svg" alt="more options" />
       </button>
     </div>
   </header>
@@ -51,6 +52,7 @@ export default {
   setup() {
     const store = useStore();
     const isMenuOpen = ref(false);
+    const user = computed(() => store.state.user.user || {});
     
     const themeName = computed(() => store.getters['mindspace/getThemeName']);
     const mindSpaceName = computed(() => store.getters['mindspace/getMindSpaceName']);
@@ -69,6 +71,7 @@ export default {
     };
 
     return {
+      user,
       isLoading,
       themeName,
       mindSpaceName,
@@ -82,65 +85,16 @@ export default {
 };
 </script>
 
-<style scoped>
-.header-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  
+<style lang="scss">
+
+@mixin responsive($breakpoint) {
+  @if $breakpoint == tablet {
+    @media (min-width: 768px) { @content; }
+  } @else if $breakpoint == desktop {
+    @media (min-width: 1024px) { @content; }
+  }
 }
 
-.left-section {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.globe-icon img {
-  width: 20px;
-  height: 20px;
-}
-
-.mindspace-name {
-  font-size: 16px;
-  font-weight: 500;
-  color: #333;
-}
-
-.center-section {
-  flex: 1;
-  text-align: center;
-}
-
-.theme-title {
-  font-size: 16px;
-  font-weight: 500;
-  color: #333;
-  margin: 0;
-}
-
-.right-section {
-  display: flex;
-  gap: 16px;
-}
-
-.icon-button {
-  background: none;
-  border: none;
-  padding: 4px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.icon-button img {
-  width: 20px;
-  height: 20px;
-}
-
-.icon-button:hover {
-  opacity: 0.8;
-}
+@import '@/assets/headerNavStyle.scss';
+@import '@/assets/mindSpaceMenuStyle.scss';
 </style>

@@ -1,0 +1,135 @@
+// Mixins
+@mixin flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+@mixin transition($property: all) {
+  transition: $property 0.2s ease;
+}
+
+// Modal styles
+.theme-modal {
+  &-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: $overlay-bg;
+    @include flex-center;
+    z-index: 1000;
+  }
+
+  &-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 1rem;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  &-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+  }
+
+  &-fade {
+    &-enter-active,
+    &-leave-active {
+      transition: opacity 0.3s ease;
+    }
+
+    &-enter-from,
+    &-leave-to {
+      opacity: 0;
+    }
+  }
+  
+  &-create-button{
+    width: 100%;
+    padding: 1rem;
+    background-color: $primary-color;
+    color: white;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    @include transition(background-color);
+
+    &:hover {
+      background-color: $primary-hover;
+    }
+  }
+
+  &-close-button{
+    width: 32px;
+    height: 32px;
+    padding: 6px;
+    border: none;
+    border-radius: 4px;
+    background: none;
+    @include transition(background-color);
+
+    .svg{
+      display: block;
+    }
+
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+  }
+}
+
+// Selection styles
+.selection {
+  &-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  &-group {
+    flex: 1;
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+  }
+}
+
+// Select styles
+.select-wrapper {
+  position: relative;
+
+  &::after {
+    content: "▼";
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+}
+
+.theme-select,
+.topic-select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid $border-color;
+  border-radius: 0.5rem;
+  appearance: none;
+  background: white;
+}
+
+.operator {
+  @include flex-center;
+  font-size: 1.5rem;
+  padding: 2rem 0 0;
+}

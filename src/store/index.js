@@ -7,6 +7,7 @@ import abilities from '../modules/abilities';
 import auth from '../modules/auth';
 import dataExtraction from '../modules/dataExtraction';
 import mindspace from '../modules/mindspace';
+import themeSpace from '../modules/themeSpace';
 
 export default createStore({
   modules: {
@@ -18,5 +19,6 @@ export default createStore({
     auth,
     dataExtraction,
     mindspace,
+    themeSpace
   },
 });

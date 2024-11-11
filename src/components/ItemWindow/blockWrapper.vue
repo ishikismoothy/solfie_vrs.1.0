@@ -27,11 +27,11 @@
 <script>
 import { ref, computed } from 'vue';
 import { useStore } from 'vuex';
-import TitleBlock from './titleBlock.vue';
-import BodyBlock from './bodyBlock.vue';
-import ImageBlock from './imgBlock.vue';
-import LineBlock from './lineBlock.vue';
-import TodoBlock from './todoBlock.vue';
+import TitleBlock from './blocks/titleBlock.vue';
+import BodyBlock from './blocks/bodyBlock.vue';
+import ImageBlock from './blocks/imgBlock.vue';
+import LineBlock from './blocks/lineBlock.vue';
+import TodoBlock from './blocks/todoBlock.vue';
 
 export default {
   name: 'BlockWrapper',
@@ -108,26 +108,3 @@ export default {
   }
 };
 </script>
-
-<style scoped>
-.block-wrapper {
-  position: relative;
-  padding: 1rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.5rem;
-  margin: 1rem 0;
-}
-
-.control-btn {
-  padding: 0.25rem 0.5rem;
-  background-color: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.25rem;
-  cursor: pointer;
-}
-
-.control-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-</style>

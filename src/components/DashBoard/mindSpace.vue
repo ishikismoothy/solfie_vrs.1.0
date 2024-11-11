@@ -239,14 +239,14 @@ ADD STATUS HEADER
   <script>
     import { defineComponent, ref, computed, onMounted, watch, nextTick } from 'vue';
     import { useStore } from 'vuex';
-    import { formatDate } from '../utility/dateUtils';
-    import backgroundImage from '../assets/bg_img.jpg';
-    import squareSvg from '../assets/shapes/square.svg';
+    import { formatDate } from '@/utility/dateUtils';
+    import backgroundImage from '@/assets/bg_img.jpg';
+    import squareSvg from '@/assets/shapes/square.svg';
     //import circleSvg from '../assets/shapes/circle.svg';
     //import octagonSvg from '../assets/shapes/octagon.svg';
     //import cloudSvg from '../assets/shapes/cloud.svg';
     //import folderSvg from '../assets/shapes/folder.svg';
-    import AddItemPopup from '../components/addItemPopup.vue';
+    import AddItemPopup from './addItemPopup.vue';
 
     export default defineComponent({
       name: 'iPhoneStyleMaestroUI',
@@ -636,6 +636,7 @@ ADD STATUS HEADER
             
             if(!isEditMode.value){
               await store.dispatch('mindspace/setItemId', item.id);
+              await store.dispatch('mindspace/getItemName', item.name);
               await store.dispatch('mindspace/triggerItemWindow', true);
             }
               
@@ -1349,6 +1350,7 @@ ADD STATUS HEADER
           console.log('[handleFolderItemClick] Clicked on Folder item clicked:', item.name);
           if(!isEditMode.value){
             await store.dispatch('mindspace/setItemId', item.id);
+            await store.dispatch('mindspace/getItemName', item.name);
             await store.dispatch('mindspace/triggerItemWindow', true);
           }
         };

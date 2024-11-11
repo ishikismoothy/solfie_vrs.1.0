@@ -1,40 +1,30 @@
-/* dashboard.css */
-.dashboard-view {
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
+//[DashboardView.vue]
 
-.dashboard {
-  margin: 0 auto;
-
-  position: relative; /* Added position relative */
-  overflow: hidden;
-
-  /* Ensure the dashboard content doesn't get hidden behind the sticky nav */
-  padding-bottom: 200px;// Adjust this value based on the height of your sticky nav
-}
-
-.dashboard::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: url('../assets/bg_img.jpg');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  transform: rotate(180deg); /* Flips the background image upside down */
-  z-index: -1; /* Ensures the pseudo-element is behind the body content */
-}
-  
+// By default (mobile), center section is hidden
 .view-container {
-  position: relative;
+  position: absolute;
+  top: 55px;
+  left:0;
   width: 100%;
-  height: 93vh;
-  //height: 100vh;
+  height: 90vh;
   overflow: hidden;
+  background-color: #ffffff;
+}
+@include responsive(iPhonePro) {
+  .view-container {
+    height: 91vh;
+  }
+}
+@include responsive(tablet) {
+  .view-container {
+    top: 55px;
+    height: 93.5vh;
+  }
+}
+@include responsive(desktop) {
+  .view-container {
+    height: 93vh;
+  }
 }
 
 .views-wrapper {
@@ -60,6 +50,37 @@
   }
 }
 
+.dashboard-view {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.dashboard {
+  margin: 0 auto;
+
+  position: relative;
+  overflow: hidden;
+
+  text-align: center;
+  
+  padding-bottom: 200px;// Adjust this value based on the height of your sticky nav
+}
+
+.dashboard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('../assets/bg_img.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transform: rotate(180deg); // Flips the background image upside down
+  z-index: -1; // Ensures the pseudo-element is behind the body content
+}
+
 //HEADER
 header {
   display: flex;
@@ -81,25 +102,6 @@ header {
 
 .user-name {
   margin-left: 10px;
-}
-
-.notifications {
-  position: relative;
-}
-
-.bell-icon {
-  font-size: 24px;
-}
-
-.notification-count {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  background-color: red;
-  color: white;
-  border-radius: 50%;
-  padding: 2px 6px;
-  font-size: 12px;
 }
 
 main {
@@ -433,13 +435,18 @@ transition: width 0.5s ease-out;
 }
 
 //[PAGE-INDICATOR]
-.indicator-wrapper {
+.page-indicator{
   position: fixed;
+  width: 100%;
+  height: 40px;
+  bottom: 180px;
+  display: flex;
+  justify-content: space-evenly;
+}
+.indicator-wrapper {
+  position: relative;
   width: 100px;
   height: 20px;
-  bottom: 200px;
-  left: 45%;
-  //right: 0;
   background: rgba(255, 255, 255, 0.521);
   backdrop-filter: blur(5px);
   padding: 10px 0;

@@ -65,10 +65,9 @@ body > .folder-item.dragging {
   display: flex;
   flex-direction: column;
   font-family: $primary-font;
-  //width: 100%;
   padding: 0 20px;
-  //height: 100vh;
-  height: 94vh;
+  //height: 89vh;
+  height: 100%;
   margin: 0;
   background-color: $background-color;
   position: relative;
@@ -101,12 +100,19 @@ body > .folder-item.dragging {
     touch-action: pan-y pinch-zoom;
   }
 
+  @include responsive(iPhonePro) {
+    .mind-grid {
+      padding-top: 20px;
+      gap: 20px;
+    }
+  }
+
   .mind-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     grid-template-rows: repeat(5, 1fr);
-    gap: 20px;
-    padding-top: 20px;
+    gap: 10px;
+    //padding-top: 20px;
     width: 100%;
     height: 100%;
     position: absolute;
@@ -537,4 +543,16 @@ body > .folder-item.dragging {
     pointer-events: none;
   }
 
+}
+
+//[addItemPopup.vue]
+.add-item-popup {
+  position: fixed;
+  top: 50%;
+  left: 75%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
 }

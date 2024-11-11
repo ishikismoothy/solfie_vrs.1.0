@@ -1,0 +1,296 @@
+//[ThemeSpaceView.vue]
+
+// Variables
+$primary-color: #3490dc;
+$primary-hover: #2563eb;
+$secondary-color: #6574cd;
+
+$border-color: #e5e7eb;
+$overlay-bg: rgba(0, 0, 0, 0.5);
+$hover-bg: #f3f4f6;
+
+$text-color: #2d3748;
+$gray-light: #f7fafc;
+$gray-medium: #e2e8f0;
+$gray-dark: #4a5568;
+$white: #ffffff;
+$transition: all 0.3s ease;
+
+// Mixins
+@mixin flex($justify: flex-start, $align: center, $gap: 0) {
+  display: flex;
+  justify-content: $justify;
+  align-items: $align;
+  @if $gap != 0 {
+    gap: $gap;
+  }
+}
+
+@mixin circle($size) {
+    width: $size;
+    height: $size;
+    border-radius: 50%;
+    overflow: hidden;
+  }
+  
+  @mixin avatar-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+
+.theme-gallery {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem;
+
+  // Header Styles
+  header {
+    @include flex(space-between);
+    margin-bottom: 1.5rem;
+
+    .logo-section {
+      @include flex(flex-start, center, 0.5rem);
+
+      h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: $text-color;
+      }
+
+      .plan-type {
+        color: $gray-dark;
+        font-size: 0.875rem;
+      }
+    }
+
+    .avatar-button {
+        @include circle(2.5rem); // 40px circle
+        padding: 0;
+        border: 2px solid $gray-medium;
+        background-color: $white;
+        cursor: pointer;
+        transition: $transition;
+        
+        // Remove default button styles
+        appearance: none;
+        -webkit-appearance: none;
+        
+        &:hover {
+          transform: scale(1.05);
+          border-color: $primary-color;
+          box-shadow: 0 0 0 4px rgba($primary-color, 0.1);
+        }
+  
+        &:focus {
+          outline: none;
+          border-color: $primary-color;
+          box-shadow: 0 0 0 4px rgba($primary-color, 0.1);
+        }
+  
+        img {
+          @include avatar-image;
+          display: block; // Removes any potential spacing issues
+        }
+    }
+  }
+
+  // Search Section
+  .search-section {
+    @include flex(space-between, center, 1rem);
+    margin-bottom: 1.5rem;
+
+    .search-container {
+      position: relative;
+      flex: 1;
+
+      input {
+        width: 80%;
+        padding: 0.75rem 1rem 0.75rem 2.5rem;
+        border: 1px solid $gray-medium;
+        border-radius: 0.5rem;
+        transition: $transition;
+        display: flex;
+
+        &:focus {
+          outline: none;
+          border-color: $primary-color;
+          box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
+        }
+      }
+
+      .search-icon {
+        position: absolute;
+        left: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        
+        svg {
+          width: 1.25rem;
+          height: 1.25rem;
+          color: $gray-dark;
+        }
+      }
+    }
+
+    .create-button {
+      padding: 0.75rem 1.5rem;
+      background-color: $primary-color;
+      color: $white;
+      border: none;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: $transition;
+
+      &:hover {
+        background-color: darken($primary-color, 10%);
+      }
+    }
+  }
+
+  // Theme Grid
+  .theme-grid {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: 1fr;
+
+    //Responsive is defeined in ThemeSpaceView.vue
+    @include responsive(tablet) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    //Responsive is defiened in ThemeSpaceView.vue
+    @include responsive(desktop) {
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    .theme-card {
+      background: $white;
+      border-radius: 0.5rem;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      transition: $transition;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      .image-container {
+        position: relative;
+        padding-top: 100%;
+        background-color: $gray-light;
+
+        img {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .overlay-icons {
+          position: absolute;
+          top: 0.5rem;
+          right: 0.5rem;
+          @include flex(flex-start, center, 0.5rem);
+
+          .icon-button {
+            @include flex(center, center);
+            background-color: rgba($white, 0.9);
+            border: none;
+            border-radius: 0.25rem;
+            padding: 0.25rem;
+            cursor: pointer;
+            transition: $transition;
+
+            svg {
+              width: 1.5rem;
+              height: 1.5rem;
+            }
+
+            &:hover {
+              background-color: $white;
+            }
+
+            &.star-button {
+              color: $secondary-color;
+            }
+
+            &.more-button {
+              color: $gray-dark;
+            }
+          }
+        }
+      }
+
+      .theme-info {
+        padding: 1rem;
+
+        h3 {
+          font-size: 1.125rem;
+          font-weight: 500;
+          color: $text-color;
+          margin-bottom: 0.25rem;
+        }
+
+        .updated-time {
+          font-size: 0.875rem;
+          color: $gray-dark;
+        }
+      }
+    }
+  }
+
+  .dropdown-container {
+    position: relative;
+  }
+  
+  .dropdown-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    min-width: 200px;
+    z-index: 1000;
+    padding: 8px;
+  }
+  
+  .dropdown-item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 12px 16px;
+    border: none;
+    background: none;
+    color: #333;
+    cursor: pointer;
+    font-size: 16px;
+    text-align: left;
+    transition: background-color 0.2s;
+    border-radius: 8px;
+    
+    .dropdown-icon{
+        width: 16px;
+        height: 16px;
+    }
+  
+    svg {
+      margin-right: 12px;
+    }
+  
+    &:hover {
+      background-color: #f5f5f5;
+    }
+  }
+  
+  // Add this if you want to prevent text selection on double click
+  .dropdown-item {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+}
