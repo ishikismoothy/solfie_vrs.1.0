@@ -375,6 +375,30 @@ export const setPrivacyMindspace = async (mindspaceId) => {
   }
 };
 
+export const updateMindSpaceName = async (mindspaceId, newName) => {
+  try {
+    const mindspaceRef = doc(db, 'mindspace', mindspaceId);
+    
+    await updateDoc(mindspaceRef, {
+      updatedAt: serverTimestamp(),
+      name: newName,
+    });
+
+    return { 
+      success: true, 
+      message: 'Mindspace Name is updated successfully'
+    };
+    
+  } catch (error) {
+    console.log(error.message);
+    return {
+      success: false,
+      error: error.message,
+      message: 'Failed to update mindspace name'
+    };
+  }
+};
+
 export const setDefaultMindspace = async (themeId, mindSpaceId) => {
   try {
     // Input validation

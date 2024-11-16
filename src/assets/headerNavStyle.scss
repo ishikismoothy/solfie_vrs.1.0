@@ -9,12 +9,20 @@
     padding: 12px;
 
     // By default (mobile), center section is hidden
-    .center-section {
+    .theme-title {
       display: none;
       width: 0;
       padding: 0;
       margin: 0;
     }
+
+    /*
+    .center-section {
+      display: none;
+      width: 0;
+      padding: 0;
+      margin: 0;
+    }*/
 }
 
 // Show center section from tablet up
@@ -23,6 +31,12 @@
   .header-container {
     width: 97vw;
 
+    .theme-title {
+      display:inline;
+      margin: 0;
+      width: auto;
+    }
+    /*
     .center-section {
       display: block;
       width: auto;
@@ -36,7 +50,7 @@
         font-size: 1.25rem;
         font-weight: 600;
       }
-    }
+    }*/
   }
 }
 
@@ -44,6 +58,13 @@
   .header-container {
     width: 98.5vw;
 
+    .theme-title {
+      display:inline;
+      margin: 0;
+      width: auto;
+    }
+
+    /*
     .center-section {
       display: block;
       width: auto;
@@ -57,7 +78,7 @@
         font-size: 1.25rem;
         font-weight: 600;
       }
-    }
+    }*/
   }
 }
   
@@ -75,6 +96,7 @@
   .mindspace-name {
     font-size: 16px;
     font-weight: 500;
+    font-weight: bold;
     color: #333;
   }
   

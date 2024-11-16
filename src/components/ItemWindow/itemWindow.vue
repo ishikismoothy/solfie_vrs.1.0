@@ -48,7 +48,7 @@
 </template>
 
 <script>
-import { computed, onMounted, watch, ref } from 'vue';
+import { computed, onMounted, watch, ref, nextTick } from 'vue';
 import { useStore } from 'vuex';
 import BlockWrapper from './blockWrapper.vue';
 
@@ -100,6 +100,7 @@ export default {
         const currentItemName = computed(() => store.getters['mindspace/getItemName']);
         const currentUid = computed(() => store.getters['mindspace/getUserId']); 
         const blocks = computed(() => store.getters['mindspace/getItemBlocks']);
+        const editInput = ref(null);
 
         const close = () => {
             emit('close');
@@ -145,11 +146,13 @@ export default {
         const onNameEdit = ref(false);
         const editedContent = ref('');
 
-        const triggerNameEdit = () => {
+        const triggerNameEdit = async () => {
             console.log("[triggerNameEdit/itemContentsWindow.vue] Input: ", editedContent.value);
             if(!onNameEdit.value){
                 onNameEdit.value = true;
                 editedContent.value = currentItemName.value;
+                await nextTick();
+                editInput.value.focus();
             }else{
                 if (editedContent.value !== currentItemName.value) {
                     console.log("[triggerNameEdit/itemContentsWindow.vue] Detect change!")
@@ -172,6 +175,7 @@ export default {
             onNameEdit,
             triggerNameEdit,
             editedContent,
+            editInput
         };
     }
 };

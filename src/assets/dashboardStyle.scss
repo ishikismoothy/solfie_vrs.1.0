@@ -12,13 +12,13 @@
 }
 @include responsive(iPhonePro) {
   .view-container {
-    height: 91vh;
+    height: 92.5vh;
   }
 }
 @include responsive(tablet) {
   .view-container {
     top: 55px;
-    height: 93.5vh;
+    height: 95.5vh;
   }
 }
 @include responsive(desktop) {

@@ -9,7 +9,7 @@
           @change="updateTodo(index)"
           class="form-checkbox"
         >
-        <div class="flex-grow" @click="startEditing(index)">
+        <div class="flex-grow" @click="handleClick(index)">
           <template v-if="editingIndex !== index">
             <span :class="{ 'line-through text-gray-500': todo.tick }">
               {{ todo.name }}
@@ -17,11 +17,11 @@
           </template>
           <template v-else>
             <input
-              v-model="editedTodoName"
-              class="edit-input w-full"
-              @blur="saveTodoChanges(index)"
-              @keyup.enter="saveTodoChanges(index)"
-              ref="todoEditInput"
+            v-model="editedTodoName"
+            class="edit-input w-full"
+            @blur="saveTodoChanges(index)"
+            @keyup.enter="saveTodoChanges(index)"
+            :ref="el => { if (el) todoEditInputs[index] = el }"
             >
           </template>
         </div>
@@ -40,7 +40,7 @@
 </template>
 
 <script>
-import { ref } from 'vue';
+import { ref, nextTick, onBeforeUpdate } from 'vue';
 import { useStore } from 'vuex';
 
 export default {
@@ -56,10 +56,18 @@ export default {
     const editingIndex = ref(null);
     const editedTodoName = ref('');
     const todos = ref(props.block.content || []);
+    const todoEditInputs = ref([]); // Change to array of refs
 
-    const startEditing = (index) => {
+    // Clear the refs before update
+    onBeforeUpdate(() => {
+      todoEditInputs.value = [];
+    });
+
+    const handleClick = async (index) => {
       editingIndex.value = index;
       editedTodoName.value = todos.value[index].name;
+      await nextTick();
+      todoEditInputs.value[index]?.focus();
     };
 
     const saveTodoChanges = (index) => {
@@ -106,11 +114,12 @@ export default {
       todos,
       editingIndex,
       editedTodoName,
-      startEditing,
+      handleClick,
       saveTodoChanges,
       updateTodo,
       addTodo,
-      formatDate
+      formatDate,
+      todoEditInputs
     };
   }
 };

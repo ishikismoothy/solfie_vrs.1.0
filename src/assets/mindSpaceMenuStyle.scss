@@ -6,7 +6,6 @@
     height: 100%;
     background: rgba(255, 255, 255, 0.521);
     backdrop-filter: blur(5px);
-    z-index: 1000;
   }
   
   .menu-container {
@@ -200,6 +199,74 @@
     width: 16px;
     height: 16px;
   }
+  
+  .space-setMindSpace-area {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(225, 225, 225, 0.5);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between; // Changed to space-between
+    padding: 0 12px;
+    opacity: 1;
+    transform: translateX(0);
+    backdrop-filter: blur(5px);
+    z-index: 2;
+    transition: background-color 0.3s ease;
+  
+    .set-active-button {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      background: none;
+      border: none;
+      padding: 8px 16px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      color: #333;
+      transition: all 0.2s ease;
+      letter-spacing: 0.5px;
+  
+      &:hover {
+        color: #000;
+      }
+  
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+  
+    &.favorite-background {
+      background-color: rgba(255, 97, 49, 0.7);
+      backdrop-filter: blur(5px);
+  
+      .set-active-button {
+        color: white;
+  
+        &:hover {
+          color: rgba(255, 255, 255, 0.8);
+        }
+      }
+    }
+  
+    &:hover {
+      background-color: rgba(225, 225, 225, 0.7);
+  
+      &.favorite-background {
+        background-color: rgba(255, 86, 34, 0.7);
+      }
+    }
+  
+    .settings-icons {
+      margin-left: auto; // Push icons to the right
+    }
+  }
 
   .space-setting-area {
     position: absolute;
@@ -304,11 +371,23 @@
   // MindSpaceList MindSpace-Setting-area
   .animate-settings-enter {
     animation: settingsEnter 0.2s ease-out;
+    
+  }
+  
+  .animate-settings-leave {
+    transition: all 0.2s ease-in;
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  
+  /*
+  .animate-settings-enter {
+    animation: settingsEnter 0.2s ease-out;
   }
 
   .animate-settings-leave {
     animation: settingsLeave 0.2s ease-in;
-  }
+  }*/
 
   @keyframes settingsEnter {
     from {

@@ -20,7 +20,7 @@
 </template>
 
 <script>
-import { ref } from 'vue';
+import { ref, nextTick } from 'vue';
 import { useStore } from 'vuex';
 
 export default {
@@ -36,10 +36,13 @@ export default {
     const isEditing = ref(false);
     const editedContent = ref('');
     const isEditable = ref(true);
+    const editInput = ref(null);
     
-    const handleClick = () => {
+    const handleClick = async () => {
       isEditing.value = true;
       editedContent.value = props.block.content;
+      await nextTick();
+      editInput.value.focus();
     };
 
     const saveChanges = () => {
@@ -58,7 +61,8 @@ export default {
       editedContent,
       isEditable,
       handleClick,
-      saveChanges
+      saveChanges,
+      editInput
     };
   }
 };

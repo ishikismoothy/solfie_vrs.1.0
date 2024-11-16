@@ -1,13 +1,14 @@
 <template>
   <div 
     class="body-block"
-    @click="isEditable && handleClick()"
+    @click="isEditable && !isEditing && handleClick()"
   >
     <template v-if="!isEditing">
-      <p>{{ block.content }}</p>
+      <p style="white-space: pre-line">{{ block.content }}</p>
     </template>
     <template v-else>
       <textarea
+        @click.stop
         v-model="editedContent"
         class="edit-textarea"
         @blur="saveChanges"
@@ -19,7 +20,7 @@
 </template>
 
 <script>
-import { ref } from 'vue';
+import { ref, nextTick } from 'vue';
 import { useStore } from 'vuex';
 
 export default {
@@ -35,10 +36,13 @@ export default {
     const isEditing = ref(false);
     const editedContent = ref('');
     const isEditable = ref(true);
+    const editTextarea = ref(null);
     
-    const handleClick = () => {
+    const handleClick = async () => {
       isEditing.value = true;
       editedContent.value = props.block.content;
+      await nextTick();
+      editTextarea.value.focus();
     };
 
     const saveChanges = () => {
@@ -56,7 +60,8 @@ export default {
       editedContent,
       isEditable,
       handleClick,
-      saveChanges
+      saveChanges,
+      editTextarea
     };
   }
 };

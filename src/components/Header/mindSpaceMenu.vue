@@ -61,11 +61,15 @@
             :class="{ 'has-overlay': activeSettingsId === mindspace.id }"
           >
             <div class="mindspace-content">
-              <div class="globe-icon" :class="{ 'is-favourite': defaultMindSpaceId === mindspace.id }">
+              <button
+                class = "icon-button globe-icon" :class="{ 'is-favourite': defaultMindSpaceId === mindspace.id }"
+                @click="toggleSetMindSpace(mindspace.id)"
+              >
                 <img src="@//assets/icons/utility/globeIcon.svg" class="globe-default" alt="globe" />
                 <img src="@//assets/icons/utility/globeIcon_active.svg" class="globe-active" alt="globe-active" />
-              </div>
+              </button>
               <span>{{ mindspace.name }}</span>
+              
               <button 
                 class="icon-button more-options"
                 @click="toggleSettings(mindspace.id)"
@@ -76,7 +80,40 @@
                   <circle cx="5" cy="12" r="1" />
                 </svg>
               </button>
+
             </div>
+
+            <!-- Globe Icon Overlay -->
+            <Transition 
+              enter-active-class="animate-settings-enter"
+              leave-active-class="animate-settings-leave"
+              @leave="handleLeave"
+              :duration="{ enter: 200, leave: 200 }"
+            >
+              <div
+                v-if="activeSetMindSpaceId === mindspace.id" 
+                class="space-setMindSpace-area"
+                :class="{ 'favorite-background': defaultMindSpaceId === mindspace.id }"
+              >
+                <!-- Center text button -->
+                <button 
+                  class="set-active-button"
+                  @click="toggleFavourite(mindspace)"
+                  :disabled="isTransitioning"
+                >
+                  {{ defaultMindSpaceId === mindspace.id ? 'ACTIVATED' : 'SET TO ACTIVE' }}
+                </button>
+
+                <div class="settings-icons">
+                  <button class="icon-button" @click="closeSettings(mindspace.id)" :disabled="isTransitioning">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </Transition>
             
             <!-- Settings Overlay with Transition -->
             <Transition
@@ -89,6 +126,16 @@
                 class="space-setting-area"
               >
                 <div class="settings-icons">
+                  <button 
+                    class="icon-button"
+                    @click="openEditNameDialog(mindspace)"
+                    >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75 1.84-1.83z"/>
+                      <path d="M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/>
+                    </svg>
+                  </button>
+                  <!--
                   <button class="icon-button" @click="toggleFavourite(mindspace)">
                     <div class="icon-swap-container" :class="{ 'is-favourite': defaultMindSpaceId === mindspace.id }">
                       
@@ -106,6 +153,7 @@
 
                     </div> 
                   </button>
+                  -->
                   <button class="icon-button" @click="togglePrivacy(mindspace)">
                     <div class="icon-swap-container" :class="{ 'is-private': mindspace.privacy }">
                       
@@ -169,14 +217,23 @@
       </div>
     </div>
   </Transition>
+
+  <!-- Edit MindSpace Name Dialog -->
   <div v-if="isOpen" class="menu-overlay" ></div>
+  <RenameDialog
+    v-model="showRenameDialog"
+    :initial-name="selectedMindspace?.name"
+    @confirm="handleRename"
+  />
+
 </template>
   
-  <script>
+<script>
   import { ref, computed } from 'vue';
   import { useStore } from 'vuex';
   import createMindSpacePopUp from '@/components/Header/createMindSpace.vue';
-  import { deleteMindspace, setDefaultMindspace, duplicateMindspace, setPrivacyMindspace } from '@/firebase/firebaseMindSpace';
+  import RenameDialog from './renameDialog.vue'
+  import { updateMindSpaceName, deleteMindspace, setDefaultMindspace, duplicateMindspace, setPrivacyMindspace } from '@/firebase/firebaseMindSpace';
   
   export default {
     name: 'SlideMenu',
@@ -200,12 +257,16 @@
     },
     components: {
       createMindSpacePopUp,
+      RenameDialog,
     },
     emits: ['close'],
     setup(props, { emit }) {
       const store = useStore();
       const activeSettingsId = ref(null);
+      const activeSetMindSpaceId = ref(null);
       const showCreateMindspace = ref(false);
+      const showRenameDialog = ref(false);
+      const selectedMindspace = ref(null);
       
       const defaultMindSpaceId = computed(() => store.getters['mindspace/getMindSpaceId']);
       const mindspaces = computed(() => store.getters['mindspace/getMindSpaceList']);
@@ -227,9 +288,41 @@
         activeSettingsId.value = activeSettingsId.value === id ? null : id;
       };
 
+      const toggleSetMindSpace = (id) => {
+        // Close settings overlay if open
+        activeSettingsId.value = null;
+        // Toggle globe overlay
+        activeSetMindSpaceId.value = activeSetMindSpaceId.value === id ? null : id;
+        console.log('Globe overlay toggled for:', activeSetMindSpaceId.value);
+      };
+
       const closeSettings = (id) => {
         console.log("[mindSpaceMenu.vue/closeSettings] closing: ",id);
         activeSettingsId.value = null;
+        activeSetMindSpaceId.value = null;
+      };
+
+      // Add the openEditNameDialog implementation
+      const openEditNameDialog = (mindspace) => {
+        selectedMindspace.value = mindspace;
+        showRenameDialog.value = true;
+      };
+      // Add the handleRename method
+      const handleRename = async (newName) => {
+        if (selectedMindspace.value) {
+          try {
+            // Implement your rename API call here
+            const result = await updateMindSpaceName(selectedMindspace.value.id, newName);
+            if (result.success) {
+              await store.dispatch('mindspace/setMindSpaceList');
+            } else {
+              console.error(result.error);
+            }
+            closeSettings();
+          } catch (error) {
+            console.error('Error renaming mindspace:', error);
+          }
+        }
       };
 
       const toggleFavourite = async (mindSpace) => {
@@ -269,7 +362,6 @@
 
       const openDuplicateDialog = async (mindspaceId) => {
         console.log(mindspaceId);
-        // Implement duplicate dialog logic
         // Optional: Add confirmation dialog
         if (!confirm('Are you sure you want to duplicate this item?')) {
           return;
@@ -321,7 +413,12 @@
 
         //MindSpaceList-Settings
         activeSettingsId,
+        activeSetMindSpaceId,
+        showRenameDialog,
+        selectedMindspace,
+
         toggleSettings,
+        toggleSetMindSpace,
         closeSettings,
         toggleFavourite,
         togglePrivacy,
@@ -329,6 +426,8 @@
         openDuplicateDialog,
         openDeleteDialog,
         openSettings,
+        openEditNameDialog,
+        handleRename,
       };
     }
   };

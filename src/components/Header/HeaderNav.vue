@@ -9,13 +9,15 @@
           <img src="@//assets/icons/utility/globeIcon.svg" alt="globe" />
         </button>
       </div>
-      <span class="mindspace-name" v-if="!isLoading">{{mindSpaceName}}</span>
+      <span class="theme-title" v-if="!isLoading">{{themeName}}/</span>
+      <h1 class="mindspace-name" v-if="!isLoading">{{mindSpaceName}}</h1>
       <span class="mindspace-name" v-else>Loading...</span>
     </div>
+    <!--
     <div class="center-section">
       <h1 class="theme-title" v-if="!isLoading">{{themeName}}</h1>
       <h1 class="theme-title" v-else>Loading...</h1>
-    </div>
+    </div>-->
     <div class="right-section">
       <button class="icon-button">
         <img src="@/assets/icons/utility/bellIcon.svg" alt="view" />
@@ -97,4 +99,5 @@ export default {
 
 @import '@/assets/headerNavStyle.scss';
 @import '@/assets/mindSpaceMenuStyle.scss';
+@import '@/assets/mindSpaceRenameModalStyle.scss';
 </style>

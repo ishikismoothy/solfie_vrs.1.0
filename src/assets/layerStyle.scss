@@ -13,7 +13,17 @@
     z-index: 998;
 }
 
-//[MindSpace View]
+//[MindSpace View/ Menu]
+//MindSpace > Menu
+.menu-overlay{
+    z-index: 1000;
+}
+
+.rename-modal-overlay{
+    z-index: 1001;
+}
+
+//[MindSpace View/ MindSpace]
 //MindSpace > Add Item
 .item-window-overlay{
     z-index: 1001;
