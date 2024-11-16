@@ -4,7 +4,7 @@
       <div v-if="modelValue" class="rename-modal-overlay">
         <div class="rename-modal-content">
           <div class="rename-modal-header">
-            <h2>Rename board</h2>
+            <h2>Rename Mindspace</h2>
             <button class="rename-modal-close-button" @click="close">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -15,7 +15,7 @@
           
           <form @submit.prevent="handleSubmit">
             <div class="form-group">
-                <label>Enter a new board name:</label>
+                <label>Enter a new mindspace name:</label>
                 <input 
                 type="text" 
                 v-model="newName"
