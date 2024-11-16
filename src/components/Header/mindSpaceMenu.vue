@@ -6,7 +6,7 @@
           <button 
             @click="$router.push('/themespace')" class="back-button">
             <span class="back-icon">&#8249;</span>
-            Home
+             Back to Theme
           </button>
         </div>
         <div class="header-right">
