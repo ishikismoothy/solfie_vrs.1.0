@@ -43,6 +43,7 @@ export default {
       editedContent.value = props.block.content;
       await nextTick();
       editTextarea.value.focus();
+      editTextarea.value.select();
     };
 
     const saveChanges = () => {

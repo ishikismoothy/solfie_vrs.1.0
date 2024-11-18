@@ -68,6 +68,7 @@ export default {
       editedTodoName.value = todos.value[index].name;
       await nextTick();
       todoEditInputs.value[index]?.focus();
+      todoEditInputs.value[index]?.select();
     };
 
     const saveTodoChanges = (index) => {

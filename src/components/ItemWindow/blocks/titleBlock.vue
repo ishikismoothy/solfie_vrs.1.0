@@ -10,7 +10,7 @@
     <template v-else>
       <input
         v-model="editedContent"
-        class="edit-input"
+        class="edit-input-title"
         @blur="saveChanges"
         @keyup.enter="saveChanges"
         ref="editInput"
@@ -43,6 +43,7 @@ export default {
       editedContent.value = props.block.content;
       await nextTick();
       editInput.value.focus();
+      editInput.value.select();
     };
 
     const saveChanges = () => {
