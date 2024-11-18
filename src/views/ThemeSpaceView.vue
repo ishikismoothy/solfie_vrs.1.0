@@ -29,7 +29,7 @@
         </div>
 
         <button class="create-button" @click="showCreateThemeModal">
-          Create New Theme
+          Create New
         </button>
       </div>
 
