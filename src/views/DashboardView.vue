@@ -167,6 +167,7 @@ export default defineComponent({
 
     onMounted(() => {
       store.dispatch('mindspace/setMindSpacePages');
+      toggleView();
     });
 
     return {

@@ -1,0 +1,42 @@
+[debug] [2024-11-18T12:11:03.880Z] ----------------------------------------------------------------------
+[debug] [2024-11-18T12:11:03.883Z] Command:       /usr/local/bin/node /usr/local/bin/firebase deploy --only hosting
+[debug] [2024-11-18T12:11:03.883Z] CLI Version:   13.25.0
+[debug] [2024-11-18T12:11:03.883Z] Platform:      darwin
+[debug] [2024-11-18T12:11:03.883Z] Node Version:  v19.5.0
+[debug] [2024-11-18T12:11:03.883Z] Time:          Mon Nov 18 2024 21:11:03 GMT+0900 (Japan Standard Time)
+[debug] [2024-11-18T12:11:03.884Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2024-11-18T12:11:03.938Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2024-11-18T12:11:03.938Z] > authorizing via signed-in user (consciousness@ishikismoothy.com)
+[debug] [2024-11-18T12:11:03.939Z] [iam] checking project solfie-398005 for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2024-11-18T12:11:03.940Z] Checked if tokens are valid: true, expires at: 1731934835654
+[debug] [2024-11-18T12:11:03.941Z] Checked if tokens are valid: true, expires at: 1731934835654
+[debug] [2024-11-18T12:11:03.942Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/solfie-398005:testIamPermissions [none]
+[debug] [2024-11-18T12:11:03.942Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/solfie-398005:testIamPermissions x-goog-quota-user=projects/solfie-398005
+[debug] [2024-11-18T12:11:03.942Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/solfie-398005:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2024-11-18T12:11:04.671Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/solfie-398005:testIamPermissions 200
+[debug] [2024-11-18T12:11:04.671Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/solfie-398005:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2024-11-18T12:11:04.671Z] Checked if tokens are valid: true, expires at: 1731934835654
+[debug] [2024-11-18T12:11:04.672Z] Checked if tokens are valid: true, expires at: 1731934835654
+[debug] [2024-11-18T12:11:04.672Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/solfie-398005 [none]
+[debug] [2024-11-18T12:11:05.107Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/solfie-398005 200
+[debug] [2024-11-18T12:11:05.107Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/solfie-398005 {"projectId":"solfie-398005","projectNumber":"682411258127","displayName":"Solfie","name":"projects/solfie-398005","resources":{"hostingSite":"solfie-398005"},"state":"ACTIVE","etag":"1_6d870989-2eef-4281-b853-23175d32157f"}
+[info] 
+[info] === Deploying to 'solfie-398005'...
+[info] 
+[info] i  deploying hosting 
+[debug] [2024-11-18T12:11:05.113Z] Checked if tokens are valid: true, expires at: 1731934835654
+[debug] [2024-11-18T12:11:05.113Z] Checked if tokens are valid: true, expires at: 1731934835654
+[debug] [2024-11-18T12:11:05.113Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/solfie-398005/versions [none]
+[debug] [2024-11-18T12:11:05.113Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/solfie-398005/versions {"status":"CREATED","labels":{"deployment-tool":"cli-firebase"}}
+[debug] [2024-11-18T12:11:06.257Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/solfie-398005/versions 200
+[debug] [2024-11-18T12:11:06.257Z] <<< [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/solfie-398005/versions {"name":"projects/682411258127/sites/solfie-398005/versions/13171fca2ec5ad42","status":"CREATED","config":{},"labels":{"deployment-tool":"cli-firebase"}}
+[info] i  hosting[solfie-398005]: beginning deploy... 
+[info] i  hosting[solfie-398005]: found 34 files in dist 
+[debug] [2024-11-18T12:11:06.276Z] [hosting] uploading with 200 concurrency
+[debug] [2024-11-18T12:11:06.588Z] Checked if tokens are valid: true, expires at: 1731934835654
+[debug] [2024-11-18T12:11:06.588Z] Checked if tokens are valid: true, expires at: 1731934835654
+[debug] [2024-11-18T12:11:06.588Z] [hosting] hash cache [ZGlzdA] stored for 34 files
+[debug] [2024-11-18T12:11:06.589Z] [hosting][hash queue][FINAL] {"max":307,"min":18,"avg":29.882352941176467,"active":0,"complete":34,"success":34,"errored":0,"retried":0,"total":34,"elapsed":311}
+[debug] [2024-11-18T12:11:06.589Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/682411258127/sites/solfie-398005/versions/13171fca2ec5ad42:populateFiles [none]
+[debug] [2024-11-18T12:11:06.589Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/682411258127/sites/solfie-398005/versions/13171fca2ec5ad42:populateFiles {"files":{"/index.html":"4bfc3ee227554d9f09f0a4f91ad23c01b35ca9665bcdb6339107cfc96e0f7201","/favicon.ico":"1e71457865f706dc865b49a54a86e193818220d290b30226b6630a42faf1535d","/js/app.946decbe.js":"24003a21304a2a14a1944fc977d4d2c03ae2a64cb46f7668cb754b7986bc6c80","/js/395.338a65d1.js":"bb9be0f9720829b290530e8c2022167fb23cea44370409eabb6328c7c6a86031","/js/395.338a65d1.js.map":"5e11942fe9a5776185a1d47240af4f0e81ec7534801b71fcbd481016301b1af6","/js/385.aba7a136.js.map":"2f40a65efdc0da55687789ce136def0d7b9b005c1bffa6de6f7789f579251995","/js/385.aba7a136.js":"6cedf5b3fa46f0e49c6a9f610ccec1ec411a843be89d20db352fec7af0256110","/js/0.2a82f9bf.js.map":"2d45881ea9316d5bb260a047e08193699bdd8aa34fd5aa31224cf64cb01cf0de","/js/0.2a82f9bf.js":"df7348898aae1b8da09fb7a8cd01aca25eea575dcd60b5c00d38404476cdc3a3","/img/square.83517382.svg":"298ad149056799b69b9c99592f7026e9871f1687858d542d4fc50a7750adfc5d","/img/statusIcon.ee2f74f1.svg":"22476c1b21dff33bd392a30ab375ec2682e584418c5582695c46402518820602","/img/squareIcon.c5e85a1e.svg":"f1080d8ee64cb98c7ddfd9337f8b148f7109e9f93fc4f6083428c36d19f27f9b","/img/moreIcon.a625d77e.svg":"fb9f7adca2753684b5de0c900506f2a769618c9e8dc83f6886a7fe68dbb9d290","/img/shareIcon.1f685077.svg":"c3255fd532037a481d51df33856d7f72a05eecd3187e93cf408a17dffe7ff183","/img/globeIcon_active.1135d27e.svg":"9be83b9e7090db35900ed2c2f04339828a5f71382a0aeea6ab52da51e1c5ce9f","/img/journalIcon.00230124.svg":"1e95b9cc7a3349baffd92c420655fd73af7563071c761c11eca8a3650424c174","/img/globeIcon.63dbbfc8.svg":"b29d4f80a65ca10a14535c36237760a3c88030233f60dc7becbe700eb7470286","/img/eventIcon.c1777be2.svg":"96f30454a8c29cf1132d9c4f0b601dccc1d638cd0091bf7cc715736c4ad3da2b","/img/folder.2265bc3c.svg":"614361fcdf1c0c60251d5d5f11e78c90cf7096324b412c13b4cbf06f886c29ea","/css/app.d126b848.css.map":"4b4e53ab428c1af6385bc4939ec18f7b361a3e2af377942345cd81438d46d4b6","/css/app.d126b848.css":"04a80727557367e6ba2c88a3cc33f019573369f02eacd08c6bdcc706cfdcd527","/img/bellIcon.a4ffd101.svg":"ae2e6375da71c65e75c13875913a1f875b869ae61ef0484463a39be8bbf45078","/css/395.88a62130.css.map":"621f1124551041105136c00a762d18c6cbb295c481b527f75d6cdc706db22ab3","/css/676.900ce62d.css":"f0f5982092d7c1eeeae3694a22a51381c860fbe5621b6b853e25a1033d3d92b3","/css/395.88a62130.css":"ff34a2e08148cd87df996a541715af7249485716c36a9de863faedd2ba3aee1f","/css/0.c5432b08.css":"0c45275fef96bfb871737bf7a491a33057936e29227afd2ab799a65fe3b5635a","/css/0.c5432b08.css.map":"db914532c292735e611c667a9f5512f5ef11f2b226a948c26e6389c3bfa1cf17","/css/676.900ce62d.css.map":"cc1e46a1a54b43fd5d3914716cca57e8fc2495d57a4e35095af0743fd104eff6","/js/676.274f77f7.js":"537876a07c322f635f6999e0801b469b134a7bdceb406f0c6bb8768ef1a321cd","/js/app.946decbe.js.map":"8c559ac6a74e62fc9626209b2c91c159f8840e15167342e948d4810dceacbfad","/js/676.274f77f7.js.map":"f4a75d2594bbc87e1da26be8d5dd520a47802ffb7811bc23e55e0c8048a142ec","/js/chunk-vendors.61e15017.js":"a569e52d48b340f46ba78bcf9fda54f15942d6a368b9dea347dbc229b22351de","/img/bg_img.cb7caf68.jpg":"7e8c29ee39b68b4f23911724b87c1799bedd169daab39d5ec541b24649fa46e3","/js/chunk-vendors.61e15017.js.map":"8bb62b336c2cd2debae6b59fefdad70d32c34e1e470fecf28dfdc01cf5e8c342"}}

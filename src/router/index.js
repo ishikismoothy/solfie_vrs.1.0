@@ -7,7 +7,7 @@ const routes = [
     name: 'home',
     redirect: () => {
       const auth = getAuth();
-      return auth.currentUser ? '/dashboard' : '/login'
+      return auth.currentUser ? '/themespace' : '/login'
     }
   },
   {
