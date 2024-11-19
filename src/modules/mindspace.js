@@ -720,7 +720,7 @@ export default {
       addItemsToPage({ commit }, payload) {
         commit('ADD_ITEMS_TO_PAGE', payload);
       },
-      async addNewFolder({ commit, state }, { pageIndex, index }) {
+      async addNewFolder({ commit, state, dispatch }, { pageIndex, index }) {
         try {
           console.log('[addNewFolder] Starting with:', { pageIndex, index });
           
@@ -737,6 +737,7 @@ export default {
           });
   
           console.log('[addNewFolder] Completed:', { folderId, folderData });
+          await dispatch('setMindSpacePages');
           return folderId;
         } catch (error) {
           console.error('Error in addNewFolder:', error);

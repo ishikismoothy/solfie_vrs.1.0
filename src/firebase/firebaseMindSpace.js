@@ -567,7 +567,7 @@ export const addFolderToMindspace = async (mindSpaceId, pageIndex, index) => {
         // Create folder data
         const folderData = {
         id: folderId,
-        createdAt: serverTimestamp(),
+        createdAt: new Date().toISOString(),
         name: 'New Folder',
         icon: folderSvg,
         items: []
