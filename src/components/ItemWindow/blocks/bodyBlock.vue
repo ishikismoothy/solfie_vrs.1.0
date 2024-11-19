@@ -12,6 +12,7 @@
         v-model="editedContent"
         class="edit-textarea"
         @blur="saveChanges"
+        @focus="handleFocus"
         ref="editTextarea"
         rows="4"
       ></textarea>
@@ -37,12 +38,18 @@ export default {
     const editedContent = ref('');
     const isEditable = ref(true);
     const editTextarea = ref(null);
+    const isFocused = ref(false);
     
     const handleClick = async () => {
       isEditing.value = true;
       editedContent.value = props.block.content;
       await nextTick();
       editTextarea.value.focus();
+    };
+
+    const handleFocus = async () => {
+      isFocused.value = true;
+      await nextTick();
       editTextarea.value.select();
     };
 
@@ -62,7 +69,9 @@ export default {
       isEditable,
       handleClick,
       saveChanges,
-      editTextarea
+      editTextarea,
+      isFocused,
+      handleFocus
     };
   }
 };

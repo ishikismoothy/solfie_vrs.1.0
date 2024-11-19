@@ -13,6 +13,7 @@
         class="edit-input-title"
         @blur="saveChanges"
         @keyup.enter="saveChanges"
+        @focus="handleFocus"
         ref="editInput"
       >
     </template>
@@ -37,12 +38,20 @@ export default {
     const editedContent = ref('');
     const isEditable = ref(true);
     const editInput = ref(null);
-    
+    const isFocused = ref(false);
+
+    //CLICK AND OPEN INPUT
     const handleClick = async () => {
       isEditing.value = true;
       editedContent.value = props.block.content;
       await nextTick();
       editInput.value.focus();
+    };
+
+    //FOCUS ON INPUT FIELD
+    const handleFocus = async () => {
+      isFocused.value = true;
+      await nextTick();
       editInput.value.select();
     };
 
@@ -55,6 +64,7 @@ export default {
         });
       }
       isEditing.value = false;
+      isFocused.value = false;
     };
 
     return {
@@ -63,7 +73,9 @@ export default {
       isEditable,
       handleClick,
       saveChanges,
-      editInput
+      editInput,
+      isFocused,
+      handleFocus
     };
   }
 };

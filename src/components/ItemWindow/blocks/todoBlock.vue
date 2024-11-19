@@ -21,6 +21,7 @@
             class="edit-input w-full"
             @blur="saveTodoChanges(index)"
             @keyup.enter="saveTodoChanges(index)"
+            @focus="handleFocus(index)"
             :ref="el => { if (el) todoEditInputs[index] = el }"
             >
           </template>
@@ -57,6 +58,7 @@ export default {
     const editedTodoName = ref('');
     const todos = ref(props.block.content || []);
     const todoEditInputs = ref([]); // Change to array of refs
+    const isFocused = ref(false);
 
     // Clear the refs before update
     onBeforeUpdate(() => {
@@ -68,6 +70,11 @@ export default {
       editedTodoName.value = todos.value[index].name;
       await nextTick();
       todoEditInputs.value[index]?.focus();
+    };
+
+    const handleFocus = async (index) => {
+      isFocused.value = true;
+      await nextTick();
       todoEditInputs.value[index]?.select();
     };
 
@@ -120,7 +127,9 @@ export default {
       updateTodo,
       addTodo,
       formatDate,
-      todoEditInputs
+      todoEditInputs,
+      isFocused,
+      handleFocus
     };
   }
 };

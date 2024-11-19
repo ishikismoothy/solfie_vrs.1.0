@@ -576,7 +576,6 @@ export default {
         }
       },
       
-
       /*
       setMindSpacePages({ commit, state }) {
         console.log("[setMindSpacePages] TRIGGERED");
