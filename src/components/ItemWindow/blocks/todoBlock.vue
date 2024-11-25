@@ -19,8 +19,7 @@
             <input
             v-model="editedTodoName"
             class="edit-input w-full"
-            @blur="saveTodoChanges(index)"
-            @keyup.enter="saveTodoChanges(index)"
+            @blur="handleBlur(index)"
             @focus="handleFocus(index)"
             :ref="el => { if (el) todoEditInputs[index] = el }"
             >
@@ -66,6 +65,7 @@ export default {
     });
 
     const handleClick = async (index) => {
+      if (isFocused.value) return;
       editingIndex.value = index;
       editedTodoName.value = todos.value[index].name;
       await nextTick();
@@ -76,6 +76,11 @@ export default {
       isFocused.value = true;
       await nextTick();
       todoEditInputs.value[index]?.select();
+    };
+
+    const handleBlur = async (index) => {
+      await saveTodoChanges(index);
+      isFocused.value = false;
     };
 
     const saveTodoChanges = (index) => {
@@ -129,7 +134,8 @@ export default {
       formatDate,
       todoEditInputs,
       isFocused,
-      handleFocus
+      handleFocus,
+      handleBlur
     };
   }
 };

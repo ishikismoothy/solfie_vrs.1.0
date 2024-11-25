@@ -1,0 +1,88 @@
+/* [Truncate Header]Header Cut off */
+.truncate-header-text {
+    display: inline-block;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  /* Optional: Add specific styling for different screen sizes */
+  @media screen and (max-width: 767px) {
+    .truncate-header-text {
+      max-width: 150px;
+    }
+  }
+  
+  @media screen and (min-width: 768px) and (max-width: 1023px) {
+    .truncate-header-text {
+      max-width: 250px;
+      
+    }
+  }
+  
+  @media screen and (min-width: 1024px) {
+    .truncate-header-text {
+      max-width: 350px;
+    }
+  }
+
+/* [Truncate Span]Text Cut off */
+.truncate-text {
+    display: inline-block;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  /* Optional: Add specific styling for different screen sizes */
+  @media screen and (max-width: 767px) {
+    .truncate-text {
+      max-width: 180px;
+      font-size: 0.9em;
+    }
+  }
+  
+  @media screen and (min-width: 768px) and (max-width: 1023px) {
+    .truncate-text {
+      max-width: 250px;
+      
+    }
+  }
+  
+  @media screen and (min-width: 1024px) {
+    .truncate-text {
+      max-width: 350px;
+    }
+  }
+
+
+/* [Truncate item Span]Text Cut off */
+  .truncate-item-text {
+    display: inline-block;
+    max-width: 100%;
+    white-space: break-spaces;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  /* Optional: Add specific styling for different screen sizes */
+  @media screen and (max-width: 767px) {
+    .truncate-item-text {
+      max-width: 100px;
+    }
+  }
+  
+  @media screen and (min-width: 768px) and (max-width: 1023px) {
+    .truncate-item-text {
+      max-width: 250px;
+      
+    }
+  }
+  
+  @media screen and (min-width: 1024px) {
+    .truncate-item-text {
+      max-width: 350px;
+    }
+  }

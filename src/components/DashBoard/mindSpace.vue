@@ -27,80 +27,82 @@ ADD STATUS HEADER
         <div v-if="isEditMode" class="edit-mode-overlay"></div>
         
         <!-- Mind-Grid -->
-        <div class="pages-container"
+        
+        <div 
+          v-for="(page, pageIndex) in mindSpacePages" 
+          :key="pageIndex" 
+          class="mind-grid" 
+          :data-page-index1="pageIndex"
+          :style="{ 
+            transform: `translateX(${calculateTransform(pageIndex)}px)`,
+            transition: isDraggingForPageShift ? 'none' : 'transform 0.3s ease'
+          }"
           @touchstart="handleTouchStartForPageShift"
           @touchmove="handleTouchMoveForPageShift"
           @touchend="handleTouchEndForPageShift"
         >
+          <!-- Mind-Item -->
           <div 
-            v-for="(page, pageIndex) in mindSpacePages" 
-            :key="pageIndex" 
-            class="mind-grid" 
-            :data-page-index1="pageIndex"
-            :style="{ 
-              transform: `translateX(${calculateTransform(pageIndex)}px)`,
-              transition: isDraggingForPageShift ? 'none' : 'transform 0.3s ease'
-            }"
-            @touchstart="handleTouchStartForPageShift"
-            @touchmove="handleTouchMoveForPageShift"
-            @touchend="handleTouchEndForPageShift"
+            v-for="(item, index) in page.items" 
+            :key="item.id || index" 
+            class="mind-Item"
+            :data-id="item.id"
           >
-            <!-- Mind-Item -->
-            <div 
-              v-for="(item, index) in page.items" 
-              :key="item.id || index" 
-              class="mind-Item"
-              :data-id="item.id"
+            <div class="icon-wrapper"
+              :class="{ 
+                'dragging': draggingItem === item,
+                'folder-hover': item.items && isDragging && hoveredFolderId === item.id
+              }"
+              :data-item-id="item.id"
+              @click="handleItemClick(item)"
+              @mousedown.prevent="handleMouseDown($event, item, pageIndex, index)"
+              @touchstart.prevent="handleTouchStart($event, item, pageIndex, index)"
+              @touchend.prevent="handleTouchEnd"
+              @mouseover="handleItemHover(item)"
+              @mouseleave="handleItemLeave()"
             >
-              <div class="icon-wrapper"
-                :class="{ 
-                  'dragging': draggingItem === item,
-                  'folder-hover': item.items && isDragging && hoveredFolderId === item.id
-                }"
-                :data-item-id="item.id"
-                @click="handleItemClick(item)"
-                @mousedown.prevent="handleMouseDown($event, item, pageIndex, index)"
-                @touchstart.prevent="handleTouchStart($event, item, pageIndex, index)"
-                @touchend.prevent="handleTouchEnd"
-                @mouseover="handleItemHover(item)"
-                @mouseleave="handleItemLeave()"
+              <!-- Add delete button -->
+              <button 
+                v-if="isEditMode && !isDragging" 
+                class="delete-button"
+                @click.stop.prevent="handleItemDelete(item)"
               >
-                <!-- Add delete button -->
-                <button 
-                  v-if="isEditMode && !isDragging" 
-                  class="delete-button"
-                  @click.stop.prevent="handleItemDelete(item)"
-                >
-                  <i class="fas fa-times-circle">X</i>
-                </button>
-                <!-- icon Shadow -->
-                <div class="icon-shadow-container">
-                  <div class="icon-shadow" v-html="createShadowSvg(item.shape)"></div>
-                </div>
-                  <img :src="item.shape" class="icon-shape" :alt="item.name">
-                <div class="icon-content">
-                  <i v-if="item.icon" :class="item.icon"></i>
-                </div>
-                <div v-if="item.badge" class="badge" :class="item.badge">
-                  <i :class="getBadgeIcon(item.badge)"></i>
-                </div>
+                <i class="fas fa-times-circle">X</i>
+              </button>
+              <!-- icon Shadow -->
+              <div class="icon-shadow-container">
+                <div class="icon-shadow" v-html="createShadowSvg(item.shape)"></div>
               </div>
-              <span class="item-name">{{ item.name }}</span>
-            </div>
-            
-            <!-- Add button only on the last page -->
-            <div 
-              v-if="page.items.length < ITEMS_PER_PAGE" 
-              class="mind-Item add-item" 
-              @click="showAddItemMenu('mindSpace', pageIndex)"
-            >
-              <div class="icon-wrapper">
-                <div class="icon-content">
-                  <i class="fas fa-plus"></i>
-                </div>
+                <img :src="item.shape" class="icon-shape" :alt="item.name">
+              <div class="icon-content">
+                <i v-if="item.icon" :class="item.icon"></i>
               </div>
-              <span class="item-name">Add New</span>
+              <div v-if="item.badge" class="badge" :class="item.badge">
+                <i :class="getBadgeIcon(item.badge)"></i>
+              </div>
             </div>
+            <TruncateText
+                class="item-name"
+                :text="item.name"
+                :mobile-cutoff="10"
+                :tablet-cutoff="15"
+                :desktop-cutoff="15"
+              />
+              <!--<span class="item-name">{{ item.name }}</span>-->
+          </div>
+          
+          <!-- Add button only on the last page -->
+          <div 
+            v-if="page.items.length < ITEMS_PER_PAGE" 
+            class="mind-Item add-item" 
+            @click="showAddItemMenu('mindSpace', pageIndex)"
+          >
+            <div class="icon-wrapper">
+              <div class="icon-content">
+                <i class="fas fa-plus"></i>
+              </div>
+            </div>
+            <span class="item-name">Add New</span>
           </div>
         </div>
       </div>
@@ -247,15 +249,18 @@ ADD STATUS HEADER
     //import cloudSvg from '../assets/shapes/cloud.svg';
     //import folderSvg from '../assets/shapes/folder.svg';
     import AddItemPopup from './addItemPopup.vue';
+    import TruncateText from '../TruncateText/truncateSpanItemText.vue';
 
     export default defineComponent({
       name: 'iPhoneStyleMaestroUI',
       
       components: {
         AddItemPopup,
+        TruncateText,
       },
       setup(props, { emit }) {
         const store = useStore();
+        const currentUser = computed(() =>store.getters['mindspace/getUserId']);
         const currentTime = ref('');
         
         //[BACKGROUND]
@@ -1844,7 +1849,9 @@ ADD STATUS HEADER
         });
   
         onMounted(async () => {
-            await store.dispatch('mindspace/setUserId');
+            if(!currentUser.value) {
+              await store.dispatch('mindspace/setUserId');
+            }
             updateTime();
             setInterval(updateTime, 60000); // Update time every minute
             initializeFolderPages();

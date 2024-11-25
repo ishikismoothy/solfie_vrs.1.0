@@ -68,7 +68,12 @@
                 <img src="@//assets/icons/utility/globeIcon.svg" class="globe-default" alt="globe" />
                 <img src="@//assets/icons/utility/globeIcon_active.svg" class="globe-active" alt="globe-active" />
               </button>
-              <span>{{ mindspace.name }}</span>
+              <TruncateText
+                :text="mindspace.name"
+                :mobile-cutoff="20"
+                :tablet-cutoff="25"
+                :desktop-cutoff="30"
+              />
               
               <button 
                 class="icon-button more-options"
@@ -87,7 +92,6 @@
             <Transition 
               enter-active-class="animate-settings-enter"
               leave-active-class="animate-settings-leave"
-              @leave="handleLeave"
               :duration="{ enter: 200, leave: 200 }"
             >
               <div
@@ -99,13 +103,12 @@
                 <button 
                   class="set-active-button"
                   @click="toggleFavourite(mindspace)"
-                  :disabled="isTransitioning"
                 >
                   {{ defaultMindSpaceId === mindspace.id ? 'ACTIVATED' : 'SET TO ACTIVE' }}
                 </button>
 
                 <div class="settings-icons">
-                  <button class="icon-button" @click="closeSettings(mindspace.id)" :disabled="isTransitioning">
+                  <button class="icon-button" @click="closeSettings(mindspace.id)">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <line x1="18" y1="6" x2="6" y2="18"></line>
                       <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -233,6 +236,7 @@
   import { useStore } from 'vuex';
   import createMindSpacePopUp from '@/components/Header/createMindSpace.vue';
   import RenameDialog from './renameDialog.vue'
+  import TruncateText from '../TruncateText/truncateSpanText.vue';
   import { updateMindSpaceName, deleteMindspace, setDefaultMindspace, duplicateMindspace, setPrivacyMindspace } from '@/firebase/firebaseMindSpace';
   
   export default {
@@ -258,6 +262,7 @@
     components: {
       createMindSpacePopUp,
       RenameDialog,
+      TruncateText,
     },
     emits: ['close'],
     setup(props, { emit }) {

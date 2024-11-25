@@ -189,6 +189,9 @@ export default defineComponent({
 
 <style lang="scss">
 @mixin responsive($breakpoint) {
+  @if $breakpoint == iPhoneSE {
+    @media (min-width: 200px) { @content; }
+  } 
   @if $breakpoint == iPhonePro {
     @media (min-width: 390px) { @content; }
   } 

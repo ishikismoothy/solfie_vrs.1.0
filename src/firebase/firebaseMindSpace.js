@@ -27,6 +27,7 @@ const generateRandomId = (length = 10) => {
   return result;
 };
 
+/*
 export const getUserThemeId = async (userId) => {
     try {
         const userDoc = await getDoc(doc(db, 'users', userId));
@@ -77,7 +78,7 @@ export const changeUserThemeId = async (userId, themeId) => {
     };
     
   }
-};
+};*/
 
 export const getDefaultMindSpaceId = async (themeId, uid) => {
     try {

@@ -2,7 +2,7 @@ import {
     collection,
     doc,
     //setDoc,
-    //getDoc,
+    getDoc,
     getDocs,//For multiple docs
     addDoc,
     updateDoc,
@@ -20,6 +20,58 @@ import {
 const themesCollection = collection(db, 'themes');
 
 export const themeService = {
+    async getUserThemeId (userId) {
+        try {
+            const userDoc = await getDoc(doc(db, 'users', userId));
+              
+              if (!userDoc.exists()) {
+                throw new Error('User document not found');
+              }
+              
+              const userData = userDoc.data();
+              const focusThemeId = userData.focusTheme;
+              
+              if (!focusThemeId) {
+                throw new Error('No focus theme set for user');
+              }
+              return focusThemeId;
+        } catch (error) {
+            console.error('Error loading user theme data:', error);
+            return error.message;
+        }
+    },
+    
+    async changeUserThemeId (userId, themeId) {
+      try {
+        console.log('[changeUserThemeId/firebaseMindSpace.js] Starting update...');
+        if (!userId) {
+          throw new Error('User ID is not set');
+        }
+    
+        const userRef = doc(db, 'users', userId);
+        
+        await updateDoc(userRef, 
+          {
+            focusTheme: themeId
+          }
+        );
+        
+        console.log('[updateMindSpaceInFirestore] Successfully updated mindspace');
+        
+        return {
+          message: "successfully updated focus theme.",
+          success: true,
+        };
+    
+      } catch (error) {
+        return {
+          message: error.message,
+          success: false,
+        };
+        
+      }
+    },
+
     // Get all themes for current user
     async getThemes(uid) {
         // First approach - direct check
@@ -81,9 +133,8 @@ export const themeService = {
     
         try {
             const themeDocData = {
-                name: themeData.name,           // This is the combinedValue
-                theme: themeData.theme,         // Original theme value
-                topic: themeData.topic,         // Original topic value
+                name: themeData.name,         // This is the combinedValue
+                hashtags: themeData.hashtags,
                 uid: uid,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
@@ -107,6 +158,30 @@ export const themeService = {
             }else{
                 console.log("[addTheme/firebaseThemeSpace.js] ", result.error);
             }
+
+            /*
+            // 2. Update hashtag counts in a separate collection
+            for (const tag of hashtags.value) {
+                const hashtagRef = doc(db, 'hashtags', tag)
+                const hashtagDoc = await getDoc(hashtagRef)
+    
+                if (hashtagDoc.exists()) {
+                // Update existing hashtag count
+                await updateDoc(hashtagRef, {
+                    count: increment(1),
+                    lastUsed: new Date(),
+                    posts: [...hashtagDoc.data().posts, postRef.id]
+                })
+                } else {
+                // Create new hashtag document
+                await addDoc(collection(db, 'hashtags'), {
+                    tag: tag,
+                    count: 1,
+                    lastUsed: new Date(),
+                    posts: [postRef.id]
+                })
+                }
+            }*/
         
         return {
             id: docRef.id,
@@ -140,7 +215,7 @@ export const themeService = {
     },
 
     // Delete theme
-    async deleteTheme(id, uid) {
+    async deleteTheme(uid, id) {
         if (!uid) throw new Error('User not authenticated');
 
         try {

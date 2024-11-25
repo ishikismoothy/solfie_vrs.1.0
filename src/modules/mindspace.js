@@ -7,7 +7,6 @@
 import { 
   getThemeData,
   getMindSpaceData,
-  getUserThemeId,
   getDefaultMindSpaceId,
   addItemToMindspace,
   addFolderToMindspace,
@@ -19,7 +18,6 @@ import {
   getListOfMindSpace,
   getItemData,
   updateItemData,
-  changeUserThemeId,
 } from '@/firebase/firebaseMindSpace';
 import { getCurrentUserId } from '@/firebase/firebaseAuth';
 
@@ -411,7 +409,7 @@ export default {
     },
     
     actions: {
-      async setUserId({ commit, state, dispatch }) {
+      async setUserId({ commit, state, /*dispatch*/ }) {
         console.log("[setUserId] TRIGGERED");
         try {
           commit('SET_LOADING', true);
@@ -420,9 +418,6 @@ export default {
           
           commit('SET_USER_ID', userId);
           console.log("[setUserId]",state.userId);
-
-          // Start the data chain
-          await dispatch('setThemeId');
           
         } catch (error) {
           console.error('Error initializing user ID:', error);
@@ -431,46 +426,19 @@ export default {
           console.log("[setUserId] Finish Process");
         }
       },
-      // Load user's theme data
-      async setThemeId({ commit, state, dispatch }) {
-        console.log("[setThemeId] TRIGGERED");
+      async setViewThemeId({ commit, state, dispatch }, themeId) {
+        console.log("[setViewThemeId] TRIGGERED", themeId);
         try {
-          // 1. Get user document to find focusTheme
-          const focusThemeId = await getUserThemeId(state.userId);
           
-          commit('SET_THEME_ID', focusThemeId);
-          console.log("[setThemeId]",state.currentThemeId);
+          commit('SET_THEME_ID', themeId);
+          console.log("[setViewThemeId] Current", state.currentThemeId);
 
           // 2. Load theme data to get theme name
           await dispatch('setThemeData');
-          
+            
           // 3. Load theme data to get defaultMindSpace
           await dispatch('setMindSpaceId');  
-
-        } catch (error) {
-          console.error('Error loading user theme data:', error);
-          commit('SET_ERROR', error.message);
-        }
-      },
-      async changeThemeId({ /*commit,*/ state, dispatch }, themeId) {
-        console.log("[changeThemeId] TRIGGERED");
-        try {
-          const result = await changeUserThemeId(state.userId, themeId);
-          //commit('SET_THEME_ID', themeId);
           
-          if(result.success) {
-            console.log(result.message);
-
-            await dispatch('setThemeId');
-
-            // 2. Load theme data to get theme name
-            //await dispatch('setThemeData');
-            
-            // 3. Load theme data to get defaultMindSpace
-            //await dispatch('setMindSpaceId');  
-          }else{
-            console.log(result.message);
-          }
         } catch (error) {
           console.log(error.message);
         }

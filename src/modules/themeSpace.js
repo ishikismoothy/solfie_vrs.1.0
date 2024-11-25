@@ -4,12 +4,13 @@ export default {
     namespaced: true,
 
     state: {
+        focusedThemeId: null,
         themes: [],
         loading: false,
         error: null,
         searchQuery: '',
         themesKey: [
-            '私が癒される', '私が満たされる', '私が活かされる', '私が伸びる', '私が輝く',
+            '仕事', '家庭', '社交', 'プライベート', '余暇',
         ],
         topicsKey:[
             '暮らし方', '働き方', '表し方', '付き合い方',
@@ -17,6 +18,9 @@ export default {
     },
 
     mutations: {
+        SET_FOCUS_THEME_ID(state, id){
+            state.focusedThemeId = id;
+        },
         SET_THEMES(state, themes) {
             state.themes = themes;
         },
@@ -109,15 +113,15 @@ export default {
             }
         },
 
-        async updateTheme({ commit, rootState }, { id, themeData }) {
-            if (!rootState.mindspace.userId) {
+        async updateTheme({ commit }, { themeId, themeData, userId }) {
+            if (!userId) {
                 commit('SET_ERROR', 'User not authenticated');
                 return;
             }
 
             commit('SET_LOADING', true);
             try {
-                const updatedTheme = await themeService.updateTheme(id, themeData);
+                const updatedTheme = await themeService.updateTheme(themeId, themeData);
                 commit('UPDATE_THEME', updatedTheme);
                 return updatedTheme;
             } catch (error) {
@@ -128,7 +132,7 @@ export default {
             }
         },
 
-        async deleteTheme({ commit, dispatch }, { themeId, userId }) {
+        async deleteTheme({ commit, dispatch }, { userId, themeId }) {
             console.log("[deleteTheme/themeSpace.js]", userId);
             if (!userId) {
                 commit('SET_ERROR', 'User not authenticated');
@@ -137,7 +141,7 @@ export default {
 
             commit('SET_LOADING', true);
             try {
-                await themeService.deleteTheme(themeId, userId);
+                await themeService.deleteTheme(userId, themeId );
                 commit('DELETE_THEME', themeId);
             } catch (error) {
                 commit('SET_ERROR', error.message);
@@ -177,10 +181,43 @@ export default {
             // API call could go here
             commit('SET_THEMESKEY', ['健やかになる', '満たされる', '成長する', '感謝される']);
             commit('SET_TOPICSKEY', ['仕事や活動', '暮らし', '人間関係', '在り方', '環境']);
-        }
+        },
+        // Load user's theme data
+        async setThemeId({ commit, state , /* dispatch*/ }, { userId }) {
+            console.log("[themeSpace.js/setThemeId] TRIGGERED");
+            try {
+            // 1. Get user document to find focusTheme
+            const focusedThemeId = await themeService.getUserThemeId(userId);
+            
+            commit('SET_FOCUS_THEME_ID', focusedThemeId);
+            console.log("[setThemeId] Default Theme Id",state.focusedThemeId);
+
+            } catch (error) {
+            console.error('Error loading user theme data:', error);
+            commit('SET_ERROR', error.message);
+            }
+        },
+        async changeThemeId({ dispatch }, { userId, themeId }) {
+            console.log("[themeSpace.js/changeThemeId] TRIGGERED");
+            try {
+            const result = await themeService.changeUserThemeId(userId, themeId);
+            
+            if(result.success) {
+                console.log(result.message);
+
+                await dispatch('setThemeId', { userId });
+
+            }else{
+                console.log(result.message);
+            }
+            } catch (error) {
+            console.log(error.message);
+            }
+        },
     },
 
     getters: {
+        getFocusedThemeId: state => state.focusedThemeId,
         getThemes: state => state.themes,
         isLoading: state => state.loading,
         getError: state => state.error,

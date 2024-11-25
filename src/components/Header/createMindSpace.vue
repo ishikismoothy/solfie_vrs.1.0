@@ -1,4 +1,4 @@
-// components/CreateMindspace.vue
+<!-- components/CreateMindspace.vue-->
 <template>
   <Transition name="modal">
     <div v-if="isVisible" class="input-container">
@@ -17,7 +17,22 @@
                 type="text" 
                 placeholder="Please Enter mindspace name"
                 class="mindsapce-name-input"
+                @input="handleNameInput"
               />
+
+              <div 
+                v-if="showSuggestions && filteredSuggestions.length"
+                class="name-suggestions"
+              >
+                <div 
+                  v-for="suggestion in filteredSuggestions" 
+                  :key="suggestion"
+                  class="name-item"
+                  @click="selectMindspaceName(suggestion)"
+                >
+                  {{ suggestion }}
+                </div>
+              </div>
 
             </div>
 
@@ -53,7 +68,7 @@
 </template>
 
 <script>
-import { ref } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { createMindspace } from '@/firebase/firebaseMindSpace';
 import { useStore } from 'vuex';
 
@@ -84,13 +99,51 @@ export default {
     const isPrivate = ref(false);
     const isLoading = ref(false);
     const error = ref('');
-    
+    const showSuggestions = ref(false);
+
+    const suggestedNames = [
+      '心があったまる食事', '私が輝くプレゼン', '心身がリフレッシュする休憩時間', 'みんなが閃く講演会', '可能性が広がる学び', 
+      'ワクワクする制作', '心が開く会話', 
+    ];
+
+    // Watch for changes in mindspaceName
+    watch(mindspaceName, (newValue) => {
+      console.log('mindspaceName changed:', newValue);
+      handleNameInput();
+    });
+
+    const handleNameInput = () => {
+      console.log('handleNameInput called');
+      console.log('Current input value:', mindspaceName.value);
+      showSuggestions.value = mindspaceName.value.length > 0;
+      console.log('showSuggestions set to:', showSuggestions.value);
+    };
+
+    const filteredSuggestions = computed(() => {
+      console.log('Computing filteredSuggestions');
+      console.log('showSuggestions:', showSuggestions.value);
+      console.log('mindspaceName:', mindspaceName.value);
+
+      if (!showSuggestions.value || !mindspaceName.value) {
+        console.log('Returning empty array - conditions not met');
+        return [];
+      }
+      
+      const searchTerm = mindspaceName.value.toLowerCase();
+      const filtered = suggestedNames.filter(name => 
+        name.toLowerCase().includes(searchTerm)
+      );
+      console.log('Filtered suggestions:', filtered);
+      return filtered;
+    });
+
+    const selectMindspaceName = (name) => {
+      mindspaceName.value = name;
+      showSuggestions.value = false;
+    };
 
     const closePopup = () => {
-      console.log("[createMindSpace.vue] userId: ",props.userId);
-      console.log("[createMindSpace.vue] themeId: ",props.themeId);
       emit('update:isVisible', false);
-      // Reset form when closing
       resetForm();
     };
 
@@ -98,6 +151,7 @@ export default {
       mindspaceName.value = '';
       isPrivate.value = false;
       error.value = '';
+      showSuggestions.value = false;
     };
 
     const handleCreateMindspace = async () => {
@@ -111,7 +165,7 @@ export default {
 
       try {
         const result = await createMindspace({
-          uid: props.userId, // Assuming this is how you store user ID
+          uid: props.userId,
           themeId: props.themeId,
           name: mindspaceName.value,
           privacy: isPrivate.value
@@ -122,7 +176,6 @@ export default {
           emit('mindspace-created', result.mindspaceId);
           resetForm();
           closePopup();
-          
         } else {
           error.value = result.error;
         }
@@ -139,8 +192,12 @@ export default {
       isPrivate,
       isLoading,
       error,
+      showSuggestions,
       handleCreateMindspace,
-      closePopup
+      closePopup,
+      selectMindspaceName,
+      handleNameInput,
+      filteredSuggestions,
     };
   }
 };

@@ -10,7 +10,14 @@
         </button>
       </div>
       <span class="theme-title" v-if="!isLoading">{{themeName}}/</span>
-      <h1 class="mindspace-name" v-if="!isLoading">{{mindSpaceName}}</h1>
+      <TruncateText
+        v-if="!isLoading"
+        :text="mindSpaceName"
+        :mobile-cutoff="10"
+        :tablet-cutoff="18"
+        :desktop-cutoff="25"
+        class="mindspace-name"
+      />
       <span class="mindspace-name" v-else>Loading...</span>
     </div>
     <!--
@@ -45,11 +52,13 @@
 import { ref, computed } from 'vue';
 import { useStore } from 'vuex';
 import SlideMenu from './mindSpaceMenu.vue';
+import TruncateText from '../TruncateText/truncateHeaderText.vue';
 
 export default {
   name: 'HeaderNav',
   components: {
-    SlideMenu
+    SlideMenu,
+    TruncateText
   },
   setup() {
     const store = useStore();

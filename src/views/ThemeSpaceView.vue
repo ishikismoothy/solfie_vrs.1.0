@@ -38,6 +38,12 @@
         @create="addTheme"
       />
 
+      <ThemeRenameModal
+        v-model="showRenameModal"
+        :initial-name="selectedThemeSpace?.name"
+        @rename="renameTheme"
+      />
+
       <!-- Loading State -->
       <div v-if="loading" class="loading-state">
         Loading themes...
@@ -56,15 +62,33 @@
           class="theme-card"
         >
           <div class="image-container"
-            @click="selectTheme(theme.id)"
+            @click="!onEdit && selectTheme(theme.id)"
           >
             <img 
               :src="theme.imageUrl" 
               :alt="theme.name"
             />
             <div class="overlay-icons">
-              <button class="icon-button star-button">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <button 
+                class="icon-button star-button"
+                :class="{ 'is-focused': focusedThemeId === theme.id }"
+                @click.stop="changeFocusTheme(theme.id)"
+              >
+                <svg 
+                  viewBox="0 0 24 24" 
+                  class="star-default"
+                  alt="star"
+                  v-show="focusedThemeId !== theme.id"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                </svg>
+
+                <svg 
+                  viewBox="0 0 24 24" 
+                  class="star-active"
+                  alt="star-active"
+                  v-show="focusedThemeId === theme.id"
+                >
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
                 </svg>
               </button>
@@ -82,7 +106,7 @@
                   class="dropdown-menu"
                   @click.stop
                 >
-                  <button @click="renameTheme(theme.id)" class="dropdown-item">
+                  <button @click="showRenameThemeModal(theme)" class="dropdown-item">
                     <svg class="dropdown-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
@@ -120,12 +144,14 @@ import { ref, computed, watch, onMounted } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router'; // Add this import at the top
 import ThemeCreateModal from '@/components/ThemeSpace/themeCreateModal.vue';
+import ThemeRenameModal from '@/components/ThemeSpace/themeRenameDialog.vue';
 import debounce from 'lodash/debounce';
 
 export default {
   name: 'ThemeSpace',
   components: {
-    ThemeCreateModal
+    ThemeCreateModal,
+    ThemeRenameModal
   },
   setup() {
     // Store setup
@@ -142,8 +168,9 @@ export default {
     const themes = computed(() => store.getters['themeSpace/getThemes'], userId.value);
     const loading = computed(() => store.getters['themeSpace/isLoading']);
     const error = computed(() => store.getters['themeSpace/getError']);
-
-    
+    const onEdit = ref(false);
+    const selectedThemeSpace = ref(null);
+    const focusedThemeId = computed(() => store.getters['themeSpace/getFocusedThemeId']);
 
     // Methods
     const fetchThemes = async () => {
@@ -159,13 +186,21 @@ export default {
       showCreateModal.value = true;
     }
 
-    const addTheme = async ({ theme, topic, combinedValue }) => {
-      console.log('Creating new theme:', { theme, topic, combinedValue });
+    const showRenameModal = ref(false);
+    const showRenameThemeModal= async(theme) => {
+      showRenameModal.value = true;
+      selectedThemeSpace.value = theme;
+
+      closeDropdown()
+    }
+
+    const addTheme = async ({ newTheme, tags }) => {
+      console.log('Creating new theme:', { newTheme });
+      console.log('Tags:', { tags });
       
       const themeData = {
-        name: combinedValue,  // This will be the document name
-        theme: theme,         // Original theme value
-        topic: topic,         // Original topic value
+        name: newTheme,  // This will be the document name
+        hashtags: tags
         // Add any other fields you want to store
       };
 
@@ -194,10 +229,22 @@ export default {
       window.addEventListener('click', closeDropdown)
     }
 
-    const renameTheme = (themeId) => {
+    const renameTheme = async(newName) => {
       // Implement rename logic here
-      console.log('Rename theme:', themeId)
-      closeDropdown()
+      console.log('Rename theme:', newName);
+      const themeData = {
+        name: newName
+      };
+      try {
+        await store.dispatch('themeSpace/updateTheme', {
+          themeId: selectedThemeSpace.value.id,
+          themeData,
+          userId: userId.value
+        });
+      } catch (error) {
+        console.error('Error in addTheme:', error);
+        // Handle error appropriately
+      }
     }
 
     const openSettings = (themeId) => {
@@ -213,8 +260,8 @@ export default {
       }
 
       try {
-        await store.dispatch('themeSpace/deleteTheme', { themeId: themeId, 
-          userId: userId.value });
+        await store.dispatch('themeSpace/deleteTheme', { userId: userId.value, 
+          themeId: themeId });
         console.log('Delete theme:', themeId)
         closeDropdown()
       } catch (error) {
@@ -222,16 +269,6 @@ export default {
       }
       
     }
-    /*
-
-    const updateTheme = async (payload) => {
-      try {
-        await store.dispatch('themeSpace/updateTheme', payload);
-      } catch (error) {
-        console.error('Error updating theme:', error);
-      }
-    };
-    */
 
     const clearThemes = () => {
       try {
@@ -273,9 +310,12 @@ export default {
     };
 
     const initializeThemes = async () => {
+      console.log('[ThemeSpaceView.vue/initializeThemes] TRIGGERED');
       try {
         if (userId.value) {
           await fetchThemes();
+          await store.dispatch('themeSpace/setThemeId', {userId: userId.value});
+          console.log('Focused Theme:', focusedThemeId.value);
         }
       } catch (error) {
         console.error('Error initializing themes:', error);
@@ -286,10 +326,29 @@ export default {
 
     const selectTheme = async (id) => {
       try {
-        await store.dispatch('mindspace/changeThemeId', id);
+        await store.dispatch('mindspace/setViewThemeId', id);
         router.push('/dashboard');  // Add navigation
       } catch (error) {
         console.log(error.message);
+      }
+    }
+
+    const changeFocusTheme = async (id) => {
+      onEdit.value = true;
+      if (!confirm('Do you want to set this as focus theme?')) {
+        onEdit.value = false;
+        return;
+      }
+      try {
+        console.log("[ThemeSpaceView.vue/changeFocusTheme]", id);
+        await store.dispatch('themeSpace/changeThemeId', {
+          userId: userId.value, 
+          themeId: id
+        });
+        onEdit.value = false;
+      } catch (error) {
+        console.log(error.message);
+        onEdit.value = false;
       }
     }
 
@@ -329,18 +388,20 @@ export default {
       planType,
       searchQuery,
       userId,
+      focusedThemeId,
       themes,
       loading,
       error,
+      onEdit,
       formatDate,
 
-      selectTheme,  
+      selectTheme, 
+      changeFocusTheme, 
       fetchThemes,
       addTheme,
       deleteTheme,
       clearThemes,
-      /*
-      updateTheme,*/
+      
       handleSearch,
       
 
@@ -350,8 +411,11 @@ export default {
       renameTheme,
       openSettings,
 
+      selectedThemeSpace,
       showCreateModal,
       showCreateThemeModal,
+      showRenameModal,
+      showRenameThemeModal,
     };
   }
 };

@@ -2,7 +2,7 @@
 <template>
   <div 
     class="title-block"
-    @click="isEditable && handleClick()"
+    @click="isEditable && !isFocused && handleClick()"
   >
     <template v-if="!isEditing">
       <h2>{{ block.content }}</h2>
@@ -11,8 +11,7 @@
       <input
         v-model="editedContent"
         class="edit-input-title"
-        @blur="saveChanges"
-        @keyup.enter="saveChanges"
+        @blur="handleBlur"
         @focus="handleFocus"
         ref="editInput"
       >
@@ -42,6 +41,7 @@ export default {
 
     //CLICK AND OPEN INPUT
     const handleClick = async () => {
+      if (isFocused.value) return; // Extra safety check
       isEditing.value = true;
       editedContent.value = props.block.content;
       await nextTick();
@@ -53,6 +53,11 @@ export default {
       isFocused.value = true;
       await nextTick();
       editInput.value.select();
+    };
+
+    const handleBlur = () => {
+      saveChanges();
+      isFocused.value = false; // Reset focus state
     };
 
     const saveChanges = () => {
@@ -75,7 +80,8 @@ export default {
       saveChanges,
       editInput,
       isFocused,
-      handleFocus
+      handleFocus,
+      handleBlur
     };
   }
 };

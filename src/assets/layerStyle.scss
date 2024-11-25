@@ -13,6 +13,12 @@
     z-index: 998;
 }
 
+//[Theme View]
+//ThemeView > Create new modal
+.theme-modal-overlay{
+    z-index: 1000;
+}
+
 //[MindSpace View/ Menu]
 //MindSpace > Menu
 .menu-overlay{
