@@ -46,6 +46,7 @@
 <script>
 import { defineComponent, computed, ref, onMounted } from 'vue';
 import { useStore } from 'vuex';
+import { useRouter } from 'vue-router'; // Add this import at the top
 import DockNav from '@/components/dockNav.vue';
 import HeaderNav from '@/components/Header/HeaderNav.vue';
 import Dashboard from '@/components/DashBoard/dashboard.vue';
@@ -65,6 +66,7 @@ export default defineComponent({
   },
   setup() {
     const store = useStore();
+    const router = useRouter();
     const isMindSpaceView = ref(true);
     const isDragging = ref(false);
     const startX = ref(0);
@@ -76,7 +78,7 @@ export default defineComponent({
     const isHorizontalDrag = ref(false);
     const isEditing = ref(false);
     const currentPage = computed(() => store.getters['mindspace/getCurrentPage']);
-    
+    const currentThemeId = computed(() => store.getters['mindspace/getThemeId']);
     const slidePosition = computed(() => {
       if (isDragging.value) {
         const delta = currentX.value - startX.value;
@@ -166,7 +168,12 @@ export default defineComponent({
     };
 
     onMounted(() => {
-      store.dispatch('mindspace/setMindSpacePages');
+      if(!currentThemeId.value){
+        router.push('/themespace');
+        return;
+      }else{
+        store.dispatch('mindspace/setMindSpacePages');
+      }
       toggleView();
     });
 
