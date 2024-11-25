@@ -45,6 +45,7 @@ export default {
       rawPages: null,
       rawFolders: null,
       showItemWindow: false,
+      isEditMode: false,
     },
     
     mutations: {
@@ -126,6 +127,9 @@ export default {
       },
 
       //[ITEM ORDER MANAGEMENT]
+      SET_IS_EDIT_MODE(state, value){
+        state.isEditMode = value;
+      },
       UPDATE_PAGE_ITEMS(state, { pageIndex, items }) {
         if (pageIndex >= 0 && pageIndex < state.mindSpacePages.length) {
           state.mindSpacePages[pageIndex].items = items;
@@ -634,6 +638,11 @@ export default {
         commit('SET_TOTAL_PAGES', state.mindSpacePages.length);
       },
       // New action for updating page items
+      setIsEditMode({ commit, state }, value){
+        console.log("[setIsEditMode] TRIGGERED");
+        commit('SET_IS_EDIT_MODE', value);
+        console.log("[mindspace.js/setIsEditMode] isEditMode: ", state.isEditMode);
+      },
       updatePageItems({ commit }, { pageIndex, items }) {
         commit('UPDATE_PAGE_ITEMS', { pageIndex, items });
       },
@@ -1011,6 +1020,7 @@ export default {
         }
         return null;
       },
+      getIsEditMode: state => state.isEditMode,
     }
   };
 

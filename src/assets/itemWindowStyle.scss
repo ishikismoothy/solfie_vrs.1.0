@@ -29,10 +29,11 @@
       border: none;
       cursor: pointer;
       padding: 0.5rem;
+      color: #333;
+      transition: background-color 0.2s;
       
       &:hover {
-        background-color: rgba(0, 0, 0, 0.1);
-        border-radius: 50%;
+        background-color: rgba(0, 0, 0, 0.05);
       }
     }
   }

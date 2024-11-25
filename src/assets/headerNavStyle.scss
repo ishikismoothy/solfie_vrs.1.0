@@ -4,7 +4,8 @@ header {
   justify-content: space-between;
   position: sticky;
   align-items: center;
-  padding: 15px;
+  width: 100vw;
+  height: 50px;
   background-color: rgb(255, 255, 255);
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
 }
@@ -26,11 +27,9 @@ header {
     position: fixed;
     top: 0;
     left: 0;
-    width: 97vw;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 5px 12px;
 
     // By default (mobile), center section is hidden
     .theme-title {
@@ -53,7 +52,6 @@ header {
 // Responsive is defiened in HeaderNav.vue
 @include responsive(tablet) {
   .header-container {
-    width: 98.5vw;
 
     .theme-title {
       display:inline;
@@ -80,7 +78,6 @@ header {
 
 @include responsive(desktop) {
   .header-container {
-    width: 98.5vw;
 
     .theme-title {
       display:inline;
@@ -110,18 +107,28 @@ header {
     display: flex;
     align-items: center;
     gap: 8px;
-  }
-  
-  .globe-icon img {
-    width: 20px;
-    height: 20px;
-  }
-  
-  .mindspace-name {
-    font-size: 16px;
-    font-weight: 500;
-    font-weight: bold;
-    color: #333;
+    margin-left: 10px;
+
+    .mindspace-name {
+      font-size: 16px;
+      font-weight: 500;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .theme-title {
+      font-size: 16px;
+      font-weight: 500;
+      color: #333;
+      margin: 0;
+    }
+    
+    .globe-icon {
+      margin: 0 10px;
+      .icon-button {
+        padding: 6px;
+      }
+    }
   }
   
   .center-section {
@@ -129,35 +136,25 @@ header {
     text-align: center;
   }
   
-  .theme-title {
-    font-size: 16px;
-    font-weight: 500;
-    color: #333;
-    margin: 0;
-  }
-  
   .right-section {
     display: flex;
-    gap: 16px;
-  }
+    gap: 12px;
+    margin-right: 10px;    
+    .icon-button {
+      padding: 6px;
+      & img {
+        width: 20px;
+        height: 20px;
+      }
+      & svg {
+        width: 20px;
+        height: 20px;
+      }
   
-  .icon-button {
-    background: none;
-    border: none;
-    padding: 4px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  .icon-button img {
-    width: 20px;
-    height: 20px;
-  }
-  
-  .icon-button:hover {
-    opacity: 0.8;
+      &:hover{
+        opacity: 0.8;
+      }
+    }
   }
 
   .notifications {

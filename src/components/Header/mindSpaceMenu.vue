@@ -61,13 +61,17 @@
             :class="{ 'has-overlay': activeSettingsId === mindspace.id }"
           >
             <div class="mindspace-content">
-              <button
-                class = "icon-button globe-icon" :class="{ 'is-favourite': defaultMindSpaceId === mindspace.id }"
-                @click="toggleSetMindSpace(mindspace.id)"
-              >
+              <div class="globe-icon" :class="{ 'is-favourite': defaultMindSpaceId === mindspace.id }">
+                <button
+                  class = "icon-button" 
+                  @click="toggleSetMindSpace(mindspace.id)"
+                >
                 <img src="@//assets/icons/utility/globeIcon.svg" class="globe-default" alt="globe" />
                 <img src="@//assets/icons/utility/globeIcon_active.svg" class="globe-active" alt="globe-active" />
               </button>
+
+              </div>
+              
               <TruncateText
                 :text="mindspace.name"
                 :mobile-cutoff="20"

@@ -1,6 +1,8 @@
 <template>
   <!-- header Menu -->
-  <HeaderNav />
+  <HeaderNav 
+    :on-edit="isEditMode"
+  />
 
   <div class="view-container">
     <!-- Page indicator - moved outside views-wrapper -->
@@ -29,7 +31,7 @@
       
       <!-- MindSpace view -->
       <div class="view mindspace-view">
-        <mindSpace @edit-mode-change="handleEditModeChange"/>
+        <mindSpace/>
       </div>
     </div>
 
@@ -44,7 +46,7 @@
 </template>
 
 <script>
-import { defineComponent, computed, ref, onMounted } from 'vue';
+import { defineComponent, computed, ref, onMounted, watch } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router'; // Add this import at the top
 import DockNav from '@/components/dockNav.vue';
@@ -76,7 +78,7 @@ export default defineComponent({
     const deltaX = ref(0);
     const deltaY = ref(0);
     const isHorizontalDrag = ref(false);
-    const isEditing = ref(false);
+    const isEditMode = computed(() => store.getters['mindspace/getIsEditMode']);
     const currentPage = computed(() => store.getters['mindspace/getCurrentPage']);
     const currentThemeId = computed(() => store.getters['mindspace/getThemeId']);
     const slidePosition = computed(() => {
@@ -89,10 +91,13 @@ export default defineComponent({
       return isMindSpaceView.value ? 0 : -50; // Changed from -100 to -50
     });
 
-    const handleEditModeChange = (value) => {
-      isEditing.value = value;
-      console.log("[DashboardView.vue]",isEditing.value);
-    };
+    watch(
+      () => isEditMode.value,
+      (newValue, oldValue) => {
+        console.log('[DashboardView.vue] Edit mode changed:', { new: newValue, old: oldValue })
+      },
+      { immediate: true }
+    )
 
 
     // Update toggleView:
@@ -104,9 +109,9 @@ export default defineComponent({
 
     // Touch handling - SHIFT TO DASHBOARD OR MINDSPACE
     const handleTouchStart = (event) => {
-      if (isEditing.value) return;
+      if (isEditMode.value) return;
 
-      if (currentPage.value < 1 && !isEditing.value){
+      if (currentPage.value < 1 && !isEditMode.value){
         console.log("[DashboardView.vue/handleTouchStart] start at: ",currentPage.value);
         startX.value = event.touches[0].clientX;
         startY.value = event.touches[0].clientY;
@@ -119,10 +124,10 @@ export default defineComponent({
     };
 
     const handleTouchMove = (event) => {
-      if (isEditing.value) return;
+      if (isEditMode.value) return;
       
       const minDis = 30;
-      if (currentPage.value < 1 && !isEditing.value){
+      if (currentPage.value < 1 && !isEditMode.value){
         currentX.value = event.touches[0].clientX;
         currentY.value = event.touches[0].clientY;
         deltaX.value = Math.abs(currentX.value - startX.value);
@@ -145,7 +150,7 @@ export default defineComponent({
     };
 
     const handleTouchEnd = () => {
-      if (isEditing.value) return;
+      if (isEditMode.value) return;
 
       if (isDragging.value) {
           const delta = currentX.value - startX.value;
@@ -185,8 +190,7 @@ export default defineComponent({
       handleTouchStart,
       handleTouchMove,
       handleTouchEnd,
-      isEditing,
-      handleEditModeChange,
+      isEditMode,
       closeItemWindow,
       showItemWindow
     };

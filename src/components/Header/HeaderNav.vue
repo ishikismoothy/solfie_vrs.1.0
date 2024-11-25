@@ -26,15 +26,32 @@
       <h1 class="theme-title" v-else>Loading...</h1>
     </div>-->
     <div class="right-section">
-      <button class="icon-button">
+      <button class="icon-button"
+        v-if="!isEditMode"
+      >
         <img src="@/assets/icons/utility/bellIcon.svg" alt="view" />
       </button>
       <span class="notification-count">{{ user.notifications }}</span>
-      <button class="icon-button">
+      <button class="icon-button"
+        v-if="!isEditMode"
+      >
         <img src="@//assets/icons/utility/shareIcon.svg" alt="share" />
       </button>
-      <button class="icon-button">
+      <button class="icon-button"
+        v-if="!isEditMode"
+      >
         <img src="@//assets/icons/utility/moreIcon.svg" alt="more options" />
+      </button>
+
+      <button 
+        class="icon-button" 
+        @click="exitEditMode"
+        v-else
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
       </button>
     </div>
   </header>
@@ -71,6 +88,8 @@ export default {
     const themeId = computed(() => store.getters['mindspace/getThemeId']);
     const userId = computed(() => store.getters['mindspace/getUserId']);
 
+    const isEditMode = computed(() => store.getters['mindspace/getIsEditMode']);
+
     console.log("[HeaderNav.vue] Reading",userId.value);
 
     const toggleMenu = () => {
@@ -81,6 +100,25 @@ export default {
       isMenuOpen.value = false;
     };
 
+    const  exitEditMode = async () => {
+      console.log('[HeaderNav.vue/exitEditMode] Successfully exited edit mode and updated mindspace');
+      try {
+        await store.dispatch('mindspace/setIsEditMode', false);
+        
+        // First update the mindspace in Firestore
+        await store.dispatch('mindspace/updateMindSpace');
+        
+        // Then refresh the pages from Firestore
+        await store.dispatch('mindspace/setMindSpacePages');
+        
+        console.log('Successfully exited edit mode and updated mindspace');
+      } catch (error) {
+        console.error('Error exiting edit mode:', error);
+        // Handle error (show message to user, etc.)
+      }
+    };
+  
+
     return {
       user,
       isLoading,
@@ -90,7 +128,9 @@ export default {
       themeId,
       isMenuOpen,
       toggleMenu,
-      closeMenu
+      closeMenu,
+      isEditMode,
+      exitEditMode
     };
   }
 };
@@ -109,4 +149,5 @@ export default {
 @import '@/assets/headerNavStyle.scss';
 @import '@/assets/mindSpaceMenuStyle.scss';
 @import '@/assets/mindSpaceRenameModalStyle.scss';
+@import '@/assets/globalIconStyle.scss';
 </style>

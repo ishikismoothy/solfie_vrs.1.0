@@ -20,6 +20,8 @@
             placeholder="Search" 
             v-model="searchQuery"
             @input="handleSearch"
+            @focus="handleSearchFocus"
+            @blur="handleSearchBlur"
           />
           <span class="search-icon">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -172,15 +174,6 @@ export default {
     const selectedThemeSpace = ref(null);
     const focusedThemeId = computed(() => store.getters['themeSpace/getFocusedThemeId']);
 
-    // Methods
-    const fetchThemes = async () => {
-      try {
-        await store.dispatch('themeSpace/fetchThemes',userId.value);
-      } catch (error) {
-        console.error('Error fetching themes:', error);
-      }
-    };
-
     const showCreateModal = ref(false);
     const showCreateThemeModal= () => {
       showCreateModal.value = true;
@@ -193,6 +186,29 @@ export default {
 
       closeDropdown()
     }
+
+    const openDropdownId = ref(null);
+    const toggleDropdown = (themeId) => {
+      openDropdownId.value = openDropdownId.value === themeId ? null : themeId
+    }
+
+    const closeDropdown = () => {
+      openDropdownId.value = null
+    }
+
+    // Add click event listener to close dropdown when clicking outside
+    if (typeof window !== 'undefined') {
+      window.addEventListener('click', closeDropdown)
+    }
+
+    // Methods
+    const fetchThemes = async () => {
+      try {
+        await store.dispatch('themeSpace/fetchThemes',userId.value);
+      } catch (error) {
+        console.error('Error fetching themes:', error);
+      }
+    };
 
     const addTheme = async ({ newTheme, tags }) => {
       console.log('Creating new theme:', { newTheme });
@@ -214,20 +230,6 @@ export default {
         // Handle error appropriately
       }
     };
-
-    const openDropdownId = ref(null);
-    const toggleDropdown = (themeId) => {
-      openDropdownId.value = openDropdownId.value === themeId ? null : themeId
-    }
-
-    const closeDropdown = () => {
-      openDropdownId.value = null
-    }
-
-    // Add click event listener to close dropdown when clicking outside
-    if (typeof window !== 'undefined') {
-      window.addEventListener('click', closeDropdown)
-    }
 
     const renameTheme = async(newName) => {
       // Implement rename logic here
@@ -276,6 +278,25 @@ export default {
       } catch (error) {
         console.error('Error clearing themes:', error);
       }
+    };
+
+    const handleSearchFocus = () => {
+      // Allow zooming when input is focused
+      const viewport = document.querySelector('meta[name="viewport"]');
+      viewport.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=10');
+    };
+    const handleSearchBlur = () => {
+      // Add a small delay to ensure the keyboard has time to hide
+      setTimeout(() => {
+        const viewport = document.querySelector('meta[name="viewport"]');
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1');
+        
+        // Double-check after a brief delay to ensure the scale is reset
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          document.body.scrollTop = 0;
+        }, 100);
+      }, 300);
     };
 
     const handleSearch = debounce(async () => {
@@ -396,12 +417,14 @@ export default {
       formatDate,
 
       selectTheme, 
-      changeFocusTheme, 
+      changeFocusTheme,
       fetchThemes,
       addTheme,
       deleteTheme,
       clearThemes,
       
+      handleSearchFocus,
+      handleSearchBlur,
       handleSearch,
       
 

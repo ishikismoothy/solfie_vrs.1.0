@@ -258,7 +258,7 @@ ADD STATUS HEADER
         AddItemPopup,
         TruncateText,
       },
-      setup(props, { emit }) {
+      setup() {
         const store = useStore();
         const currentUser = computed(() =>store.getters['mindspace/getUserId']);
         const currentTime = ref('');
@@ -495,14 +495,15 @@ ADD STATUS HEADER
   
   
         //[Drag&Drop]Mind-Grid Drag and Drop mode Handling
-        const isEditMode = ref(false);
+        const isEditMode = computed(() => store.getters['mindspace/getIsEditMode']);
         const isMouseDown = ref(false);
         const editModeTimer = ref(null);
         
-        const startEditModeTimer = (/*event*/) => {
+        const startEditModeTimer = () => {
           if (isEditMode.value) return;
-          editModeTimer.value = setTimeout(() => {
-            isEditMode.value = true;
+          editModeTimer.value = setTimeout(async() => {
+            //isEditMode.value = true;
+            await store.dispatch('mindspace/setIsEditMode', true);
           }, 2000);
         };
   
@@ -514,8 +515,8 @@ ADD STATUS HEADER
   
         const  exitEditMode = async () => {
           try {
-            isEditMode.value = false;
-            
+            //isEditMode.value = false;
+            await store.dispatch('mindspace/setIsEditMode', false);
             // First update the mindspace in Firestore
             await store.dispatch('mindspace/updateMindSpace');
             
@@ -553,7 +554,7 @@ ADD STATUS HEADER
 
         watch(isEditMode, (newValue) => {
           console.log("[mindSapce.vue] Disable handleTouchStart from Dashboard.",newValue)
-          emit('edit-mode-change', newValue);
+          //emit('edit-mode-change', newValue);
         });
 
         //PageShift Touch Swipe

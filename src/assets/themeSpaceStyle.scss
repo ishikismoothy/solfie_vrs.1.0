@@ -49,6 +49,8 @@ $transition: all 0.3s ease;
   header {
     @include flex(space-between);
     margin-bottom: 1.5rem;
+    width: auto;
+    padding: 10px;
 
     .logo-section {
       @include flex(flex-start, center, 0.5rem);
