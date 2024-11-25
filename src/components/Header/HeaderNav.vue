@@ -31,7 +31,11 @@
       >
         <img src="@/assets/icons/utility/bellIcon.svg" alt="view" />
       </button>
-      <span class="notification-count">{{ user.notifications }}</span>
+      <span v-if="!isEditMode"
+        class="notification-count"
+      >
+        {{ user.notifications }}
+      </span>
       <button class="icon-button"
         v-if="!isEditMode"
       >
