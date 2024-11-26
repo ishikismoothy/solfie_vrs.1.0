@@ -5,7 +5,7 @@
     @click="isEditable && !isFocused && handleClick()"
   >
     <template v-if="!isEditing">
-      <h2>{{ block.content }}</h2>
+      <h4>{{ block.content }}</h4>
     </template>
     <template v-else>
       <input
