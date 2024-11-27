@@ -348,6 +348,7 @@ export default {
     const selectTheme = async (id) => {
       try {
         await store.dispatch('mindspace/setViewThemeId', id);
+        await store.dispatch('user/setLastViewThemeHistory', {uid: userId.value, themeId: id});
         router.push('/dashboard');  // Add navigation
       } catch (error) {
         console.log(error.message);

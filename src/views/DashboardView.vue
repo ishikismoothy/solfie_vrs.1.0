@@ -68,6 +68,7 @@ export default defineComponent({
   },
   setup() {
     const store = useStore();
+    const userId = computed(() => store.getters['mindspace/getUserId']);
     const router = useRouter();
     const isMindSpaceView = ref(true);
     const isDragging = ref(false);
@@ -172,16 +173,32 @@ export default defineComponent({
         store.dispatch('mindspace/triggerItemWindow', false);
     };
 
-    onMounted(() => {
-      if(!currentThemeId.value){
-        router.push('/themespace');
-        return;
-      }else{
-        store.dispatch('mindspace/setMindSpacePages');
-      }
-      toggleView();
-    });
+    onMounted(async () => {
+      try {
+        // Make sure we have a userId first
+        if (!userId.value) {
+          await store.dispatch('mindspace/setUserId');
+        }
 
+        // If no theme is selected
+        if (!currentThemeId.value) {
+          const loadView = await store.dispatch('mindspace/loadViewThemeId');
+          
+          if (!loadView) {
+            return router.push('/themespace');
+          }
+        }
+
+        // Load pages if we have a theme
+        await store.dispatch('mindspace/setMindSpacePages');
+        toggleView();
+
+      } catch (error) {
+        console.error('Error in setup:', error);
+        router.push('/themespace');
+      }
+    });
+    
     return {
       isMindSpaceView,
       toggleView,

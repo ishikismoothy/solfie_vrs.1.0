@@ -19,6 +19,11 @@ import {
   getItemData,
   updateItemData,
 } from '@/firebase/firebaseMindSpace';
+import { 
+  updateViewThemeHistory,
+  updateViewMindspaceHistory,
+  loadViewHistory,
+} from '@/firebase/firebaseFirestore';
 import { getCurrentUserId } from '@/firebase/firebaseAuth';
 
 export default {
@@ -430,12 +435,48 @@ export default {
           console.log("[setUserId] Finish Process");
         }
       },
+      async loadViewThemeId({ commit, state, dispatch }) {
+        console.log("[loadViewThemeId] TRIGGERED");
+        try {
+          // Check if userId exists
+          if (!state.userId) {
+            console.log("[loadViewThemeId] No userId available");
+            return null;
+          }
+      
+          // Add await here
+          const viewHistory = await loadViewHistory(state.userId);
+      
+          if (!viewHistory) {
+            return null;
+          }
+      
+          // Add null check for theme
+          if (viewHistory.theme) {
+            commit('SET_THEME_ID', viewHistory.theme);
+            console.log("[setViewThemeId] Current", state.currentThemeId);
+      
+            // 2. Load theme data to get theme name
+            await dispatch('setThemeData');
+              
+            // 3. Load theme data to get defaultMindSpace
+            await dispatch('setMindSpaceId'); 
+            console.log("[loadViewThemeId] reset mindspaceId: ",state.currentMindSpaceId);
+          }
+      
+          return viewHistory;
+        } catch (error) {
+          console.error("[loadViewThemeId] Error:", error.message);
+          return null;
+        }
+      },
       async setViewThemeId({ commit, state, dispatch }, themeId) {
         console.log("[setViewThemeId] TRIGGERED", themeId);
         try {
           
           commit('SET_THEME_ID', themeId);
           console.log("[setViewThemeId] Current", state.currentThemeId);
+          updateViewThemeHistory( state.userId, state.currentThemeId);
 
           // 2. Load theme data to get theme name
           await dispatch('setThemeData');
@@ -453,9 +494,10 @@ export default {
         try {
           // Get theme document to find defaultMindSpace
           const defaultMindSpaceId = await getDefaultMindSpaceId(state.currentThemeId, state.userId);
-          
+
           commit('SET_MINDSPACE_ID', defaultMindSpaceId);
           console.log("[setMindSpaceId]",state.currentMindSpaceId);
+          updateViewMindspaceHistory( state.userId, state.currentMindSpaceId);
 
           // Now load the mindspace pages
           await dispatch('setMindSpacePages');

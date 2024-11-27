@@ -109,4 +109,75 @@ import {
     }
   };
 
-  // Add more Firestore operations as needed
+  export const updateViewThemeHistory = async (uid, themeId) => {
+    try {
+      const userRef = doc(db, 'users', uid);
+      const userRefSnap = await getDoc(userRef);
+  
+      if (!userRefSnap.exists()) {
+        throw new Error('User document not found');
+      }
+  
+      const userData = userRefSnap.data();
+      const existingViewHistory = userData.viewHistory || {};
+      
+      await updateDoc(userRef, {
+        viewHistory: {
+          ...existingViewHistory,  // Preserve existing fields
+          theme: themeId          // Update theme
+        }
+      });
+      return { message: "successful." };
+  
+    } catch (error) {
+      console.error("Error updating view history:", error);
+      throw error;
+    }
+  };
+  
+  export const updateViewMindspaceHistory = async (uid, mindSpaceId) => {
+    try {
+      const userRef = doc(db, 'users', uid);
+      const userRefSnap = await getDoc(userRef);
+  
+      if (!userRefSnap.exists()) {
+        throw new Error('User document not found');
+      }
+  
+      const userData = userRefSnap.data();
+      const existingViewHistory = userData.viewHistory || {};
+      
+      await updateDoc(userRef, {
+        viewHistory: {
+          ...existingViewHistory,    // Preserve existing fields
+          mindspace: mindSpaceId    // Update mindspace
+        }
+      });
+      return { message: "successful." };
+  
+    } catch (error) {
+      console.error("Error updating view history:", error);
+      throw error;
+    }
+  };
+  
+  export const loadViewHistory = async (uid) => {
+    try {
+      const userDoc = await getDoc(doc(db, 'users', uid));
+      if (!userDoc.exists()) {
+        throw new Error('User document not found');
+      }
+  
+      const userData = userDoc.data();
+      const viewHistoryData = userData.viewHistory;
+  
+      if (!viewHistoryData) {
+        return null;
+      } else {
+        return viewHistoryData;
+      }
+    } catch (error) {
+      console.error("Error loading view history:", error);
+      throw error;
+    }
+  };
