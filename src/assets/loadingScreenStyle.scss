@@ -1,3 +1,20 @@
+
+@keyframes dotOne {
+    0%, 100% { opacity: 0; }
+    15%, 95% { opacity: 1; }
+  }
+  
+  @keyframes dotTwo {
+    0%, 25%, 100% { opacity: 0; }
+    40%, 95% { opacity: 1; }
+  }
+  
+  @keyframes dotThree {
+    0%, 50%, 100% { opacity: 0; }
+    65%, 95% { opacity: 1; }
+  }
+
+  
 .loading-screen {
     position: fixed;
     top: 0;
@@ -8,37 +25,113 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    z-index: 9999;
   
-    &__content {
+    .content {
       text-align: center;
       padding: 2rem;
       max-width: 600px;
+      width: 100%;
+      margin: 0 auto;
+  
+      @media screen and (max-width: 768px) {
+        padding: 2rem 1.5rem;
+        max-width: 100%;
+      }
+  
+      @media screen and (max-width: 375px) {
+        padding: 2rem 1.25rem;
+      }
     }
   
-    &__title {
-      font-size: 2.5rem;
+    .title {
+      font-size: 2rem;
       font-weight: bold;
       margin-bottom: 1rem;
+  
+      @media screen and (max-width: 768px) {
+        font-size: 2rem;
+      }
     }
   
-    &__preparing {
-      font-size: 1.25rem;
-      margin-bottom: 2rem;
+    .preparing {
+        font-size: 1.25rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: baseline;
+        justify-content: center;
+        gap: 2px;
+
+        @media screen and (max-width: 768px) {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+        }
+    }
+    
+    .dots {
+        display: inline-flex;
+        align-items: baseline;
+        margin-left: 2px;
+        
+        span {
+            width: 4px;
+            height: 4px;
+            background-color: currentColor;
+            border-radius: 50%;
+            margin: 0 2px;
+            display: inline-block;
+            
+            &:nth-child(1) {
+                animation: dotOne 1.5s infinite;
+            }
+            
+            &:nth-child(2) {
+                animation: dotTwo 1.5s infinite;
+            }
+            
+            &:nth-child(3) {
+                animation: dotThree 1.5s infinite;
+            }
+        }
     }
   
-    &__tips {
+    .tips {
       margin-top: 2rem;
+      
+      @media screen and (max-width: 768px) {
+        margin-top: 1.5rem;
+      }
     }
   
-    &__tips-title {
+    .tips-title {
       font-size: 1.5rem;
       margin-bottom: 0.5rem;
+  
+      @media screen and (max-width: 768px) {
+        font-size: 1.25rem;
+      }
     }
   
-    &__tips-text {
+    .tips-text {
       color: #666;
       line-height: 1.6;
+      margin: 0 auto;
+      max-width: 90%;
+  
+      @media screen and (max-width: 768px) {
+        font-size: 0.95rem;
+        line-height: 1.5;
+        max-width: 95%;
+      }
     }
+  }
+  
+  @keyframes dots {
+    0% { width: 0; }
+    25% { width: 0.5em; }
+    50% { width: 1em; }
+    75% { width: 1.5em; }
+    100% { width: 0; }
   }
   
   // Fade transition
