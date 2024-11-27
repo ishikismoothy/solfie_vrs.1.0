@@ -1011,9 +1011,11 @@ export default {
         console.log("[mindspace.js/itemBlocks] Currently: ", state.itemBlocks);
         updateItemData(state.currentItemId, state.currentItemName, state.itemBlocks );
       },
-      updateBlock({ commit, state }, { id, content }) {
+      async updateBlock({ commit, state, dispatch }, { id, content }) {
         commit('UPDATE_BLOCK', { id, content });
-        updateItemData(state.currentItemId, state.currentItemName, state.itemBlocks );
+        await updateItemData(state.currentItemId, state.currentItemName, state.itemBlocks);
+        // Optionally update the store with the cleaned contents
+        await dispatch('setBlocks', state.currentItemId);
       },
       deleteBlock({ commit, state }, id) {
         commit('DELETE_BLOCK', id);

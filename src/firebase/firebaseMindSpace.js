@@ -523,21 +523,31 @@ export const getItemData = async (itemId) => {
   
 }
 
+// Firebase Update Function
 export const updateItemData = async (itemId, itemName, itemBlockData) => {
   console.log('[updateItemInFirestore] Starting update...');
-    
-    if (!itemId) {
-      throw new Error('Item ID is not set');
-    }
+  
+  if (!itemId) {
+    throw new Error('Item ID is not set');
+  }
 
-    const itemRef = doc(db, 'items', itemId);
-    
-    await updateDoc(itemRef, {
-        updatedAt: serverTimestamp(),
-        name: itemName,
-        contents: itemBlockData
-      }
-    );
+  // Store the filtered array in a new variable
+  const cleanedContents = itemBlockData.filter(item => {
+    return item && 
+      typeof item.content === 'string' && 
+      item.content.trim() !== '';
+  });
+
+  console.log('Original length:', itemBlockData.length);
+  console.log('Cleaned length:', cleanedContents.length);
+
+  const itemRef = doc(db, 'items', itemId);
+  
+  await updateDoc(itemRef, {
+    updatedAt: serverTimestamp(),
+    name: itemName,
+    contents: cleanedContents  // Use the cleaned array here
+  });
 }
 
 // Function to add item to Firestore and update mindspace
@@ -550,6 +560,7 @@ export const addItemToMindspace = async (userId, mindSpaceId, pageIndex, index, 
 
     const itemData = {
       id: itemId,
+      uid: userId,
       createdAt: serverTimestamp(),
       updatedAt: null,
       name: newItem.name || 'New Item',
@@ -699,6 +710,7 @@ export const addItemToFolder = async (userId, mindSpaceId, folderId, item) => {
   
       const itemData = {
         id: itemId,
+        uid: userId,
         createdAt: serverTimestamp(),
         updatedAt: null,
         name: item.name || 'New Item',
