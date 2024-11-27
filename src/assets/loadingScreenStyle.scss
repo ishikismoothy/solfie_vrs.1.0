@@ -1,0 +1,55 @@
+.loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  
+    &__content {
+      text-align: center;
+      padding: 2rem;
+      max-width: 600px;
+    }
+  
+    &__title {
+      font-size: 2.5rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+    }
+  
+    &__preparing {
+      font-size: 1.25rem;
+      margin-bottom: 2rem;
+    }
+  
+    &__tips {
+      margin-top: 2rem;
+    }
+  
+    &__tips-title {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+  
+    &__tips-text {
+      color: #666;
+      line-height: 1.6;
+    }
+  }
+  
+  // Fade transition
+  .fade {
+    &-enter-active,
+    &-leave-active {
+      transition: opacity 0.5s ease;
+    }
+  
+    &-enter-from,
+    &-leave-to {
+      opacity: 0;
+    }
+  }

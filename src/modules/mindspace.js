@@ -586,6 +586,7 @@ export default {
           console.error('Error loading mindspace:', error);
           commit('SET_ERROR', error.message);
         } finally {
+          await new Promise(resolve => setTimeout(resolve, 500));
           commit('SET_LOADING', false);
         }
       },

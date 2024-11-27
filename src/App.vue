@@ -12,6 +12,7 @@
 
 <style lang="scss">
 @import './assets/layerStyle.scss';
+@import './assets/loadingScreenStyle.scss';
 
 #app {
   font-family: Helvetica, Avenir, Arial, sans-serif;

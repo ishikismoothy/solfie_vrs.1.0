@@ -7,6 +7,7 @@ export default {
         focusedThemeId: null,
         themes: [],
         loading: false,
+        initialLoading: false,
         error: null,
         searchQuery: '',
         themesKey: [
@@ -23,6 +24,9 @@ export default {
         },
         SET_THEMES(state, themes) {
             state.themes = themes;
+        },
+        SET_INITIAL_LOADING(state, status) {
+            state.initialLoading = status;
         },
         SET_LOADING(state, status) {
             state.loading = status;
@@ -72,7 +76,7 @@ export default {
             }
     
             // Set loading state
-            commit('SET_LOADING', true);
+            commit('SET_INITIAL_LOADING', true);
     
             // Fetch themes
             const themes = await themeService.getThemes(userId);
@@ -87,7 +91,8 @@ export default {
                 commit('SET_ERROR', error.message);
                 commit('SET_THEMES', []);
             } finally {
-                commit('SET_LOADING', false);
+                await new Promise(resolve => setTimeout(resolve, 3000));
+                commit('SET_INITIAL_LOADING', false);
             }
         },
 
@@ -219,6 +224,7 @@ export default {
     getters: {
         getFocusedThemeId: state => state.focusedThemeId,
         getThemes: state => state.themes,
+        isInitialLoading: state => state.initialLoading,
         isLoading: state => state.loading,
         getError: state => state.error,
         getSearchQuery: state => state.searchQuery,

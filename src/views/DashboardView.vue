@@ -1,4 +1,6 @@
 <template>
+  <LoadingScreen v-model="isLoading" />
+
   <!-- header Menu -->
   <HeaderNav 
     :on-edit="isEditMode"
@@ -55,6 +57,7 @@ import Dashboard from '@/components/DashBoard/dashboard.vue';
 import mindSpace from '@/components/DashBoard/mindSpace.vue';
 import PageIndicator from '@/components/DashBoard/pageIndicator.vue';
 import itemWindow from '@/components/ItemWindow/itemWindow.vue';
+import LoadingScreen from '@/components/loadingScreen.vue';
 
 export default defineComponent({
   name: 'DashboardView',
@@ -64,12 +67,14 @@ export default defineComponent({
     mindSpace,
     PageIndicator,
     HeaderNav,
-    itemWindow
+    itemWindow,
+    LoadingScreen
   },
   setup() {
     const store = useStore();
     const userId = computed(() => store.getters['mindspace/getUserId']);
     const router = useRouter();
+    const isLoading = computed(() => store.getters['mindspace/isLoading']);
     const isMindSpaceView = ref(true);
     const isDragging = ref(false);
     const startX = ref(0);
@@ -198,8 +203,9 @@ export default defineComponent({
         router.push('/themespace');
       }
     });
-    
+
     return {
+      isLoading,
       isMindSpaceView,
       toggleView,
       isDragging,

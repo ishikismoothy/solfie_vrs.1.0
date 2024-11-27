@@ -1,4 +1,5 @@
 <template>
+  <LoadingScreen v-model="themeInitialLoading" />
   <div class="theme-space-container" v-if="isInitialized">
     <div class="theme-gallery">
       <!-- Header -->
@@ -47,7 +48,7 @@
       />
 
       <!-- Loading State -->
-      <div v-if="loading" class="loading-state">
+      <div v-if="themeLoading" class="loading-state">
         Loading themes...
       </div>
 
@@ -148,12 +149,14 @@ import { useRouter } from 'vue-router'; // Add this import at the top
 import ThemeCreateModal from '@/components/ThemeSpace/themeCreateModal.vue';
 import ThemeRenameModal from '@/components/ThemeSpace/themeRenameDialog.vue';
 import debounce from 'lodash/debounce';
+import LoadingScreen from '@/components/loadingScreen.vue';
 
 export default {
   name: 'ThemeSpace',
   components: {
     ThemeCreateModal,
-    ThemeRenameModal
+    ThemeRenameModal,
+    LoadingScreen
   },
   setup() {
     // Store setup
@@ -168,7 +171,10 @@ export default {
     // Computed properties
     const userId = computed(() => store.getters['mindspace/getUserId']);
     const themes = computed(() => store.getters['themeSpace/getThemes'], userId.value);
-    const loading = computed(() => store.getters['themeSpace/isLoading']);
+    const themeInitialLoading = computed(() => store.getters['themeSpace/isInitialLoading']);
+    const themeLoading = computed(() => store.getters['themeSpace/isLoading']);
+    const isLoading = computed(() => store.getters['mindspace/isLoading']);
+
     const error = computed(() => store.getters['themeSpace/getError']);
     const onEdit = ref(false);
     const selectedThemeSpace = ref(null);
@@ -389,6 +395,7 @@ export default {
 
     // Lifecycle hooks
     onMounted(async () => {
+      console.log("[ThemeSapceView.vue]: isLoading from mindspace.js", isLoading);
       try {
         console.log('Store state:', store.state);
         await store.dispatch('mindspace/setUserId');
@@ -412,7 +419,9 @@ export default {
       userId,
       focusedThemeId,
       themes,
-      loading,
+      themeLoading,
+      themeInitialLoading,
+      isLoading,
       error,
       onEdit,
       formatDate,
