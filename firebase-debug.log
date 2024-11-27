@@ -1,0 +1,10 @@
+[debug] [2024-11-27T05:00:58.736Z] ----------------------------------------------------------------------
+[debug] [2024-11-27T05:00:58.738Z] Command:       /usr/local/bin/node /usr/local/bin/firebase login
+[debug] [2024-11-27T05:00:58.739Z] CLI Version:   13.25.0
+[debug] [2024-11-27T05:00:58.739Z] Platform:      darwin
+[debug] [2024-11-27T05:00:58.739Z] Node Version:  v19.5.0
+[debug] [2024-11-27T05:00:58.739Z] Time:          Wed Nov 27 2024 14:00:58 GMT+0900 (Japan Standard Time)
+[debug] [2024-11-27T05:00:58.739Z] ----------------------------------------------------------------------
+[debug] 
+[info] i  Firebase optionally collects CLI and Emulator Suite usage and error reporting information to help improve our products. Data is collected in accordance with Google's privacy policy (https://policies.google.com/privacy) and is not used to identify you.
+ 

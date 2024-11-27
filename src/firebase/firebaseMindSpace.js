@@ -277,7 +277,6 @@ export const createMindspace = async ({
 
 export const duplicateMindspace = async (mindSpaceId) => {
   try {
-    // Check if mindSpaceId is provided
     if (!mindSpaceId) {
       throw new Error('MindSpace ID is required');
     }
@@ -286,24 +285,86 @@ export const duplicateMindspace = async (mindSpaceId) => {
     const mindspaceRef = doc(db, 'mindspace', mindSpaceId);
     const mindspaceDoc = await getDoc(mindspaceRef);
 
-    // Check if original document exists
     if (!mindspaceDoc.exists()) {
       throw new Error('Original mindspace document not found');
     }
 
-    // Get the data and modify it for the duplicate
     const originalData = mindspaceDoc.data();
     
-    // Create new data object with modified timestamps and name
-    const duplicateData = {
-      ...originalData,
-      name: `${originalData.name} (Copy)`, // Add '(Copy)' to the name
-      createdAt: serverTimestamp(), // New creation timestamp
-      updatedAt: null, // Reset edited timestamp
-      //id: null // Remove the original id if it exists in the data
+    // Function to duplicate an item and return new ID
+    const duplicateItem = async (itemId) => {
+      const itemRef = doc(db, 'items', itemId);
+      const itemDoc = await getDoc(itemRef);
+      
+      if (!itemDoc.exists()) {
+        throw new Error(`Item ${itemId} not found`);
+      }
+
+      const itemData = itemDoc.data();
+      const now = new Date();
+      
+      // Create new item with same data but new timestamps
+      const newItemData = {
+        ...itemData,
+        contents: itemData.contents.map(content => ({
+          ...content,
+          createdAt: now,  // Use regular Date object instead of serverTimestamp
+          editedAt: null
+        }))
+      };
+
+      // Add new item document
+      const itemsCollection = collection(db, 'items');
+      const newItemRef = await addDoc(itemsCollection, newItemData);
+      return newItemRef.id;
     };
 
-    // Add the new document to the collection
+    // Duplicate all items and create mapping of old to new IDs
+    const itemMapping = new Map();
+    
+    // Process folders
+    const duplicatedFolders = await Promise.all(originalData.folders.map(async folder => {
+      const newItems = await Promise.all(folder.items.map(async itemId => {
+        if (!itemMapping.has(itemId)) {
+          const newItemId = await duplicateItem(itemId);
+          itemMapping.set(itemId, newItemId);
+        }
+        return itemMapping.get(itemId);
+      }));
+
+      return {
+        ...folder,
+        items: newItems
+      };
+    }));
+
+    // Process pages
+    const duplicatedPages = await Promise.all(originalData.pages.map(async page => {
+      const newItems = await Promise.all(page.items.map(async itemId => {
+        if (!itemMapping.has(itemId)) {
+          const newItemId = await duplicateItem(itemId);
+          itemMapping.set(itemId, newItemId);
+        }
+        return itemMapping.get(itemId);
+      }));
+
+      return {
+        ...page,
+        items: newItems
+      };
+    }));
+
+    // Create new mindspace data
+    const duplicateData = {
+      ...originalData,
+      name: `${originalData.name} (Copy)`,
+      createdAt: serverTimestamp(),  // This is fine as it's not in an array
+      updatedAt: null,
+      folders: duplicatedFolders,
+      pages: duplicatedPages
+    };
+
+    // Add the new mindspace document
     const mindspaceCollection = collection(db, 'mindspace');
     const newDocRef = await addDoc(mindspaceCollection, duplicateData);
 
@@ -322,7 +383,6 @@ export const duplicateMindspace = async (mindSpaceId) => {
       message: 'Failed to duplicate mindspace'
     };
   }
-
 };
 
 export const deleteMindspace = async (mindSpaceId) => {
