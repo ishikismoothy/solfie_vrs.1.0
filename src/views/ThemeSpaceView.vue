@@ -150,7 +150,7 @@ import ThemeCreateModal from '@/components/ThemeSpace/themeCreateModal.vue';
 import ThemeRenameModal from '@/components/ThemeSpace/themeRenameDialog.vue';
 import debounce from 'lodash/debounce';
 import LoadingScreen from '@/components/loadingScreen.vue';
-
+import { enableBodyScroll, /*clearAllBodyScrollLocks*/ } from 'body-scroll-lock';
 export default {
   name: 'ThemeSpace',
   components: {
@@ -174,6 +174,7 @@ export default {
     const themeInitialLoading = computed(() => store.getters['themeSpace/isInitialLoading']);
     const themeLoading = computed(() => store.getters['themeSpace/isLoading']);
     const isLoading = computed(() => store.getters['mindspace/isLoading']);
+    const bodyElement = document.querySelector('body');
 
     const error = computed(() => store.getters['themeSpace/getError']);
     const onEdit = ref(false);
@@ -395,6 +396,7 @@ export default {
 
     // Lifecycle hooks
     onMounted(async () => {
+      enableBodyScroll(bodyElement);
       console.log("[ThemeSapceView.vue]: isLoading from mindspace.js", isLoading);
       try {
         console.log('Store state:', store.state);

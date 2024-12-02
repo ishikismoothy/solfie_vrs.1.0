@@ -39,7 +39,7 @@
 
     <DockNav />
     
-    <itemWindow 
+    <itemWindow class="itemWindow-view"
       :is-open="showItemWindow"
       @close="closeItemWindow"
     />
@@ -58,6 +58,7 @@ import mindSpace from '@/components/DashBoard/mindSpace.vue';
 import PageIndicator from '@/components/DashBoard/pageIndicator.vue';
 import itemWindow from '@/components/ItemWindow/itemWindow.vue';
 import LoadingScreen from '@/components/loadingScreen.vue';
+import { disableBodyScroll,  /*enableBodyScroll, /*clearAllBodyScrollLocks*/ } from 'body-scroll-lock';
 
 export default defineComponent({
   name: 'DashboardView',
@@ -96,6 +97,7 @@ export default defineComponent({
       }
       return isMindSpaceView.value ? 0 : -50; // Changed from -100 to -50
     });
+    const bodyElement = document.querySelector('body');
 
     watch(
       () => isEditMode.value,
@@ -179,6 +181,14 @@ export default defineComponent({
     };
 
     onMounted(async () => {
+      const dashboardView = document.querySelector('.view.dashboard-view');
+      const itemWindowView = document.querySelector('.itemWindow-view');
+
+      disableBodyScroll(bodyElement, {
+        allowTouchMove: (el) => {
+          return dashboardView.contains(el) || itemWindowView.contains(el);
+        }
+      });
       try {
         // Make sure we have a userId first
         if (!userId.value) {
