@@ -3,7 +3,7 @@
   <header class="header-container">
     <div class="left-section">
       <div class="globe-icon">
-        <button class="icon-button" 
+        <button class="icon-button"
           @click="toggleMenu"
         >
           <img src="@//assets/icons/utility/globeIcon.svg" alt="globe" />
@@ -30,12 +30,13 @@
         v-if="!isEditMode"
       >
         <img src="@/assets/icons/utility/bellIcon.svg" alt="view" />
-      </button>
-      <span v-if="!isEditMode"
+        <span v-if="!isEditMode"
         class="notification-count"
       >
         {{ user.notifications }}
       </span>
+      </button>
+
       <button class="icon-button"
         v-if="!isEditMode"
       >
@@ -43,12 +44,13 @@
       </button>
       <button class="icon-button"
         v-if="!isEditMode"
+        @click = "toggleDropdown"
       >
         <img src="@//assets/icons/utility/moreIcon.svg" alt="more options" />
       </button>
 
-      <button 
-        class="icon-button" 
+      <button
+        class="icon-button"
         @click="exitEditMode"
         v-else
       >
@@ -57,10 +59,17 @@
           <line x1="6" y1="6" x2="18" y2="18"></line>
         </svg>
       </button>
+
+        <!-- Dropdown content here -->
+      <div v-if="isDropdownOpen" class="dropdown-menu">
+        <LogoutButton class="button-style" />
+      </div>
+        <!-- Dropdown content ends -->
+
     </div>
   </header>
 
-  <SlideMenu 
+  <SlideMenu
       :is-open="isMenuOpen"
       :user-id="userId"
       :theme-id="themeId"
@@ -74,18 +83,21 @@ import { ref, computed } from 'vue';
 import { useStore } from 'vuex';
 import SlideMenu from './mindSpaceMenu.vue';
 import TruncateText from '../TruncateText/truncateHeaderText.vue';
+import LogoutButton from '@/components/logoutButton.vue';
 
 export default {
   name: 'HeaderNav',
   components: {
     SlideMenu,
-    TruncateText
+    TruncateText,
+    LogoutButton,
   },
   setup() {
     const store = useStore();
     const isMenuOpen = ref(false);
+    const isDropdownOpen = ref(false);
     const user = computed(() => store.state.user.user || {});
-    
+
     const themeName = computed(() => store.getters['mindspace/getThemeName']);
     const mindSpaceName = computed(() => store.getters['mindspace/getMindSpaceName']);
     const isLoading = computed(() => store.getters['mindspace/isLoading']);
@@ -100,6 +112,10 @@ export default {
       isMenuOpen.value = !isMenuOpen.value;
     };
 
+    const toggleDropdown = () => {
+      isDropdownOpen.value = !isDropdownOpen.value;
+    };
+
     const closeMenu = () => {
       isMenuOpen.value = false;
     };
@@ -108,20 +124,20 @@ export default {
       console.log('[HeaderNav.vue/exitEditMode] Successfully exited edit mode and updated mindspace');
       try {
         await store.dispatch('mindspace/setIsEditMode', false);
-        
+
         // First update the mindspace in Firestore
         await store.dispatch('mindspace/updateMindSpace');
-        
+
         // Then refresh the pages from Firestore
         await store.dispatch('mindspace/setMindSpacePages');
-        
+
         console.log('Successfully exited edit mode and updated mindspace');
       } catch (error) {
         console.error('Error exiting edit mode:', error);
         // Handle error (show message to user, etc.)
       }
     };
-  
+
 
     return {
       user,
@@ -131,7 +147,9 @@ export default {
       userId,
       themeId,
       isMenuOpen,
+      isDropdownOpen,
       toggleMenu,
+      toggleDropdown,
       closeMenu,
       isEditMode,
       exitEditMode
@@ -154,4 +172,5 @@ export default {
 @import '@/assets/mindSpaceMenuStyle.scss';
 @import '@/assets/mindSpaceRenameModalStyle.scss';
 @import '@/assets/globalIconStyle.scss';
+
 </style>

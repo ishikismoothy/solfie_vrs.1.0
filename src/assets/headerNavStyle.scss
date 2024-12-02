@@ -102,7 +102,7 @@ header {
     }*/
   }
 }
-  
+
   .left-section {
     display: flex;
     align-items: center;
@@ -122,7 +122,7 @@ header {
       color: #333;
       margin: 0;
     }
-    
+
     .globe-icon {
       margin: 0 10px;
       .icon-button {
@@ -130,18 +130,19 @@ header {
       }
     }
   }
-  
+
   .center-section {
     flex: 1;
     text-align: center;
   }
-  
+
   .right-section {
     display: flex;
     gap: 12px;
-    margin-right: 10px;    
+    margin-right: 10px;
     .icon-button {
       padding: 6px;
+      position: relative;
       & img {
         width: 20px;
         height: 20px;
@@ -150,24 +151,69 @@ header {
         width: 20px;
         height: 20px;
       }
-  
+
       &:hover{
         opacity: 0.8;
       }
     }
   }
 
-  .notifications {
-    position: relative;
-  }
-  
+  // .notifications {
+  //   position: relative;
+  // }
+
   .notification-count {
     position: absolute;
-    top: 8px;
-    right: 98px;
+    top: 0px;
+    right: 0px;
     background-color: red;
     color: white;
     border-radius: 50%;
     padding: 2px 5px;
     font-size: 10px;
+  }
+
+// Dropdown styles
+
+  .dropdown-menu {
+    position: absolute;
+    top: 40px;
+    right: 10px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+  }
+
+  .dropdown-item {
+    display: block;
+    padding: 10px;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+
+  .dropdown-item:hover {
+    background-color: #f5f5f5;
+  }
+
+  .button-style {
+    display: block;
+    padding: 15px 25px;
+    font-size: 18px;
+    color: #ff4a1d;
+    text-align: left;
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+  }
+
+  .button-style:hover {
+    background-color: #f5f5f5;
+    color: #ff0000;
+    text-shadow: 0px 0px 0px rgba(133, 0, 0, 0.4);
   }
