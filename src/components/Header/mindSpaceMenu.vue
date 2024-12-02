@@ -4,7 +4,10 @@
       <div class="menu-header">
         <div class="header-left">
           <button 
-            @click="$router.push('/themespace')" class="back-button">
+            @click="$router.push('/themespace')" 
+            @touchstart="$router.push('/themespace')" 
+            class="back-button"
+            >
             <span class="back-icon">&#8249;</span>
              Back to Theme
           </button>

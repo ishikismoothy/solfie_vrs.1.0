@@ -436,6 +436,7 @@ export default {
         }finally {
           console.log('Set new themes order END');
           isDragging.value = false;
+          console.log('isDragging',isDragging.value);
         }
       }
     });
@@ -447,26 +448,12 @@ export default {
         isDragging.value = true;
       }
     };
-    /*
+    
     const themeDragEnd = async () => {
-      store.commit('themeSpace/SET_LOADING', true);
       if (!themeLoading.value) {
-        
-        try {
-          console.log('Drag end, Set new orders',sortableThemes.value);
-        } catch (error) {
-          console.error('Error updating theme order:', error);
-          // Revert to original order on error
-          await fetchThemes();
-        } finally {
-          store.commit('themeSpace/SET_LOADING', false);
-          isDragging.value = false;
-        }
-      } else {
         isDragging.value = false;
-        store.commit('themeSpace/SET_LOADING', false);
       }
-    };*/
+    };
 
     // Watchers
     watch(userId, async (newUserId) => {
@@ -543,7 +530,7 @@ export default {
       sortableThemes,
       isDragging,
       themeDragStart,
-      //themeDragEnd,
+      themeDragEnd,
     };
   }
 };
