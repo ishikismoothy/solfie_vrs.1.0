@@ -138,7 +138,7 @@ export default {
         },
 
         async deleteTheme({ commit, dispatch }, { userId, themeId }) {
-            console.log("[deleteTheme/themeSpace.js]", userId);
+            console.log("[deleteTheme/themeSpace.js]", themeId);
             if (!userId) {
                 commit('SET_ERROR', 'User not authenticated');
                 return;
@@ -217,6 +217,22 @@ export default {
             }
             } catch (error) {
             console.log(error.message);
+            }
+        },
+        
+        async updateThemeOrder({ commit }, themes ) {
+            commit('SET_LOADING', true);
+            console.log('themeSpace.js/updateThemesOrder',themes)
+            try {
+              // Update the order in your backend
+              await themeService.updateThemeOrder(themes);
+              // Update the local state
+              commit('SET_THEMES', themes);
+            } catch (error) {
+              console.error('Error updating theme order:', error);
+              throw error;
+            } finally{
+                commit('SET_LOADING', false);
             }
         },
     },

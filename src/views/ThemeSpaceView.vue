@@ -32,7 +32,7 @@
         </div>
 
         <button class="create-button" @click="showCreateThemeModal">
-          Create New
+          New Wish
         </button>
       </div>
 
@@ -58,86 +58,124 @@
       </div>
 
       <!-- Theme Grid -->
-      <div v-else class="theme-grid">
-        <div 
-          v-for="theme in themes" 
-          :key="theme.id" 
-          class="theme-card"
-        >
-          <div class="image-container"
-            @click="!onEdit && selectTheme(theme.id)"
+      <draggable
+        v-else
+        v-model="sortableThemes"
+        class="theme-grid"
+        :animation="500"
+        ghost-class="theme-card-ghost"
+        drag-class="theme-card-drag"
+        group="themes"
+        @start="themeDragStart"
+      >
+          <div 
+            v-for="theme in sortableThemes"
+            :key="theme.id" 
+            class="theme-card"
+            :class="{ 
+              'is-dragging': isDragging,
+              'is-disabled': themeLoading 
+            }"
           >
-            <img 
-              :src="theme.imageUrl" 
-              :alt="theme.name"
-            />
-            <div class="overlay-icons">
-              <button 
-                class="icon-button star-button"
-                :class="{ 'is-focused': focusedThemeId === theme.id }"
-                @click.stop="changeFocusTheme(theme.id)"
-              >
-                <svg 
-                  viewBox="0 0 24 24" 
-                  class="star-default"
-                  alt="star"
-                  v-show="focusedThemeId !== theme.id"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                </svg>
-
-                <svg 
-                  viewBox="0 0 24 24" 
-                  class="star-active"
-                  alt="star-active"
-                  v-show="focusedThemeId === theme.id"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                </svg>
-              </button>
-              <div class="dropdown-container">
-                <button 
-                  class="icon-button more-button" 
-                  @click.stop="toggleDropdown(theme.id)"
-                >
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+            <div class="theme-content" @click="!onEdit && !themeLoading && selectTheme(theme.id)">
+              <div class="theme-info-group">
+                <div class="drag-handle" :class="{ 'is-disabled': themeLoading }">
+                  <svg viewBox="0 0 24 24" width="24" height="24" class="drag-icon">
+                    <path fill="currentColor" d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/>
                   </svg>
-                </button>
-                <div 
-                  v-if="openDropdownId === theme.id" 
-                  class="dropdown-menu"
-                  @click.stop
-                >
-                  <button @click="showRenameThemeModal(theme)" class="dropdown-item">
-                    <svg class="dropdown-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    Rename
-                  </button>
-                  <button @click="deleteTheme(theme.id)" class="dropdown-item delete">
-                    <svg class="dropdown-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                    Delete
-                  </button>
-                  <button @click="openSettings(theme.id)" class="dropdown-item">
-                    <svg class="dropdown-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    Settings
-                  </button>
+                </div>
+                <!--
+                <div class="theme-dots-icon">
+                  <span class="dot"></span>
+                  <span class="dot"></span>
+                  <span class="dot"></span>
+                  <span class="dot"></span>
+                </div>-->
+                <div class="theme-info">
+                  <h3>{{ theme.name }}</h3>
+                  <p class="updated-time">{{ formatDate(theme.updatedAt) }}</p>
                 </div>
               </div>
-            </div>
+              
+              <div class="action-buttons">
+                <button 
+                  class="icon-button star-button"
+                  :class="{ 
+                    'is-focused': focusedThemeId === theme.id,
+                    'is-disabled': isDragging || themeLoading 
+                  }"
+                  @click.stop="!isDragging && !themeLoading && changeFocusTheme(theme.id)"
+                  :disabled="isDragging || themeLoading"
+                >
+                  <svg 
+                    viewBox="0 0 24 24" 
+                    class="star-default"
+                    alt="star"
+                    v-show="focusedThemeId !== theme.id"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                  </svg>
+
+                  <svg 
+                    viewBox="0 0 24 24" 
+                    class="star-active"
+                    alt="star-active"
+                    v-show="focusedThemeId === theme.id"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                  </svg>
+                </button>
+                
+                <div class="dropdown-container">
+                  <button 
+                    class="icon-button more-button" 
+                    @click.stop="!isDragging && !themeLoading && toggleDropdown(theme.id)"
+                    :disabled="isDragging || themeLoading"
+                    :class="{ 'is-disabled': isDragging || themeLoading }"
+                  >
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                    </svg>
+                  </button>
+                  <div 
+                    v-if="openDropdownId === theme.id && !isDragging && !themeLoading" 
+                    class="dropdown-menu"
+                    @click.stop
+                  >
+                    <button 
+                      @click="showRenameThemeModal(theme)" 
+                      class="dropdown-item"
+                    >
+                      <svg class="dropdown-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                      Rename
+                    </button>
+                    <button 
+                      @click="deleteTheme(theme.id)" 
+                      class="dropdown-item delete"
+                    >
+                      <svg class="dropdown-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      Delete
+                    </button>
+                    <button 
+                      @click="openSettings(theme.id)" 
+                      class="dropdown-item"
+                    >
+                      <svg class="dropdown-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      Settings
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>        
           </div>
-          <div class="theme-info">
-            <h3>{{ theme.name }}</h3>
-            <p class="updated-time">{{ formatDate(theme.updatedAt) }}</p>
-          </div>
-        </div>
-      </div>
+      </draggable>
     </div>
   </div>
 </template>
@@ -146,6 +184,7 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router'; // Add this import at the top
+import { VueDraggableNext } from 'vue-draggable-next';
 import ThemeCreateModal from '@/components/ThemeSpace/themeCreateModal.vue';
 import ThemeRenameModal from '@/components/ThemeSpace/themeRenameDialog.vue';
 import debounce from 'lodash/debounce';
@@ -154,6 +193,7 @@ import { enableBodyScroll, /*clearAllBodyScrollLocks*/ } from 'body-scroll-lock'
 export default {
   name: 'ThemeSpace',
   components: {
+    draggable: VueDraggableNext,
     ThemeCreateModal,
     ThemeRenameModal,
     LoadingScreen
@@ -170,7 +210,7 @@ export default {
 
     // Computed properties
     const userId = computed(() => store.getters['mindspace/getUserId']);
-    const themes = computed(() => store.getters['themeSpace/getThemes'], userId.value);
+    const themes = computed(() => store.getters['themeSpace/getThemes']);
     const themeInitialLoading = computed(() => store.getters['themeSpace/isInitialLoading']);
     const themeLoading = computed(() => store.getters['themeSpace/isLoading']);
     const isLoading = computed(() => store.getters['mindspace/isLoading']);
@@ -381,6 +421,53 @@ export default {
       }
     }
 
+    const isDragging = ref(false);
+
+    // Add sortableThemes computed property that works with your existing store
+    const sortableThemes = computed({
+      get: () => store.state.themeSpace.themes || [],
+      set: async (newOrder) => {
+        console.log('Set new themes order START');
+        try { 
+          console.log('Set new themes order:', newOrder);
+          store.dispatch('themeSpace/updateThemeOrder', newOrder);
+        } catch (error) {
+          console.error('Error updating themes order:', error);
+        }finally {
+          console.log('Set new themes order END');
+          isDragging.value = false;
+        }
+      }
+    });
+
+    
+    // Add drag handlers
+    const themeDragStart = () => {
+      if (!themeLoading.value) {
+        isDragging.value = true;
+      }
+    };
+    /*
+    const themeDragEnd = async () => {
+      store.commit('themeSpace/SET_LOADING', true);
+      if (!themeLoading.value) {
+        
+        try {
+          console.log('Drag end, Set new orders',sortableThemes.value);
+        } catch (error) {
+          console.error('Error updating theme order:', error);
+          // Revert to original order on error
+          await fetchThemes();
+        } finally {
+          store.commit('themeSpace/SET_LOADING', false);
+          isDragging.value = false;
+        }
+      } else {
+        isDragging.value = false;
+        store.commit('themeSpace/SET_LOADING', false);
+      }
+    };*/
+
     // Watchers
     watch(userId, async (newUserId) => {
       try {
@@ -403,6 +490,7 @@ export default {
         await store.dispatch('mindspace/setUserId');
         console.log('uid:', userId.value);
         await initializeThemes();
+        console.log("[ThemeSapceView.vue]: sortableThemes", sortableThemes);
       } catch (error) {
         console.error('Error in onMounted:', error);
       }
@@ -451,6 +539,11 @@ export default {
       showCreateThemeModal,
       showRenameModal,
       showRenameThemeModal,
+
+      sortableThemes,
+      isDragging,
+      themeDragStart,
+      //themeDragEnd,
     };
   }
 };
@@ -459,6 +552,12 @@ export default {
 <style lang="scss">
 //SIZE MANAGEMENT
 @mixin responsive($breakpoint) {
+  @if $breakpoint == iPhoneSE {
+    @media (min-width: 200px) { @content; }
+  } 
+  @if $breakpoint == iPhonePro {
+    @media (min-width: 390px) { @content; }
+  } 
   @if $breakpoint == tablet {
     @media (min-width: 768px) { @content; }
   } @else if $breakpoint == desktop {

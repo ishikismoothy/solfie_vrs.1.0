@@ -7,8 +7,11 @@ import {
     addDoc,
     updateDoc,
     deleteDoc,
-    query, where, orderBy,
+    query, where, //orderBy,
+    //writeBatch,
     serverTimestamp,
+    increment,
+    arrayUnion
 } from 'firebase/firestore';
 import { db } from './firebaseInit';
 import store from '@/store'; // Import your Vuex store
@@ -74,53 +77,57 @@ export const themeService = {
 
     // Get all themes for current user
     async getThemes(uid) {
-        // First approach - direct check
         try {
-            console.log("[getThemes/firebaseThemeSpace.js] === Direct Check Approach ===");
-            console.log("[getThemes/firebaseThemeSpace.js] Collection path:", themesCollection.path);
+            console.log("[getThemes/firebaseThemeSpace.js] Starting theme fetch for uid:", uid);
             
-            let matchingDocs = [];
-
-            //Matching Process
-            console.log("[getThemes/firebaseThemeSpace.js] === Query Approach ===");
+            // First, get the user's theme order
+            const userRef = doc(db, 'users', uid);
+            const userDoc = await getDoc(userRef);
+            const themeOrder = userDoc.data()?.themeOrder || [];
+            
+            console.log("[getThemes] Theme order from user document:", themeOrder);
+    
+            // Get all themes for the user
             const q = query(
                 themesCollection,
-                where('uid', '==', uid),
-                orderBy('updatedAt', 'desc')
+                where('uid', '==', uid)
             );
             
-            console.log("[getThemes/firebaseThemeSpace.js] Query constraints:", q);
             const snapshot = await getDocs(q);
-            
-            console.log("[getThemes/firebaseThemeSpace.js] Query results:", {
-                totalDocuments: snapshot.size,
-                empty: snapshot.empty,
-                path: snapshot.query._path
-            });
-
-            // Log each document from the query result
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                console.log("[getThemes/firebaseThemeSpace.js] Query matched document:", {
-                    id: doc.id,
-                    uid: data.uid,
-                    data: data
-                });
-            });
-
-            // Using map to push
-            matchingDocs = snapshot.docs.map(doc => ({
+            let themes = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
             }));
-
-            console.log("[getThemes/firebaseThemeSpace.js] Matching documents:", {
-                count: matchingDocs.length,
-                documents: matchingDocs
-            });
-
-            return matchingDocs; // Return the results from direct check for now
-
+    
+            console.log("[getThemes] Raw themes before ordering:", themes);
+    
+            if (themeOrder.length > 0) {
+                // Create a map for quick theme lookup
+                const themesMap = new Map(themes.map(theme => [theme.id, theme]));
+                
+                // First, get all themes that are in the order array
+                const orderedThemes = themeOrder
+                    .map(id => themesMap.get(id))
+                    .filter(theme => theme); // Remove any undefined entries
+                
+                // Then get any remaining themes that aren't in the order array
+                const remainingThemes = themes.filter(theme => !themeOrder.includes(theme.id));
+                
+                // Combine ordered themes with any remaining themes
+                themes = [...orderedThemes, ...remainingThemes];
+                
+                console.log("[getThemes] Themes after ordering:", themes);
+            } else {
+                // If no order is specified, fall back to updatedAt ordering
+                themes.sort((a, b) => {
+                    const dateA = new Date(a.updatedAt);
+                    const dateB = new Date(b.updatedAt);
+                    return dateB - dateA;
+                });
+            }
+    
+            return themes;
+    
         } catch (error) {
             console.error('[getThemes/firebaseThemeSpace.js] Error:', error);
             throw error;
@@ -159,29 +166,31 @@ export const themeService = {
                 console.log("[addTheme/firebaseThemeSpace.js] ", result.error);
             }
 
-            /*
+            
             // 2. Update hashtag counts in a separate collection
-            for (const tag of hashtags.value) {
-                const hashtagRef = doc(db, 'hashtags', tag)
-                const hashtagDoc = await getDoc(hashtagRef)
-    
-                if (hashtagDoc.exists()) {
-                // Update existing hashtag count
-                await updateDoc(hashtagRef, {
-                    count: increment(1),
-                    lastUsed: new Date(),
-                    posts: [...hashtagDoc.data().posts, postRef.id]
-                })
+            for (const tag of themeData.hashtags) {
+                // Query to find if hashtag exists (by tag field, not by ID)
+                const hashtagQuery = query(collection(db, 'hashtags'), where('tag', '==', tag));
+                const querySnapshot = await getDocs(hashtagQuery);
+
+                if (!querySnapshot.empty) {
+                    // Update existing hashtag
+                    const hashtagDoc = querySnapshot.docs[0];
+                    await updateDoc(hashtagDoc.ref, {
+                        count: increment(1),
+                        lastUsed: serverTimestamp(),
+                        themes: arrayUnion(docRef.id)
+                    });
                 } else {
-                // Create new hashtag document
-                await addDoc(collection(db, 'hashtags'), {
-                    tag: tag,
-                    count: 1,
-                    lastUsed: new Date(),
-                    posts: [postRef.id]
-                })
+                    // Create new hashtag
+                    await addDoc(collection(db, 'hashtags'), {
+                        tag: tag,
+                        count: 1,
+                        lastUsed: serverTimestamp(),
+                        themes: [docRef.id]
+                    });
                 }
-            }*/
+            }
         
         return {
             id: docRef.id,
@@ -193,6 +202,26 @@ export const themeService = {
         }
     },
     // Update theme
+    async updateThemeOrder(themes) {
+        const userId = store.state.mindspace.userId;
+        try {
+            // Extract just the IDs from theme objects
+            const themeIds = themes.map(theme => theme.id);
+            
+            const userRef = doc(db, 'users', userId);
+            
+            await updateDoc(userRef, {
+                themeOrder: themeIds,
+                updatedAt: new Date().toISOString()
+            });
+            
+            console.log('[updateThemeOrder] Updated theme order:', themeIds);
+        } catch (error) {
+            console.error('Error updating user theme order:', error);
+            throw error;
+        }
+    },
+
     async updateTheme(id, themeData) {
         const userId = store.state.mindspace.userId;
         if (!userId) throw new Error('User not authenticated');
@@ -213,17 +242,58 @@ export const themeService = {
             throw error;
         }
     },
-
     // Delete theme
     async deleteTheme(uid, id) {
         if (!uid) throw new Error('User not authenticated');
-
+    
         try {
             const themeRef = doc(db, 'themes', id);
+            const themeDoc = await getDoc(themeRef);
+    
+            if (!themeDoc.exists()) {
+                throw new Error('Theme not found');
+            }
+    
+            const themeData = themeDoc.data();
+            const hashtags = themeData.hashtags || [];
+            
+            console.log('[DeleteTheme] Starting deletion process for theme:', id);
+            console.log('[DeleteTheme] Hashtags to process:', hashtags);
+    
+            // Update hashtags
+            for (const tag of hashtags) {
+                // Query to find hashtag document by tag field
+                const hashtagQuery = query(collection(db, 'hashtags'), where('tag', '==', tag));
+                const querySnapshot = await getDocs(hashtagQuery);
+    
+                if (!querySnapshot.empty) {
+                    const hashtagDoc = querySnapshot.docs[0];
+                    const hashtagData = hashtagDoc.data();
+                    console.log('[DeleteTheme] Found hashtag document:', hashtagData);
+    
+                    const newThemes = hashtagData.themes.filter(themeId => themeId !== id);
+                    
+                    if (hashtagData.count <= 1 || newThemes.length === 0) {
+                        // Delete the hashtag document
+                        console.log('[DeleteTheme] Deleting hashtag document');
+                        await deleteDoc(hashtagDoc.ref);
+                    } else {
+                        // Update the hashtag document
+                        console.log('[DeleteTheme] Updating hashtag document');
+                        await updateDoc(hashtagDoc.ref, {
+                            count: increment(-1),
+                            themes: newThemes
+                        });
+                    }
+                }
+            }
+    
+            // Delete the theme
             await deleteDoc(themeRef);
             return id;
+    
         } catch (error) {
-            console.error('Error deleting theme:', error);
+            console.error('[DeleteTheme] Error:', error);
             throw error;
         }
     },
@@ -252,3 +322,36 @@ export const themeService = {
         }
     }
 };
+
+
+//Hashtag usage
+/*
+// Function to get trending hashtags
+async function getTrendingHashtags() {
+  return await db.collection('hashtags')
+    .orderBy('count.last24h', 'desc')
+    .limit(10)
+    .get();
+}
+
+// Function to get posts by hashtag
+async function getPostsByHashtag(hashtag) {
+  return await db.collection('themes')
+    .where('hashtags', 'array-contains', hashtag)
+    .orderBy('createdAt', 'desc')
+    .limit(20)
+    .get();
+}
+
+// Function to update daily hashtag stats
+async function updateDailyHashtagStats(hashtag) {
+  const today = new Date().toISOString().split('T')[0];
+  const statsRef = db.collection('hashtag_stats').doc(today);
+  
+  await statsRef.set({
+    tags: {
+      [hashtag]: firebase.firestore.FieldValue.increment(1)
+    }
+  }, { merge: true });
+}
+*/

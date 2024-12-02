@@ -1,17 +1,20 @@
+$overlay-bg: rgba(0, 0, 0, 0.5);
+$gray-medium: #888888;
+
 .icon-button {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
+  border-radius: 0.5rem;
   transition: background-color 0.2s;
-  background: none;
+  background: transparent;
   border: none;
   cursor: pointer;
-  color: #333;
-  padding: 6px;
+  color: $gray-medium;
+  padding: 0.5rem;
   
   &:hover {
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: $overlay-bg;
   }
 }
 
