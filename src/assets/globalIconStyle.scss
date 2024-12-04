@@ -1,5 +1,10 @@
-$overlay-bg: rgba(0, 0, 0, 0.5);
+$overlay-bg: rgba(0, 0, 0, 0.3);
+$hover-bg: #f1f1f3;
+
+$gray-light: #cccccc;
 $gray-medium: #888888;
+$gray-dark: #4a5568;
+$white: #ffffff;
 
 .icon-button {
   display: flex;
@@ -10,11 +15,14 @@ $gray-medium: #888888;
   background: transparent;
   border: none;
   cursor: pointer;
-  color: $gray-medium;
+  color: $gray-dark;
   padding: 0.5rem;
   
   &:hover {
-    background-color: $overlay-bg;
+    background-color: $hover-bg;
+  }
+  svg{
+    display: block;
   }
 }
 
@@ -22,10 +30,25 @@ $gray-medium: #888888;
   position: relative;
   width: 20px;
   height: 20px;
+  margin-right: 10px;
   .icon-button {
+    
     transition: opacity 0.2s;
     &:hover{
       opacity: 0.5;
     }
+  }
+  img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transition: opacity 0.2s ease;
+  }
+}
+
+.more-button {
+  margin-left: auto;
+  svg {
+    display: block;
   }
 }

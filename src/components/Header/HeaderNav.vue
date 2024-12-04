@@ -62,7 +62,7 @@
 
         <!-- Dropdown content here -->
       <div v-if="isDropdownOpen" class="dropdown-menu">
-        <LogoutButton class="button-style" />
+        <LogoutButton class="dropdown-item" />
       </div>
         <!-- Dropdown content ends -->
 

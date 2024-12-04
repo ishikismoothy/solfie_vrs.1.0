@@ -122,13 +122,6 @@ header {
       color: #333;
       margin: 0;
     }
-
-    .globe-icon {
-      margin: 0 10px;
-      .icon-button {
-        padding: 6px;
-      }
-    }
   }
 
   .center-section {
@@ -179,41 +172,31 @@ header {
     position: absolute;
     top: 40px;
     right: 10px;
-    background: white;
     border: 1px solid #ccc;
-    border-radius: 5px;
+    background: white;
+    border-radius: 16px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    z-index: 10;
+    padding: 8px;
   }
 
   .dropdown-item {
-    display: block;
-    padding: 10px;
+    display: flex;
+    align-items: center;
     width: 100%;
-    text-align: left;
-    background: none;
+    padding: 12px 16px;
     border: none;
+    background: none;
+    color: #333;
     cursor: pointer;
-  }
-
-  .dropdown-item:hover {
-    background-color: #f5f5f5;
-  }
-
-  .button-style {
-    display: block;
-    padding: 15px 25px;
-    font-size: 18px;
+    font-size: 16px;
     color: #ff4a1d;
     text-align: left;
-    background: none;
-    border: none;
-    cursor: pointer;
-    width: 100%;
-  }
+    transition: background-color 0.2s;
+    border-radius: 8px;
 
-  .button-style:hover {
-    background-color: #f5f5f5;
-    color: #ff0000;
-    text-shadow: 0px 0px 0px rgba(133, 0, 0, 0.4);
+    &:hover {
+      background-color: #f5f5f5;
+      color: #ff4011;
+      text-shadow: 0px 0px 0px rgba(133, 0, 0, 0.4);
+    }
   }

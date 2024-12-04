@@ -80,13 +80,7 @@
     padding: 0 12px;
   }
 
-  .more-button {
-    padding: 4px;
-    
-    svg {
-      display: block;
-    }
-  }
+  
 
   .add-button {
     width: 28px;
@@ -143,10 +137,6 @@
     padding: 12px 12px;
     z-index: 1;
 
-    .globe-icon {
-      margin-right: 12px;
-    }
-
     .globe-active {
       opacity: 0;
     }
@@ -162,30 +152,6 @@
     .globe-icon.is-favourite .globe-default {
       opacity: 0;
     }
-  }
-  
-  
-  
-  .globe-icon img {
-    position: absolute;
-    top: 0;
-    left: 0;
-    transition: opacity 0.2s ease;
-  }
-
-  
-  
-  .more-options {
-    margin-left: auto;
-    background: none;
-    border: none;
-    padding: 4px;
-    cursor: pointer;
-  }
-  
-  .more-options img {
-    width: 16px;
-    height: 16px;
   }
   
   .space-setMindSpace-area {
@@ -277,13 +243,9 @@
     gap: 5px;
     
     .icon-button {
-      padding: 6px;
-      border-radius: 4px;
-      
-      &:hover {
-        background-color: rgba(0, 0, 0, 0.05);
+      &:hover{
+        background-color: #cccccc;
       }
-      
       svg {
         display: block;
       }
