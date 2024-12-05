@@ -43,9 +43,18 @@
 
     <!-- Sticky Doc -->
     <div
+      ref="navRef"
       class="sticky-nav"
-      :class="{ 'visible': isNavVisible }"
-      :style="{ transform: `translateY(${navPosition}px)` }"
+      :class="{ 
+        'visible': isNavVisible,
+        'expanded': isChatBoxExpanded,
+        'transitioning': isTransitioning
+      }"
+      :style="{ 
+        transform: `translateY(${navPosition}px)`,
+        zIndex: navZindex 
+
+      }"
     >
       <DockNav />
     </div>
@@ -213,18 +222,26 @@ export default defineComponent({
     // Nav visibility state
     const isNavVisible = computed(() => store.state.user.dock.isVisible);
     const isChatBoxExpanded = computed(() => store.state.user.dock.isExpanded);
+    const isTransitioning = ref(false);
+    const navZindex = ref(700);
     const navPosition = ref(160);
     const indicatorPosition = ref(0);
     const buttonPosition = ref(0);
+    const navRef = ref(null);
 
-    // Toggle nav visibility
+    const updateZIndex = () => {
+      navZindex.value = isChatBoxExpanded.value ? 700 : 1000;
+    };
     // Toggle nav visibility
     const toggleNav = async () => {
       const newValue = !isNavVisible.value;
       await store.dispatch('user/setDockVisibility', newValue);
       console.log("[DashboardView.vue] Trigger:", newValue ? "ON" : "OFF");
       updatePositions();
+      updateZIndex();
     };
+
+    
 
     // Update positions based on nav visibility
     const updatePositions = () => {
@@ -254,10 +271,27 @@ export default defineComponent({
     });
 
     watch(isChatBoxExpanded, (newValue) => {
-    console.log('[DashboardView.vue] ChatBox Expanded changed:', newValue);
-    // Force a style update if needed
-    updatePositions();
-  });
+      console.log('[DashboardView.vue] ChatBox Expanded changed:', newValue);
+      if (newValue) {
+        // When expanding
+        isTransitioning.value=true;
+        //navRef.value.classList.add('transitioning');
+        setTimeout(() => {
+          isTransitioning.value=false;
+          //navRef.value.classList.remove('transitioning');
+        }, 1000);
+      } else {
+        // When collapsing
+        isTransitioning.value=true;
+        //navRef.value.classList.add('transitioning');
+        setTimeout(() => {
+          //navRef.value.classList.remove('transitioning');
+          isTransitioning.value=false;
+        }, 1000);
+      }
+      // Force a style update if needed
+      updatePositions();
+    });
 
     onMounted(async () => {
       //console.log("[DashboardView.vue]access store state: ",isNavVisible);
@@ -308,8 +342,11 @@ export default defineComponent({
       showItemWindow,
 
       //Dock visibility Handlings
+      navRef,
       isNavVisible,
       isChatBoxExpanded,
+      isTransitioning,
+      navZindex,
       navPosition,
       indicatorPosition,
       buttonPosition,

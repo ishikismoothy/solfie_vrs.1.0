@@ -494,7 +494,14 @@ transition: width 0.5s ease-out;
   transition: transform 0.3s ease-in-out;
   &.visible {
     transform: translateY(0);
+  }
+  &.expanded{
     height: 100%;
+    transition: transform 0.3s ease-in-out;
+  }
+  &.transitioning {
+    height: 100%;
+    pointer-events: none;
   }
 }
 
