@@ -144,9 +144,15 @@ nav {
     height: 100%;
     width: 100%;
   }
-  
-  .chatbox-button:hover {
-    background-color: #e0e0e0;
+  .chatbox-button{
+    @media (hover: hover) {
+      &:hover {
+        background-color: #e0e0e0;
+      }
+    }
+    &:active{
+      background-color: #e0e0e0;
+    }
   }
   
   .chat-text {
