@@ -1,6 +1,6 @@
 <template>
 
-<nav class="sticky-nav" :class="{ expanded: isChatBoxExpanded }">
+<nav class="sticky-nav-container" :class="{ expanded: isChatBoxExpanded }">
       <div class="nav-icons" v-if="!isChatBoxExpanded">
         <a href="#" class="nav-icon">
           <img src="../assets/icons/journalIcon.svg" alt="Journal" />

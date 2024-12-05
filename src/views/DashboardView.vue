@@ -8,7 +8,11 @@
 
   <div class="view-container">
     <!-- Page indicator - moved outside views-wrapper -->
-    <div class="page-indicator">
+    <div 
+      class="page-indicator"
+      :class="{ 'shifted': isNavVisible }"
+      :style="{ transform: `translateY(${indicatorPosition}px)` }"
+      >
       <PageIndicator 
         :is-app-view="isMindSpaceView"
         @view-switch="toggleView"
@@ -37,7 +41,33 @@
       </div>
     </div>
 
-    <DockNav />
+    <!-- Sticky Doc -->
+    <div
+      class="sticky-nav"
+      :class="{ 'visible': isNavVisible }"
+      :style="{ transform: `translateY(${navPosition}px)` }"
+    >
+      <DockNav />
+    </div>
+    
+
+    <!-- Dock Button -->
+    <button 
+      class="dock-button"
+      :class="{ 'shifted': isNavVisible }"
+      :style="{ transform: `translateY(${buttonPosition}px)` }"
+      @click="toggleNav"
+    >
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path 
+          d="M12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 13.9021 3.5901 15.6665 4.59721 17.1199C4.70168 17.2707 4.7226 17.4653 4.64529 17.6317L3.42747 20.2519C3.23699 20.5853 3.47768 21 3.86159 21H12Z" 
+          stroke="currentColor" 
+          stroke-width="2" 
+          stroke-linecap="round" 
+          stroke-linejoin="round"
+        />
+      </svg>
+    </button>
     
     <itemWindow class="itemWindow-view"
       :is-open="showItemWindow"
@@ -180,10 +210,44 @@ export default defineComponent({
         store.dispatch('mindspace/triggerItemWindow', false);
     };
 
+    // Nav visibility state
+    const isNavVisible = ref(false);
+    const navPosition = ref(160);
+    const indicatorPosition = ref(0);
+    const buttonPosition = ref(0);
+
+    // Toggle nav visibility
+    const toggleNav = () => {
+      isNavVisible.value = !isNavVisible.value;
+      updatePositions();
+    };
+
+    // Update positions based on nav visibility
+    const updatePositions = () => {
+      const navHeight = 160; // Adjust this value based on your nav height
+      if (isNavVisible.value) {
+        navPosition.value = 0;
+        indicatorPosition.value = -navHeight;
+        buttonPosition.value = -navHeight;
+      } else {
+        navPosition.value = navHeight;
+        indicatorPosition.value = 0;
+        buttonPosition.value = 0;
+      }
+    };
+
+    // Watch for edit mode changes to hide nav
+    watch(() => isEditMode.value, (newValue) => {
+      if (newValue) {
+        isNavVisible.value = false;
+        updatePositions();
+      }
+    });
+
     onMounted(async () => {
       const dashboardView = document.querySelector('.view.dashboard-view');
       const itemWindowView = document.querySelector('.itemWindow-view');
-
+      
       disableBodyScroll(bodyElement, {
         allowTouchMove: (el) => {
           return dashboardView.contains(el) || itemWindowView.contains(el);
@@ -225,7 +289,14 @@ export default defineComponent({
       handleTouchEnd,
       isEditMode,
       closeItemWindow,
-      showItemWindow
+      showItemWindow,
+
+      //Dock visibility Handlings
+      isNavVisible,
+      navPosition,
+      indicatorPosition,
+      buttonPosition,
+      toggleNav,
     };
   }
 });
