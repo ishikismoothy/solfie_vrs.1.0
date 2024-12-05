@@ -499,6 +499,12 @@ body > .folder-item.dragging {
           opacity: 0;  // Hide the name when dragging
         }
       }
+      @include responsive(tablet) {
+        .item-name {
+          overflow: visible;
+          white-space: break-spaces;
+        }
+      }
     
       &.dragging {
         opacity: 0.5;
