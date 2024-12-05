@@ -525,31 +525,42 @@ export const getItemData = async (itemId) => {
 
 // Firebase Update Function
 export const updateItemData = async (itemId, itemName, itemBlockData) => {
-  console.log('[updateItemInFirestore] Starting update...');
+  console.log('[updateItemInFirestore] Starting update...', itemBlockData);
   
   if (!itemId) {
     throw new Error('Item ID is not set');
   }
 
-  // Store the filtered array in a new variable
+  // Modified filter to handle different content types
   const cleanedContents = itemBlockData.filter(item => {
-    return item && 
-      typeof item.content === 'string' && 
-      item.content.trim() !== '';
+    if (!item) return false;
+    
+    // Handle different content types
+    if (item.type === 'todo-block') {
+      return Array.isArray(item.content) && item.content.length > 0;
+    }
+    
+    if (item.type === 'line-block') {
+      // Assuming line-block doesn't need content, or has its own format
+      return true;
+    }
+    
+    // For other types (title, body, image), keep original string check
+    return typeof item.content === 'string' && item.content.trim() !== '';
   });
 
   console.log('Original length:', itemBlockData.length);
   console.log('Cleaned length:', cleanedContents.length);
+  console.log('Cleaned contents:', cleanedContents);
 
   const itemRef = doc(db, 'items', itemId);
   
   await updateDoc(itemRef, {
     updatedAt: serverTimestamp(),
     name: itemName,
-    contents: cleanedContents  // Use the cleaned array here
+    contents: cleanedContents
   });
 }
-
 // Function to add item to Firestore and update mindspace
 export const addItemToMindspace = async (userId, mindSpaceId, pageIndex, index, newItem) => {
     

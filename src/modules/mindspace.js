@@ -1056,6 +1056,7 @@ export default {
         const newBlocks = [...currentBlocks];
         newBlocks.splice(index, 0, block);
         commit('SET_BLOCKS', newBlocks);
+        console.log(newBlocks);
         updateItemData(state.currentItemId, state.currentItemName, newBlocks);
       },
       duplicateBlock({ commit, state }, { id, index }) {

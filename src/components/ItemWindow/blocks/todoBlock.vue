@@ -2,13 +2,7 @@
 <template>
   <div class="todo-block">
     <div v-for="(todo, index) in todos" :key="index" class="todo-item">
-      <div class="flex items-center gap-4">
-        <input 
-          type="checkbox" 
-          v-model="todo.tick"
-          @change="updateTodo(index)"
-          class="form-checkbox"
-        >
+      <div class="todo-item-left-section">
         <div class="flex-grow" @click="handleClick(index)">
           <template v-if="editingIndex !== index">
             <span :class="{ 'line-through text-gray-500': todo.tick }">
@@ -17,11 +11,11 @@
           </template>
           <template v-else>
             <input
-            v-model="editedTodoName"
-            class="edit-input w-full"
-            @blur="handleBlur(index)"
-            @focus="handleFocus(index)"
-            :ref="el => { if (el) todoEditInputs[index] = el }"
+              v-model="editedTodoName"
+              class="edit-input w-full"
+              @blur="handleBlur(index)"
+              @focus="handleFocus(index)"
+              :ref="el => { if (el) todoEditInputs[index] = el }"
             >
           </template>
         </div>
@@ -29,6 +23,14 @@
           Due: {{ formatDate(todo.due) }}
         </div>
       </div>
+      <div class="todo-item-right-section">
+        <input 
+          type="checkbox" 
+          v-model="todo.tick"
+          @change="updateTodo(index)"
+          class="form-checkbox"
+        >
+      </div> 
     </div>
     <button 
       @click="addTodo"
