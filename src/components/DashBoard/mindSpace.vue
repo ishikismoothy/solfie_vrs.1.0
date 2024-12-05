@@ -147,11 +147,11 @@ ADD STATUS HEADER
                   }"
                   @click="handleFolderItemClick(item)"
                   @mousedown.prevent="handleFolderMouseDown($event, item, pageIndex, index)"
-                  @touchstart.prevent="handleFolderTouchStart($event, item, pageIndex, index)"
+                  @touchstart="handleFolderTouchStart($event, item, pageIndex, index)"
                 >
                   <!-- Add delete button -->
                   <button
-                    v-if="isEditMode"
+                    v-if="isEditMode && draggingFolderItem !== item"
                     class="delete-button"
                     @click.stop.prevent="handleItemDelete(item)"
                   >
@@ -168,7 +168,7 @@ ADD STATUS HEADER
                     <i :class="getBadgeIcon(item.badge)"></i>
                   </div>
                 </div>
-                <span class="item-name">{{ item.name }}</span>
+                <span class="item-name" :class="{ 'dragging': draggingFolderItem === item }">{{ item.name }}</span>
               </div>
 
               <!-- Add button on every page -->
@@ -1421,11 +1421,13 @@ ADD STATUS HEADER
         };
 
         const handleFolderTouchStart = (event, item, pageIndex, index) => {
+          console.log('[handleFolderTouchStart] TRIGGERED');
+          folderDragStartX.value = event.touches[0].clientX;
+          folderDragStartY.value = event.touches[0].clientY;
+          folderDragStartTime.value = Date.now();
+
           if (isEditMode.value) {
             isFolderMouseDown.value = true;
-            folderDragStartX.value = event.touches[0].clientX;
-            folderDragStartY.value = event.touches[0].clientY;
-            folderDragStartTime.value = Date.now();
             draggingFolderItem.value = item;
             folderDragStartIndex.value = index;
             folderDragStartPageIndex.value = pageIndex;
@@ -1445,9 +1447,34 @@ ADD STATUS HEADER
               x: folderDragStartX.value - rect.left,
               y: folderDragStartY.value - rect.top
             };
-
+            
             document.addEventListener('touchmove', handleFolderTouchMove, { passive: false });
             document.addEventListener('touchend', handleFolderTouchEnd);
+          }else {
+              // Non-edit mode - handle clicks
+              const handleTouchEnd = (endEvent) => {
+              const touchEndTime = Date.now();
+              const touchDuration = touchEndTime - folderDragStartTime.value;
+              
+              // Calculate movement
+              const touch = endEvent.changedTouches[0];
+              const moveX = Math.abs(touch.clientX - folderDragStartX.value);
+              const moveY = Math.abs(touch.clientY - folderDragStartY.value);
+              
+              // If it was a short touch without much movement, treat as click
+              if (touchDuration < 500 && moveX < 10 && moveY < 10) {
+                handleFolderItemClick(item);
+              }
+              
+              document.removeEventListener('touchend', handleTouchEnd);
+            };
+
+            document.addEventListener('touchend', handleTouchEnd);
+          }
+
+          // Only prevent default in edit mode
+          if (isEditMode.value) {
+            event.preventDefault();
           }
         };
 
