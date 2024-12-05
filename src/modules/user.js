@@ -26,6 +26,10 @@ export default {
     viewHistory: {
       lastThemeId: null,
       lastMindSpaceId: null,
+    },
+    dock:{
+      isVisible: false,
+      isExpanded: false
     }
   },
   mutations: {
@@ -35,6 +39,12 @@ export default {
     SET_LAST_MINDSPACEID(state, id){
       state.viewHistory.lastMindSpaceId = id;
     },
+    SET_DOCK_VISIBILITY(state, value){
+      state.dock.isVisible = value;
+    },
+    SET_DOCK_EXPANDED(state, value) {
+      state.dock.isExpanded = value;
+    }
   },
   actions: {
     setLastViewThemeHistory({ commit, state }, { uid, themeId }){
@@ -66,6 +76,12 @@ export default {
       commit('SET_LAST_THEMEID', lastViewHistory.theme);
       commit('SET_LAST_MINDSPACEID', lastViewHistory.mindspace);
     },
+    setDockVisibility({ commit },value){
+      commit('SET_DOCK_VISIBILITY', value);
+    },
+    setDockExpanded({ commit },value){
+      commit('SET_DOCK_EXPANDED', value);
+    }
   },
   getters: {
     getLastThemeId: state => state.viewHistory.lastThemeId,

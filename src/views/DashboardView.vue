@@ -10,7 +10,7 @@
     <!-- Page indicator - moved outside views-wrapper -->
     <div 
       class="page-indicator"
-      :class="{ 'shifted': isNavVisible }"
+      :class="{ 'shifted': isNavVisible, 'hidden': isChatBoxExpanded }"
       :style="{ transform: `translateY(${indicatorPosition}px)` }"
       >
       <PageIndicator 
@@ -54,7 +54,7 @@
     <!-- Dock Button -->
     <button 
       class="dock-button"
-      :class="{ 'shifted': isNavVisible }"
+      :class="{ 'shifted': isNavVisible, 'hidden': isChatBoxExpanded }"
       :style="{ transform: `translateY(${buttonPosition}px)` }"
       @click="toggleNav"
     >
@@ -211,20 +211,24 @@ export default defineComponent({
     };
 
     // Nav visibility state
-    const isNavVisible = ref(false);
+    const isNavVisible = computed(() => store.state.user.dock.isVisible);
+    const isChatBoxExpanded = computed(() => store.state.user.dock.isExpanded);
     const navPosition = ref(160);
     const indicatorPosition = ref(0);
     const buttonPosition = ref(0);
 
     // Toggle nav visibility
-    const toggleNav = () => {
-      isNavVisible.value = !isNavVisible.value;
+    // Toggle nav visibility
+    const toggleNav = async () => {
+      const newValue = !isNavVisible.value;
+      await store.dispatch('user/setDockVisibility', newValue);
+      console.log("[DashboardView.vue] Trigger:", newValue ? "ON" : "OFF");
       updatePositions();
     };
 
     // Update positions based on nav visibility
     const updatePositions = () => {
-      const navHeight = 160; // Adjust this value based on your nav height
+      const navHeight = 160;
       if (isNavVisible.value) {
         navPosition.value = 0;
         indicatorPosition.value = -navHeight;
@@ -239,12 +243,24 @@ export default defineComponent({
     // Watch for edit mode changes to hide nav
     watch(() => isEditMode.value, (newValue) => {
       if (newValue) {
-        isNavVisible.value = false;
+        store.dispatch('user/setDockVisibility', false);
         updatePositions();
       }
     });
 
+    // Add watch for isNavVisible to handle state changes
+    watch(isNavVisible, () => {
+      updatePositions();
+    });
+
+    watch(isChatBoxExpanded, (newValue) => {
+    console.log('[DashboardView.vue] ChatBox Expanded changed:', newValue);
+    // Force a style update if needed
+    updatePositions();
+  });
+
     onMounted(async () => {
+      //console.log("[DashboardView.vue]access store state: ",isNavVisible);
       const dashboardView = document.querySelector('.view.dashboard-view');
       const itemWindowView = document.querySelector('.itemWindow-view');
       
@@ -293,6 +309,7 @@ export default defineComponent({
 
       //Dock visibility Handlings
       isNavVisible,
+      isChatBoxExpanded,
       navPosition,
       indicatorPosition,
       buttonPosition,

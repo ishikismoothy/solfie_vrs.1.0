@@ -88,11 +88,14 @@ export default defineComponent({
       date: '2024/01/01',
     });
 
-    const toggleChatBox = () => {
-        isChatBoxExpanded.value = !isChatBoxExpanded.value;
-      };
+    const toggleChatBox = async() => {
+      const newValue = !isChatBoxExpanded.value;
+      await store.dispatch('user/setDockExpanded', newValue);
+      //isChatBoxExpanded.value = !isChatBoxExpanded.value;
+      console.log("[dockNav.vue] Trigger:", newValue ? "ON" : "OFF");
+    };
 
-    const isChatBoxExpanded = ref(false);
+    const isChatBoxExpanded = computed(() => store.state.user.dock.isExpanded);
 
     const chatInput = ref('');
     const chatMessages = ref(store.state.chat.chatMessages);

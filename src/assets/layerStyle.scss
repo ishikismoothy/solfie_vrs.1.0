@@ -2,24 +2,24 @@
 
 //[Global]
 .page-indicator {
-    z-index: 800;
+    z-index: 900;
 }
 .dock-button{
-    z-index: 800;
+    z-index: 900;
 }
 .sticky-nav{
-    z-index: 998;
+    z-index: 800;
 }
 .sticky-nav-container{
-    z-index: 998;
+   //z-index: 998;
 }
 
 .header-container{
-    z-index: 998;
+    z-index: 700;
 }
 
 .dropdown-menu {
-    z-index: 1000;
+    z-index: 700;
 }
 
 .loading-screen {
