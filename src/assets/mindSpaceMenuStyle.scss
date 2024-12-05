@@ -96,8 +96,12 @@
     justify-content: center;
     color: #333;
     padding: 0;
-    
-    &:hover {
+    @media (hover: hover) {
+      &:hover {
+        background-color: #f5f5f5;
+      }
+    }
+    &:active{
       background-color: #f5f5f5;
     }
   }
@@ -185,11 +189,15 @@
       color: #333;
       transition: all 0.2s ease;
       letter-spacing: 0.5px;
-  
-      &:hover {
+
+      @media (hover: hover) {
+        &:hover {
+          color: #000;
+        }
+      }
+      &:active{
         color: #000;
       }
-  
       &:disabled {
         opacity: 0.5;
         cursor: not-allowed;
@@ -202,20 +210,35 @@
   
       .set-active-button {
         color: white;
-  
-        &:hover {
+        
+        @media (hover: hover) {
+          &:hover {
+            color: rgba(255, 255, 255, 0.8);
+          }
+        }
+        &:active{
           color: rgba(255, 255, 255, 0.8);
         }
       }
     }
+
+    @media (hover: hover) {
+      &:hover {
+        background-color: rgba(225, 225, 225, 0.7);
   
-    &:hover {
+      &.favorite-background {
+        background-color: rgba(255, 86, 34, 0.7);
+      }
+      }
+    }
+    &:active{
       background-color: rgba(225, 225, 225, 0.7);
   
       &.favorite-background {
         background-color: rgba(255, 86, 34, 0.7);
       }
     }
+  
   }
 
   .space-setting-area {
@@ -243,7 +266,12 @@
     gap: 5px;
     
     .icon-button {
-      &:hover{
+      @media (hover: hover) {
+        &:hover {
+          background-color: #cccccc;
+        }
+      }
+      &:active{
         background-color: #cccccc;
       }
       svg {
@@ -491,8 +519,13 @@
       padding: 0.5rem 1rem;
       cursor: pointer;
       @include transition(background-color);
-
-      &:hover {
+      @media (hover: hover) {
+        &:hover {
+          background-color: #f3f4f6;
+          color: #888888;
+        }
+      }
+      &:active{
         background-color: #f3f4f6;
         color: #888888;
       }

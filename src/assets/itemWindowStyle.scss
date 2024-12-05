@@ -25,16 +25,11 @@
       position: absolute;
       top: 1rem;
       right: 1rem;
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 0.5rem;
-      color: #333;
-      transition: background-color 0.2s;
-      
-      &:hover {
-        background-color: rgba(0, 0, 0, 0.05);
-      }
+    }
+    .editBlock-button{
+      position: absolute;
+      top: 1rem;
+      right: 3.5rem;
     }
   }
   
@@ -45,29 +40,6 @@
   }
   
   // Include your existing styles here
-  .controls {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 2rem;
-  }
-  
-  .btn {
-    padding: 0rem 0.3rem;
-    background-color: rgb(88, 88, 88);
-    color: white;
-    border-radius: 1rem;
-    border: none;
-    cursor: pointer;
-    width: 100%;
-    height: 40px;
-    font-size: 10px;
-    transition: background-color 0.2s;
-  
-    &:hover {
-      background-color: rgb(88, 88, 88, 0.8);;
-    }
-  }
-  
   .block-wrapper {
       margin: 1rem 0;
       padding: 1rem;
@@ -89,13 +61,11 @@
   .title-block {
     font-size: 1.5rem;
     font-weight: bold;
-    margin-bottom: 1rem;
   }
   
   .body-block {
     font-size: 1rem;
     line-height: 1.5;
-    margin-bottom: 1rem;
   
       .todo-item {
           display: flex;
@@ -169,9 +139,10 @@
   }
   
   .timestamp-info {
-  margin-top: 0.5rem;
-  font-size: 0.875rem;
-  color: #718096;
+    font-size: 0.65rem;
+    margin-top: 0.5rem;
+    color: #718096;
+    font-weight: lighter;
   }
 
   //BLOCK WRAPPER
@@ -181,14 +152,33 @@
     border: 1px solid #e2e8f0;
     border-radius: 0.5rem;
     margin: 1rem 0;
+    &.onBlockEdit{
+      height: 120px;
+    }
   }
   
+  .block-controls{ 
+    position:absolute;
+    right: 5px;
+    top: 5px;
+    display:flex;
+    gap:2px
+  }
   .control-btn {
     padding: 0.25rem 0.5rem;
     background-color: #fff;
-    border: 1px solid #e2e8f0;
+    border: none;
     border-radius: 0.25rem;
     cursor: pointer;
+    transition: background-color 0.3s ease;
+    @media (hover: hover) {
+      &:hover {
+        background: #f5f5f5;
+      }
+    }
+    &:active{
+      background-color: rgba(0, 0, 0, 0.5);
+    }
   }
   
   .control-btn:disabled {

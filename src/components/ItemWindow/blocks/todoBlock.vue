@@ -73,6 +73,7 @@ export default {
     };
 
     const handleFocus = async (index) => {
+      store.dispatch('user/setIsBlockEdit', false);
       isFocused.value = true;
       await nextTick();
       todoEditInputs.value[index]?.select();

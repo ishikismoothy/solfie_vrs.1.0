@@ -1012,6 +1012,14 @@ export default {
         console.log("[mindspace.js/itemBlocks] Currently: ", state.itemBlocks);
         updateItemData(state.currentItemId, state.currentItemName, state.itemBlocks );
       },
+      addBlockAtIndex({ commit, state }, { block, index }) {
+        // First check if itemBlocks exists and is an array
+        const currentBlocks = state.itemBlocks || [];
+        const newBlocks = [...currentBlocks];
+        newBlocks.splice(index, 0, block);
+        commit('SET_BLOCKS', newBlocks);
+        updateItemData(state.currentItemId, state.currentItemName, newBlocks);
+      },
       async updateBlock({ commit, state, dispatch }, { id, content }) {
         commit('UPDATE_BLOCK', { id, content });
         await updateItemData(state.currentItemId, state.currentItemName, state.itemBlocks);

@@ -141,6 +141,7 @@
                     v-if="openDropdownId === theme.id && !isDragging && !themeLoading" 
                     class="dropdown-menu"
                     @click.stop
+                    @click.self="toggleDropdown(theme.id)"
                   >
                     <button 
                       @click="showRenameThemeModal(theme)" 

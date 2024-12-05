@@ -81,6 +81,7 @@
     <itemWindow class="itemWindow-view"
       :is-open="showItemWindow"
       @close="closeItemWindow"
+      @click.self="closeItemWindow"
     />
     
   </div>

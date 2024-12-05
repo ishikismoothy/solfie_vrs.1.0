@@ -1,15 +1,18 @@
 // blockWrapper.vue
 <template>
-  <div class="block-wrapper relative" :class="block.type">
+  <div class="block-wrapper relative" 
+    :class="{
+      block: block.type,
+      'onBlockEdit':isBlockEdit
+    }"
+  >
     <div 
       class="block-content"
-      @mouseenter="isEditing = true"
-      @mouseleave="isEditing = false"
     >
-        <div class="block-controls absolute right-2 top-2 flex gap-2" v-if="isEditing">
-        <button @click="moveBlock('up')" class="control-btn" :disabled="isFirst">↑</button>
-        <button @click="moveBlock('down')" class="control-btn" :disabled="isLast">↓</button>
-        <button @click="deleteBlock" class="control-btn text-red-500">×</button>
+        <div class="block-controls" v-if="isBlockEdit">
+          <button @click="moveBlock('up')" class="control-btn" :disabled="isFirst">↑</button>
+          <button @click="moveBlock('down')" class="control-btn" :disabled="isLast">↓</button>
+          <button @click="deleteBlock" class="control-btn text-red-500">×</button>
         </div>
         <component 
             :is="getBlockComponent"
@@ -17,7 +20,7 @@
             @edit="handleEdit"
         />
     </div>
-    <div class="timestamp-info text-sm text-gray-500" v-if="isEditing">
+    <div class="timestamp-info text-sm text-gray-500" v-if="isBlockEdit">
       <span>Created: {{ formatDate(block.createdAt) }}</span>
       <span class="ml-4">Last edited: {{ formatDate(block.editedAt) }}</span>
     </div>
@@ -25,7 +28,7 @@
 </template>
 
 <script>
-import { ref, computed } from 'vue';
+import { computed } from 'vue';
 import { useStore } from 'vuex';
 import TitleBlock from './blocks/titleBlock.vue';
 import BodyBlock from './blocks/bodyBlock.vue';
@@ -58,7 +61,7 @@ export default {
   },
   setup(props) {
     const store = useStore();
-    const isEditing = ref(false);
+    const isBlockEdit = computed(() => store.state.user.itemWindow.isBlockEdit);
     
     const isFirst = computed(() => props.index === 0);
     const isLast = computed(() => props.index === props.totalBlocks - 1);
@@ -96,7 +99,7 @@ export default {
     };
 
     return {
-      isEditing,
+      isBlockEdit,
       isFirst,
       isLast,
       getBlockComponent,

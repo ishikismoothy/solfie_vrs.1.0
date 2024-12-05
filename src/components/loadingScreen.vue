@@ -8,7 +8,6 @@
               {{ currentTip }}
             </p>
           </div>
-          
         </div>
       </div>
     </Transition>

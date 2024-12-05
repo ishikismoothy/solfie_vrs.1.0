@@ -16,6 +16,16 @@
                     @click = "triggerNameEdit"
                     v-else
                 >{{ currentItemName }}</h3>
+                
+                <button 
+                    class="icon-button editBlock-button"
+                    @click="toggleEditBlock"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75 1.84-1.83z"/>
+                      <path d="M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/>
+                    </svg>
+                </button>
 
                 <button @click="close" class="icon-button close-button">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -23,24 +33,28 @@
                     <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
                 </button>
-                
-                <div class="controls mb-4">
-                    <button @click="addNewBlock('title-block')" class="btn">Add Title</button>
-                    <button @click="addNewBlock('body-block')" class="btn">Add Body</button>
-                    <button @click="addNewBlock('image-block')" class="btn">Add Image</button>
-                    <button @click="addNewBlock('line-block')" class="btn">Add Line</button>
-                    <button @click="addNewBlock('todo-block')" class="btn">Add Todo</button>
-                </div>
         
                 <div class="blocks-container">
-                    <block-wrapper
-                    v-for="(block, index) in blocks"
-                    :key="block.id"
-                    :block="block"
-                    :index="index"
-                    :total-blocks="blocks.length"
-                    @edit="handleBlockEdit"
+                    <AddBlockButton 
+                        :index="0"
+                        :is-block-edit="isBlockEdit"
+                        @add="handleAddBlock"
+                        v-if="isBlockEdit"
                     />
+                    <template v-for="(block, index) in blocks" :key="block.id">
+                        <block-wrapper
+                            :block="block"
+                            :index="index"
+                            :total-blocks="blocks.length"
+                            @edit="handleBlockEdit"
+                        />
+                        <AddBlockButton 
+                            :index="index + 1"
+                            :is-block-edit="isBlockEdit"
+                            @add="handleAddBlock"
+                            v-if="isBlockEdit"
+                        />
+                    </template>
                 </div>
             </div>
         </div>
@@ -51,6 +65,7 @@
 import { computed, onMounted, watch, ref, nextTick } from 'vue';
 import { useStore } from 'vuex';
 import BlockWrapper from './blockWrapper.vue';
+import AddBlockButton from './addBlockButton.vue';
 
 // Move helper functions outside of setup
 const generateRandomId = (length = 10) => {
@@ -85,7 +100,8 @@ const getDefaultContent = (type) => {
 export default {
     name: 'ItemWindow',
     components: {
-        BlockWrapper
+        BlockWrapper,
+        AddBlockButton
     },
     props: {
         isOpen: {
@@ -105,6 +121,7 @@ export default {
         const close = () => {
             emit('close');
             onNameEdit.value = false;
+            store.dispatch('user/setIsBlockEdit', false);
         };
 
         const loadItemData = async () => {
@@ -166,6 +183,29 @@ export default {
             }
         }
 
+        //const isBlockEdit = ref(true); // Add this or use your existing implementation
+
+        const handleAddBlock = ({ type, index }) => {
+            const newBlock = {
+                id: 'e-' + generateRandomId(),
+                type,
+                content: getDefaultContent(type),
+                createdBy: currentUid.value,
+                editedBy: [currentUid.value],
+                createdAt: new Date().toISOString(),
+                editedAt: new Date().toISOString()
+            };
+
+            // Add new action to your store
+            store.dispatch('mindspace/addBlockAtIndex', { block: newBlock, index });
+        };
+
+        const isBlockEdit = computed(() => store.state.user.itemWindow.isBlockEdit);
+        const toggleEditBlock = () => {
+            const newValue = !isBlockEdit.value;
+            store.dispatch('user/setIsBlockEdit', newValue);
+        }
+
 
         return {
             blocks,
@@ -176,7 +216,10 @@ export default {
             onNameEdit,
             triggerNameEdit,
             editedContent,
-            editInput
+            editInput,
+            handleAddBlock,
+            isBlockEdit,
+            toggleEditBlock,
         };
     }
 };

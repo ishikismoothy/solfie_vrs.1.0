@@ -30,6 +30,9 @@ export default {
     dock:{
       isVisible: false,
       isExpanded: false
+    },
+    itemWindow:{
+      isBlockEdit: false,
     }
   },
   mutations: {
@@ -44,6 +47,9 @@ export default {
     },
     SET_DOCK_EXPANDED(state, value) {
       state.dock.isExpanded = value;
+    },
+    SET_IS_BLOCK_EDIT(state, value){
+      state.itemWindow.isBlockEdit = value;
     }
   },
   actions: {
@@ -81,7 +87,10 @@ export default {
     },
     setDockExpanded({ commit },value){
       commit('SET_DOCK_EXPANDED', value);
-    }
+    },
+    setIsBlockEdit({ commit },value){
+      commit('SET_IS_BLOCK_EDIT', value);
+    },
   },
   getters: {
     getLastThemeId: state => state.viewHistory.lastThemeId,
