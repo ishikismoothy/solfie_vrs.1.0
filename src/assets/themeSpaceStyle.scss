@@ -79,10 +79,12 @@ $transition: all 0.3s ease;
         appearance: none;
         -webkit-appearance: none;
         
-        &:hover {
-          transform: scale(1.05);
+        @media (hover: hover) {
+          &:hover {
+            transform: scale(1.05);
           border-color: $primary-color;
           box-shadow: 0 0 0 4px rgba($primary-color, 0.1);
+          }
         }
   
         &:focus {
@@ -149,8 +151,10 @@ $transition: all 0.3s ease;
       height: 40px;
       font-size: 10px;
 
-      &:hover {
-        background-color: darken($primary-color, 10%);
+      @media (hover: hover) {
+        &:hover {
+          background-color: darken($primary-color, 10%);
+        }
       }
     }
   }
@@ -367,10 +371,11 @@ $transition: all 0.3s ease;
           opacity: 0.3;
         }
       }
-
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      @media (hover: hover) {
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
       }
       .theme-content {
         display: flex;
@@ -408,9 +413,10 @@ $transition: all 0.3s ease;
         align-items: center;
         gap: 0.5rem;
         .icon-button {
-          
-          &:hover {
-            background-color: $hover-bg;
+          @media (hover: hover) {
+            &:hover {
+              background-color: $hover-bg;
+            }
           }
         }
         
@@ -512,9 +518,11 @@ $transition: all 0.3s ease;
     svg {
       margin-right: 12px;
     }
-  
-    &:hover {
-      background-color: #f5f5f5;
+    
+    @media (hover: hover) {
+      &:hover {
+        background-color: #f5f5f5;
+      }
     }
   }
   

@@ -18,8 +18,10 @@ $white: #ffffff;
   color: $gray-dark;
   padding: 0.5rem;
   
-  &:hover {
-    background-color: $hover-bg;
+  @media (hover: hover) {
+    &:hover {
+      background-color: $hover-bg;
+    }
   }
   svg{
     display: block;
@@ -34,8 +36,10 @@ $white: #ffffff;
   .icon-button {
     
     transition: opacity 0.2s;
-    &:hover{
-      opacity: 0.5;
+    @media (hover: hover) {
+      &:hover {
+        opacity: 0.5;
+      }
     }
   }
   img {
@@ -52,3 +56,5 @@ $white: #ffffff;
     display: block;
   }
 }
+
+
