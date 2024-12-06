@@ -62,13 +62,10 @@ ADD STATUS HEADER
               @mouseleave="handleItemLeave()"
             >
               <!-- Add delete button -->
-              <button
+              <DeleteButton
                 v-if="isEditMode && !isDragging"
-                class="delete-button"
-                @click.stop.prevent="handleItemDelete(item)"
-              >
-                <i class="fas fa-times-circle">X</i>
-              </button>
+                @delete="handleItemDelete(item)"
+              />
               <!-- icon Shadow -->
               <div class="icon-shadow-container">
                 <div class="icon-shadow" v-html="createShadowSvg(item.shape)"></div>
@@ -150,13 +147,10 @@ ADD STATUS HEADER
                   @touchstart="handleFolderTouchStart($event, item, pageIndex, index)"
                 >
                   <!-- Add delete button -->
-                  <button
-                    v-if="isEditMode && draggingFolderItem !== item"
-                    class="delete-button"
-                    @click.stop.prevent="handleItemDelete(item)"
-                  >
-                  <i class="fas fa-times-circle">X</i>
-                  </button>
+                  <DeleteButton
+                    v-if="isEditMode"
+                    @delete="handleItemDelete(item)"
+                  />
                   <div class="icon-shadow-container">
                     <div class="icon-shadow" v-html="createShadowSvg(item.shape)"></div>
                   </div>
@@ -168,7 +162,7 @@ ADD STATUS HEADER
                     <i :class="getBadgeIcon(item.badge)"></i>
                   </div>
                 </div>
-                <span class="item-name" :class="{ 'dragging': draggingFolderItem === item }">{{ item.name }}</span>
+                <span class="item-name">{{ item.name }}</span>
               </div>
 
               <!-- Add button on every page -->
@@ -248,6 +242,7 @@ ADD STATUS HEADER
     //import octagonSvg from '../assets/shapes/octagon.svg';
     //import cloudSvg from '../assets/shapes/cloud.svg';
     //import folderSvg from '../assets/shapes/folder.svg';
+    import DeleteButton from './deleteButton.vue';
     import AddItemPopup from './addItemPopup.vue';
     import TruncateText from '../TruncateText/truncateSpanItemText.vue';
 
@@ -257,6 +252,7 @@ ADD STATUS HEADER
       components: {
         AddItemPopup,
         TruncateText,
+        DeleteButton
       },
       setup() {
         const store = useStore();

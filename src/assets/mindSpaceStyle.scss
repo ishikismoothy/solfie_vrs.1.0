@@ -25,6 +25,11 @@ $badge-colors: (
     height: 77px;
     position: relative;
 
+    .delete-button{
+      display: none;
+      visibility: hidden;
+    }
+
     .icon-shadow-container {
       top: 0;
       left: 0;
@@ -192,13 +197,13 @@ body > .folder-item.dragging {
         position: relative;
         margin-bottom: 5px;
         
-
+        /*
         .delete-button {
           position: absolute;
-          top: -8px;
-          right: -8px;
-          width: 20px;
-          height: 20px;
+          top: -10px;
+          right: -10px;
+          width: 25px;
+          height: 25px;
           border-radius: 50%;
           background: rgb(170, 170, 170);
           color: rgb(255, 255, 255);
@@ -212,11 +217,16 @@ body > .folder-item.dragging {
           font-size: 14px;
           opacity: 0.4;
           transition: opacity 0.2s ease;
-        }
-  
-        &:hover .delete-button {
-          opacity: 0.9;
-        }
+          @media (hover: hover) {
+            &:hover {
+              opacity: 0.9;;
+            }
+          }
+    
+          &:active {
+            opacity: 0.9;;
+          }
+        }*/
 
         .icon-shadow-container {
           position: absolute;
@@ -237,10 +247,14 @@ body > .folder-item.dragging {
           height: 100%;
           object-fit: contain;
           transition: transform 0.2s ease;
-        }
-
-        &:hover .icon-shape {
-          transform: scale(1.1);
+          @media (hover: hover) {
+            &:hover {
+              transform: scale(1.1);
+            }
+          }
+          &:active {
+            transform: scale(1.1);
+          }
         }
       }
 
@@ -251,8 +265,12 @@ body > .folder-item.dragging {
         .item-name{
           color: #6e6e6e;
         }
-
-        &:hover {
+        @media (hover: hover) {
+          &:hover {
+            opacity: 1;
+          }
+        }
+        &:active {
           opacity: 1;
         }
 
@@ -325,14 +343,12 @@ body > .folder-item.dragging {
     opacity: 0.5;
     //border: 2px dashed #ccc;
     //background-color: rgba(200, 200, 200, 0.3);
-  }
-  
-  .mind-Item.placeholder .icon-wrapper {
-    filter: grayscale(100%);
-  }
-  
-  .mind-Item.placeholder .item-name {
-    color: #999;
+    .icon-wrapper {
+      filter: grayscale(100%);
+    }
+    .item-name {
+      color: #888888;
+    }
   }
 
   .exit-edit-mode {
@@ -436,7 +452,8 @@ body > .folder-item.dragging {
         height: 50px;
         position: relative;
         margin-bottom: 5px;
-    
+        
+        /*
         .delete-button {
           position: absolute;
           top: -8px;
@@ -456,11 +473,17 @@ body > .folder-item.dragging {
           font-size: 14px;
           opacity: 0.4;
           transition: opacity 0.2s ease;
-        }
-    
-        &:hover .delete-button {
-          opacity: 0.9;
-        }
+          @media (hover: hover) {
+            &:hover {
+              opacity: 0.9;
+            }
+          }
+          &:active {
+            opacity: 0.9;
+          }
+        }*/
+        
+        
     
         .icon-shadow-container {
           position: absolute;
@@ -494,10 +517,7 @@ body > .folder-item.dragging {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        
-        &.dragging {
-          opacity: 0;  // Hide the name when dragging
-        }
+
       }
       @include responsive(tablet) {
         .item-name {
@@ -513,10 +533,6 @@ body > .folder-item.dragging {
     
         .icon-wrapper {
           transform: scale(1.1);
-        }
-    
-        .delete-button {
-          display: none;  // Hide delete button while dragging
         }
       }
     

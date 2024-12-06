@@ -246,7 +246,7 @@ export default defineComponent({
 
     // Update positions based on nav visibility
     const updatePositions = () => {
-      const navHeight = 160;
+      const navHeight = 180;
       if (isNavVisible.value) {
         navPosition.value = 0;
         indicatorPosition.value = -navHeight;
@@ -374,6 +374,7 @@ export default defineComponent({
 
 @import '../assets/dashboardStyle.scss';
 @import '../assets/mindSpaceStyle.scss';
+@import '../assets/deleteButtonStyle.scss';
 @import '../assets/todosStyle.scss';
 @import '../assets/dockStyle.scss';
 </style>
