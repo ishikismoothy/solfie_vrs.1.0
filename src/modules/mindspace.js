@@ -380,9 +380,7 @@ export default {
       },
 
       //[ITEM PAGE HANDLING]
-      TRIGGER_ITEM_WINDOW (state, boolean) {
-        state.showItemWindow = boolean;
-      },
+      
       SET_ITEM_NAME (state, name) {
         state.currentItemName = name;
       },
@@ -1020,10 +1018,6 @@ export default {
         }
       },
       //Item Blocks Handling
-      triggerItemWindow({ commit, state }, boolean) {
-        commit('TRIGGER_ITEM_WINDOW', boolean);
-        console.log("Item Window Set to: ", state.showItemWindow);
-      },
       async getItemName({ commit, state }, itemName) {
         commit('SET_ITEM_NAME', itemName);
         console.log("[getItemName/mindspace.js] itemName:", state.currentItemName);
@@ -1132,7 +1126,6 @@ export default {
       getCurrentPage: state => state.currentPage,
       getTotalPages: state => state.totalPages,
       getItemName: state => state.currentItemName,
-      getShowItemWindow: state => state.showItemWindow,
       isLoading: state => state.loading,
       getError: state => state.error,
       // New getter to get items from a specific page

@@ -48,44 +48,52 @@ ADD STATUS HEADER
             class="mind-Item"
             :data-id="item.id"
           >
-            <div class="icon-wrapper"
+            <div 
+              class="icon-wrapper"
               :class="{
                 'dragging': draggingItem === item,
                 'folder-hover': item.items && isDragging && hoveredFolderId === item.id
               }"
               :data-item-id="item.id"
-              @click="handleItemClick(item)"
-              @mousedown.prevent="handleMouseDown($event, item, pageIndex, index)"
-              @touchstart.prevent="handleTouchStart($event, item, pageIndex, index)"
-              @touchend.prevent="handleTouchEnd"
-              @mouseover="handleItemHover(item)"
-              @mouseleave="handleItemLeave()"
             >
-              <!-- Add delete button -->
-              <DeleteButton
-                v-if="isEditMode && !isDragging"
-                @delete="handleItemDelete(item)"
-              />
-              <!-- icon Shadow -->
-              <div class="icon-shadow-container">
-                <div class="icon-shadow" v-html="createShadowSvg(item.shape)"></div>
+              <!-- Separate container for delete button -->
+              <div class="delete-button-container" v-if="isEditMode && !isDragging">
+                <DeleteButton
+                  @delete="handleItemDelete(item)"
+                  @touchstart.stop="void 0"
+                />
               </div>
+              
+              <!-- Main content wrapper -->
+              <div 
+                class="content-wrapper"
+                @click="handleItemClick(item)"
+                @mousedown.prevent="handleMouseDown($event, item, pageIndex, index)"
+                @touchstart.prevent="handleTouchStart($event, item, pageIndex, index)"
+                @touchend.prevent="handleTouchEnd"
+                @mouseover="handleItemHover(item)"
+                @mouseleave="handleItemLeave()"
+              >
+                <!-- icon Shadow -->
+                <div class="icon-shadow-container">
+                  <div class="icon-shadow" v-html="createShadowSvg(item.shape)"></div>
+                </div>
                 <img :src="item.shape" class="icon-shape" :alt="item.name">
-              <div class="icon-content">
-                <i v-if="item.icon" :class="item.icon"></i>
-              </div>
-              <div v-if="item.badge" class="badge" :class="item.badge">
-                <i :class="getBadgeIcon(item.badge)"></i>
+                <div class="icon-content">
+                  <i v-if="item.icon" :class="item.icon"></i>
+                </div>
+                <div v-if="item.badge" class="badge" :class="item.badge">
+                  <i :class="getBadgeIcon(item.badge)"></i>
+                </div>
               </div>
             </div>
             <TruncateText
-                class="item-name"
-                :text="item.name"
-                :mobile-cutoff="10"
-                :tablet-cutoff="15"
-                :desktop-cutoff="15"
-              />
-              <!--<span class="item-name">{{ item.name }}</span>-->
+              class="item-name"
+              :text="item.name"
+              :mobile-cutoff="10"
+              :tablet-cutoff="15"
+              :desktop-cutoff="15"
+            />
           </div>
 
           <!-- Add button only on the last page -->
@@ -148,8 +156,8 @@ ADD STATUS HEADER
                 >
                   <!-- Add delete button -->
                   <DeleteButton
-                    v-if="isEditMode"
-                    @delete="handleItemDelete(item)"
+                      v-if="isEditMode"
+                      @delete="handleItemDelete(item)"
                   />
                   <div class="icon-shadow-container">
                     <div class="icon-shadow" v-html="createShadowSvg(item.shape)"></div>
@@ -437,6 +445,7 @@ ADD STATUS HEADER
         };
 
         const handleItemDelete = async (item) => {
+          console.error('mindSpace.vue/handleItemDelete: TRIGGERED');
           try {
             if (!item || !item.id) {
               console.error('Invalid item for deletion');
@@ -639,7 +648,7 @@ ADD STATUS HEADER
             if(!isEditMode.value){
               await store.dispatch('mindspace/setItemId', item.id);
               await store.dispatch('mindspace/getItemName', item.name);
-              await store.dispatch('mindspace/triggerItemWindow', true);
+              await store.dispatch('user/triggerItemWindow', true);
             }
 
             // Here you can add any additional functionality for non-folder items
@@ -1353,7 +1362,7 @@ ADD STATUS HEADER
           if(!isEditMode.value){
             await store.dispatch('mindspace/setItemId', item.id);
             await store.dispatch('mindspace/getItemName', item.name);
-            await store.dispatch('mindspace/triggerItemWindow', true);
+            await store.dispatch('user/triggerItemWindow', true);
           }
         };
 

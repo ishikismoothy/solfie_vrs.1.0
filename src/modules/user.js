@@ -31,8 +31,13 @@ export default {
       isVisible: false,
       isExpanded: false
     },
-    itemWindow:{
+    editMonitor:{
+      isEditSatisfaction: false,
       isBlockEdit: false,
+    },
+    modalControl:{
+      showItemWindow: false,
+      showSatWindow: false,
     }
   },
   mutations: {
@@ -49,8 +54,17 @@ export default {
       state.dock.isExpanded = value;
     },
     SET_IS_BLOCK_EDIT(state, value){
-      state.itemWindow.isBlockEdit = value;
-    }
+      state.editMonitor.isBlockEdit = value;
+    },
+    SET_IS_SATISFACTION_EDIT(state, value) {
+      state.editMonitor.isEditSatisfaction = value;
+    },
+    TRIGGER_ITEM_WINDOW (state, boolean) {
+      state.modalControl.showItemWindow = boolean;
+    },
+    TRIGGER_SAT_WINDOW (state, boolean) {
+      state.modalControl.showSatWindow = boolean;
+    },
   },
   actions: {
     setLastViewThemeHistory({ commit, state }, { uid, themeId }){
@@ -91,10 +105,25 @@ export default {
     setIsBlockEdit({ commit },value){
       commit('SET_IS_BLOCK_EDIT', value);
     },
+    setIsEditSatisfaction({ commit, state },value){
+      commit('SET_IS_SATISFACTION_EDIT', value);
+      console.log(state.editMonitor.isEditSatisfaction);
+    },
+    //Modal Control
+    triggerItemWindow({ commit, state }, boolean) {
+      commit('TRIGGER_ITEM_WINDOW', boolean);
+      console.log("Item Window Set to: ", state.modalControl.showItemWindow);
+    },
+    triggerSatWindow({ commit, state }, boolean) {
+      commit('TRIGGER_SAT_WINDOW', boolean);
+      console.log("Satisfaction Window Set to: ", state.modalControl.showItemWindow);
+    },
   },
   getters: {
     getLastThemeId: state => state.viewHistory.lastThemeId,
     getLastMindSpaceId: state => state.viewHistory.lastMindSpaceId,
+    getShowItemWindow: state => state.modalControl.showItemWindow,
+    getShowSatWindow: state => state.modalControl.showSatWindow,
   }
 };
 

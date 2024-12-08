@@ -383,7 +383,7 @@ export default {
       try {
         if (userId.value) {
           await fetchThemes();
-          await store.dispatch('themeSpace/setThemeId', {userId: userId.value});
+          await store.dispatch('themeSpace/setFocusThemeId', {userId: userId.value});
           console.log('Focused Theme:', focusedThemeId.value);
         }
       } catch (error) {
@@ -397,6 +397,7 @@ export default {
       try {
         await store.dispatch('mindspace/setViewThemeId', id);
         await store.dispatch('user/setLastViewThemeHistory', {uid: userId.value, themeId: id});
+        await store.dispatch('themeSpace/setThemeId', id);
         router.push('/dashboard');  // Add navigation
       } catch (error) {
         console.log(error.message);
@@ -411,7 +412,7 @@ export default {
       }
       try {
         console.log("[ThemeSpaceView.vue/changeFocusTheme]", id);
-        await store.dispatch('themeSpace/changeThemeId', {
+        await store.dispatch('themeSpace/changeFocusThemeId', {
           userId: userId.value, 
           themeId: id
         });

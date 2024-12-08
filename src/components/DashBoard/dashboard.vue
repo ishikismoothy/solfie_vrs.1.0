@@ -1,10 +1,22 @@
 <template>
 <div class="dashboard">
     <main>
-      <section class="image-section">
-        <div class="image-placeholder"></div>
-        <h2>The Maestro - 巨匠</h2>
+      
+      <section class="overview-block">
+        <!--
+        <div class="image-placeholder"></div>-->
+        <h2>{{themeName}}</h2>
+        <div class="sat-icon-container">
+          <h4 class="sat-title">今日も実感してる？</h4>
+          <button class="sat-button"
+            @click="triggerSatisfaction"
+          >
+            {{ result() }}
+          </button>
+        </div>
       </section>
+
+      
 
       <section class="potential-section">
         <div class="score-tab-menu" v-if="Object.keys(scoresData).length">
@@ -18,6 +30,7 @@
             {{ tab }}
           </button>
         </div>
+
         <section v-if="isScoresLoading" class="scores-section-loading">
           <!-- The loading text is handled by the ::after pseudo-element -->
           <!-- <div class="scores-loading-text">Loading...</div>-->
@@ -173,6 +186,23 @@
       const store = useStore();
       const user = computed(() => store.state.user.user || {});
       const stats = computed(() => store.state.user.stats || {});
+      const themeName = computed(() => store.state.mindspace.currentThemeName);
+      const satisfactionValue = computed(() => store.state.themeSpace.satisfaction.currentSelfSatisfaction);
+
+      const result = () => {
+        const satisfaction = ["😱", "😣", "😕", "😃", "😍"];
+        if (satisfactionValue.value < 0 || satisfactionValue.value > 5) {
+          return 'Invalid score';
+        } else if (satisfactionValue.value >= 5) {
+          return satisfaction[4];
+        } else {
+          return satisfaction[Math.floor(satisfactionValue.value)];
+        }
+      }
+
+      const triggerSatisfaction = () => {
+        store.dispatch('user/triggerSatWindow', true)
+      };
 
       //=====[SYSTEM01 : TAB FOR POTENTIAL GRAPH]=====
       const selectedScoreTab = computed({
@@ -401,6 +431,9 @@
         //USER DATA FUNCTION
         user,
         stats,
+        themeName,
+        result,
+        triggerSatisfaction,
 
         //SCORE DISPLAY FUNCTION
         selectedScoreTab,

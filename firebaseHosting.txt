@@ -4,6 +4,7 @@ How to Host an app on firebase
 1) npm install -g firebase-tools
 2) firebase login
 
+[[!!!ALWAYS MAKE SURE THIS!!!]]
 1) cd to the folder contains the project.
 
 2) Initialise firebase

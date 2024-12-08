@@ -1,7 +1,7 @@
 import {
     collection,
     doc,
-    //setDoc,
+    setDoc,
     getDoc,
     getDocs,//For multiple docs
     addDoc,
@@ -318,6 +318,115 @@ export const themeService = {
             }));
         } catch (error) {
             console.error('Error searching themes:', error);
+            throw error;
+        }
+    },
+
+    async updateAssessment(themeId, assessmentValue, assessmentType = 'selfAssessment') {
+        if (!themeId) {
+            throw new Error('Theme ID is required');
+        }
+        
+        const userId = store.state.mindspace.userId;
+        if (!userId) {
+            throw new Error('User not authenticated');
+        }
+        
+        // Validate assessment type
+        if (!['selfAssessment', 'aiAssessment'].includes(assessmentType)) {
+            throw new Error('Invalid assessment type');
+        }
+        
+        // Ensure we have a raw number value
+        const rawValue = Number(assessmentValue);
+        
+        // Validate assessment value
+        if (rawValue < 0 || rawValue > 5 || isNaN(rawValue)) {
+            throw new Error('Assessment value must be between 0 and 5');
+        }
+    
+        try {
+            const themeRef = doc(db, 'themes', themeId.toString());
+            
+            // Create new assessment record
+            const newAssessment = {
+                value: rawValue,
+                timestamp: new Date().toISOString()
+            };
+    
+            // First check if the document exists and get its current data
+            const themeDoc = await getDoc(themeRef);
+            if (!themeDoc.exists()) {
+                throw new Error('Theme document not found');
+            }
+    
+            const themeData = themeDoc.data();
+            
+            // Initialize the update object
+            let updateObject = {
+                updatedAt: new Date().toISOString()
+            };
+    
+            // If assessment field doesn't exist, create the full structure
+            if (!themeData.assessment) {
+                updateObject.assessment = {
+                    selfAssessment: [],
+                    aiAssessment: []
+                };
+            }
+    
+            // Use set with merge to ensure the structure exists, then update the array
+            await setDoc(themeRef, updateObject, { merge: true });
+            
+            // Now we can safely use arrayUnion
+            await updateDoc(themeRef, {
+                [`assessment.${assessmentType}`]: arrayUnion(newAssessment)
+            });
+    
+            return {
+                id: themeId,
+                type: assessmentType,
+                newAssessment,
+                uid: userId
+            };
+        } catch (error) {
+            console.error('Error updating assessment:', error);
+            throw error;
+        }
+    },
+    async  getLatestAssessment(themeId, assessmentType = 'selfAssessment') {
+        if (!themeId) {
+            throw new Error('Theme ID is required');
+        }
+    
+        try {
+            const themeRef = doc(db, 'themes', themeId.toString());
+            const themeDoc = await getDoc(themeRef);
+    
+            if (!themeDoc.exists()) {
+                throw new Error('Theme document not found');
+            }
+    
+            const data = themeDoc.data();
+            
+            // Check if assessment and the specified type exist
+            if (!data.assessment || !data.assessment[assessmentType]) {
+                return null;
+            }
+    
+            const assessments = data.assessment[assessmentType];
+            
+            // If there are no assessments, return null
+            if (!assessments.length) {
+                return null;
+            }
+    
+            // Sort by timestamp in descending order and get the first item
+            return assessments.sort((a, b) => 
+                new Date(b.timestamp) - new Date(a.timestamp)
+            )[0];
+        } catch (error) {
+            console.error('Error getting latest assessment:', error);
             throw error;
         }
     }

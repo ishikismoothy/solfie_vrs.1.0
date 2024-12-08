@@ -245,7 +245,7 @@ export default {
             store.dispatch('mindspace/addBlockAtIndex', { block: newBlock, index });
         };
 
-        const isBlockEdit = computed(() => store.state.user.itemWindow.isBlockEdit);
+        const isBlockEdit = computed(() => store.state.user.editMonitor.isBlockEdit);
         const toggleEditBlock = () => {
             const newValue = !isBlockEdit.value;
             store.dispatch('user/setIsBlockEdit', newValue);

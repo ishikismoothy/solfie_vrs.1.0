@@ -67,7 +67,7 @@ export default {
   },
   setup(props) {
     const store = useStore();
-    const isBlockEdit = computed(() => store.state.user.itemWindow.isBlockEdit);
+    const isBlockEdit = computed(() => store.state.user.editMonitor.isBlockEdit);
     
     const isFirst = computed(() => props.index === 0);
     const isLast = computed(() => props.index === props.totalBlocks - 1);

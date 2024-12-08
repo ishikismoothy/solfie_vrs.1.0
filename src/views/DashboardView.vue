@@ -26,7 +26,7 @@
         transform: `translateX(${slidePosition}%)`, 
         transition: isDragging ? 'none' : 'transform 0.5s ease'
         }"
-      @touchstart="handleTouchStart"
+      @touchstart="handleTouchStart($event)"
       @touchmove="handleTouchMove"
       @touchend="handleTouchEnd"
     >
@@ -83,6 +83,11 @@
       @close="closeItemWindow"
       @click.self="closeItemWindow"
     />
+    <satSlider class="satWindow-view"
+      :is-open="showSatWindow"
+      @close="closeSatWindow"
+      @click.self="closeSatWindow"
+    />
     
   </div>
 </template>
@@ -98,6 +103,7 @@ import mindSpace from '@/components/DashBoard/mindSpace.vue';
 import PageIndicator from '@/components/DashBoard/pageIndicator.vue';
 import itemWindow from '@/components/ItemWindow/itemWindow.vue';
 import LoadingScreen from '@/components/loadingScreen.vue';
+import satSlider from '@/components/DashBoard/satisfactionSlider.vue';
 import { disableBodyScroll,  /*enableBodyScroll, /*clearAllBodyScrollLocks*/ } from 'body-scroll-lock';
 
 export default defineComponent({
@@ -109,7 +115,9 @@ export default defineComponent({
     PageIndicator,
     HeaderNav,
     itemWindow,
+    satSlider,
     LoadingScreen
+    
   },
   setup() {
     const store = useStore();
@@ -157,7 +165,7 @@ export default defineComponent({
 
     // Touch handling - SHIFT TO DASHBOARD OR MINDSPACE
     const handleTouchStart = (event) => {
-      if (isEditMode.value) return;
+      if (isEditMode.value) return
 
       if (currentPage.value < 1 && !isEditMode.value){
         console.log("[DashboardView.vue/handleTouchStart] start at: ",currentPage.value);
@@ -215,10 +223,16 @@ export default defineComponent({
     };
 
     //Item Window
-    const showItemWindow = computed(() => store.getters['mindspace/getShowItemWindow']);
+    const showItemWindow = computed(() => store.state.user.modalControl.showItemWindow);
     const closeItemWindow = () => {
-        store.dispatch('mindspace/triggerItemWindow', false);
+        store.dispatch('user/triggerItemWindow', false);
     };
+
+    const showSatWindow = computed(() => store.state.user.modalControl.showSatWindow);
+    const closeSatWindow = () => {
+        store.dispatch('user/triggerSatWindow', false);
+    };
+    
 
     // Nav visibility state
     const isNavVisible = computed(() => store.state.user.dock.isVisible);
@@ -304,6 +318,7 @@ export default defineComponent({
           return dashboardView.contains(el) || itemWindowView.contains(el);
         }
       });
+      
       try {
         // Make sure we have a userId first
         if (!userId.value) {
@@ -313,7 +328,7 @@ export default defineComponent({
         // If no theme is selected
         if (!currentThemeId.value) {
           const loadView = await store.dispatch('mindspace/loadViewThemeId');
-          
+      
           if (!loadView) {
             return router.push('/themespace');
           }
@@ -326,6 +341,10 @@ export default defineComponent({
       } catch (error) {
         console.error('Error in setup:', error);
         router.push('/themespace');
+      }finally{
+        store.dispatch('themeSpace/setThemeId', currentThemeId.value);
+        await store.dispatch('themeSpace/getSelfAssessment');
+          
       }
     });
 
@@ -339,8 +358,11 @@ export default defineComponent({
       handleTouchMove,
       handleTouchEnd,
       isEditMode,
-      closeItemWindow,
+      
       showItemWindow,
+      closeItemWindow,
+      showSatWindow,
+      closeSatWindow,
 
       //Dock visibility Handlings
       navRef,
