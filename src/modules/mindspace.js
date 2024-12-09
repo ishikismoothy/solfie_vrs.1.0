@@ -523,8 +523,8 @@ export default {
       },
       async setThemeData({ commit, state }) {
         console.log("[setThemeData] TRIGGERED");
-        const currentThemeName = await getThemeData(state.currentThemeId);
-
+        const currentThemeData = await getThemeData(state.currentThemeId);
+        const currentThemeName = currentThemeData.name;
         commit('SET_THEME_NAME', currentThemeName);
         console.log("[setThemeData] Mindspace Name:", state.currentThemeName);
       },

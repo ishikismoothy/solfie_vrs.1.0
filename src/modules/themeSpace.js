@@ -18,8 +18,8 @@ export default {
             '暮らし方', '働き方', '表し方', '付き合い方',
         ],
         satisfaction: {
-            currentSelfSatisfaction: 0,
-            currentAiSatisfaction: 0,
+            currentSelfSatisfaction: 5,
+            currentAiSatisfaction: 5,
             showSatWindow: false,
         }
     },

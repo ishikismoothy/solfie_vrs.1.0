@@ -134,6 +134,22 @@ export const themeService = {
         }
     },
 
+    // Get specific Theme data.
+    async getThemeData (themeId) {
+        const themeRef = doc(db, 'themes', themeId);
+        const themeDoc = await getDoc(themeRef);
+      
+        if (!themeDoc.exists()) {
+          throw new Error ('Theme not found');
+        }
+      
+        const themeData = themeDoc.data();
+      
+        console.log("[getThemeData]",themeData);
+      
+        return themeData;
+    },
+
     // Add new theme
     async addTheme(themeData, uid) {
         if (!uid) throw new Error('User not authenticated');

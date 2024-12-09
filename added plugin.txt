@@ -1,0 +1,5 @@
+Drag handling plugin
+npm install vue-draggable-next
+
+Chart handlings plugin
+npm install vue-chartjs chart.js

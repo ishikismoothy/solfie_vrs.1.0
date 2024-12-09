@@ -344,7 +344,7 @@ export default defineComponent({
       }finally{
         store.dispatch('themeSpace/setThemeId', currentThemeId.value);
         await store.dispatch('themeSpace/getSelfAssessment');
-          
+        await store.dispatch('scores/fetchSatisfactionData',currentThemeId.value);
       }
     });
 
@@ -397,6 +397,7 @@ export default defineComponent({
 @import '../assets/dashboardStyle.scss';
 @import '../assets/mindSpaceStyle.scss';
 @import '../assets/deleteButtonStyle.scss';
+@import '../assets/satisfactionDataViewStyle.scss';
 @import '../assets/todosStyle.scss';
 @import '../assets/dockStyle.scss';
 </style>

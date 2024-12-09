@@ -125,8 +125,8 @@ export const getThemeData = async (themeId) => {
 
   console.log("[getThemeData]",themeData);
 
-  return themeData.name;
-}
+  return themeData;
+};
 
 export const getListOfMindSpace = async (themeId) => {
   console.log("[getListOfMindSpace] 00 themeId: ",themeId);
@@ -154,7 +154,7 @@ export const getListOfMindSpace = async (themeId) => {
     return [];
   }
   
-}
+};
 
 export const getMindSpaceData = async (mindSpaceId) => {
     const mindspaceRef = doc(db, 'mindspace', mindSpaceId);

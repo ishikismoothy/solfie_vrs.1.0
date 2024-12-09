@@ -16,37 +16,7 @@
         </div>
       </section>
 
-      
-
-      <section class="potential-section">
-        <div class="score-tab-menu" v-if="Object.keys(scoresData).length">
-          <button
-            v-for="tab in Object.keys(scoresData)"
-            :key="tab"
-            @click="selectedScoreTab = tab"
-            :class="{ active: selectedScoreTab === tab }"
-            :disabled="isScoresLoading"
-          >
-            {{ tab }}
-          </button>
-        </div>
-
-        <section v-if="isScoresLoading" class="scores-section-loading">
-          <!-- The loading text is handled by the ::after pseudo-element -->
-          <!-- <div class="scores-loading-text">Loading...</div>-->
-        </section>
-        <section v-if="!isScoresLoading && currentScoreData.items" class="scores-section">
-          <p class="score-update">更新：{{ currentScoreData.date }}</p>
-          <div v-for="(value, key) in currentScoreData.items" :key="key" class="score-item">
-            <span class="score-label">{{ key }}</span>
-            <div class="score-bar">
-              <div class="ability-fill" :style="{ width: `${(animatedScores[selectedScoreTab]?.[key] || 0) * 20}%` }"></div>
-            </div>
-            <span class="ability-value">{{ (animatedScores[selectedScoreTab]?.[key] || 0).toFixed(1) }}</span>
-          </div>
-        </section>
-        <div v-else class="no-data"></div>
-      </section>
+      <SatisfactionDataView/>
 
       <section class="decision-section">
         <div class="ability-tab-menu" v-if="Object.keys(abilitiesData).length">
@@ -178,10 +148,12 @@
 // Dashboard.vue
   import { defineComponent, ref, computed, watch, onMounted } from 'vue';
   import { useStore } from 'vuex';
-
+  import SatisfactionDataView from './satisfactionDataView.vue';
   export default defineComponent({
     name: 'DashboardView',
-
+    components:{
+      SatisfactionDataView
+    },
     setup() {
       const store = useStore();
       const user = computed(() => store.state.user.user || {});
@@ -204,79 +176,14 @@
         store.dispatch('user/triggerSatWindow', true)
       };
 
+
       //=====[SYSTEM01 : TAB FOR POTENTIAL GRAPH]=====
-      const selectedScoreTab = computed({
-        get: () => store.state.scores.selectedScoreTab,
-        set: (value) => store.dispatch('scores/selectScoreTab', value)
-      });
-
-      const currentScoreData = computed(() => store.getters['scores/currentScoreData'] || { date: '', items: {} });
-      const scoresData = computed(() => store.state.scores.scoresData);
-      const isScoresLoading = computed(() => store.getters['scores/isLoading']);
-
-      //Initial Value during the loading
-      const animatedScores = ref({
-        '自己評価': {
-          date: '2024/01/01',
-          items: {
-            '開花': 0,
-            '姿': 0,
-            '環境': 0,
-            '活動': 0,
-          }
-        },
-        '意識解析': {
-          date: '2024/01/01',
-          items: {
-            '開花': 0,
-            '姿': 0,
-            '環境': 0,
-            '活動': 0,
-          }
-        } });
-
-      const lerp = (start, end, t) => start * (1 - t) + end * t;
 
       
-      const initializeAnimatedScores = () => {
-        console.log("Starting initializieAnimated")
-
-        Object.keys(scoresData.value).forEach(tab => {
-          if (scoresData.value[tab]?.items) {
-            animatedScores.value[tab] = Object.fromEntries(
-              Object.keys(scoresData.value[tab].items).map(key => [key, 0])
-            );
-          }
-        });
-      };
-
-      watch([selectedScoreTab, isScoresLoading], ([newTab, isLoading]) => {
-        if (!isLoading && scoresData.value[newTab]?.items) {
-            const targetScores = scoresData.value[newTab].items;
-            const duration = 500;
-            const start = performance.now();
-
-            const animate = (time) => {
-              const elapsed = time - start;
-              const progress = Math.min(elapsed / duration, 1);
-
-              animatedScores.value[newTab] = Object.fromEntries(
-                Object.entries(targetScores).map(([key, value]) => [
-                  key,
-                  lerp(animatedScores.value[newTab][key], value, progress)
-                ])
-              );
-
-              if (progress < 1) {
-                requestAnimationFrame(animate);
-              }
-            };
-
-            requestAnimationFrame(animate);
-        }
-      }, { immediate: true });
 
       //=====[SYSTEM02 : TAB FOR DECISION GRAPH]=====
+      const lerp = (start, end, t) => start * (1 - t) + end * t;
+
       const selectedAbilityTab = computed({
         get: () => store.state.abilities.selectedAbilityTab,
         set: (value) => store.dispatch('abilities/selectAbilityTab', value)
@@ -414,16 +321,13 @@
         await store.dispatch('scores/loadScoresData');
         await store.dispatch('abilities/loadAbilitiesData');
         await store.dispatch('todos/loadTodosData');
-        initializeAnimatedScores();
         initializeAnimatedAbilities();
       });
 
       console.log('Entire store state:', store.state);
       console.log('Current User:', store.state.user.user.name);
       console.log('Store state:', store.state);
-      console.log('Selected score tab:', selectedScoreTab.value);
       console.log('Selected ability tab:', selectedAbilityTab.value);
-      console.log('Current score data:', currentScoreData.value);
       console.log('Current abilities:', currentAbilities.value);
 
 
@@ -434,13 +338,6 @@
         themeName,
         result,
         triggerSatisfaction,
-
-        //SCORE DISPLAY FUNCTION
-        selectedScoreTab,
-        currentScoreData,
-        scoresData,
-        isScoresLoading,
-        animatedScores,
 
         //ABILITY DISPLAY FUNCTION
         selectedAbilityTab,

@@ -1,13 +1,32 @@
+import { themeService } from '@/firebase/firebaseThemeSpace';
+
 export default {
   namespaced: true,
   state: {
-    selectedScoreTab: '自己評価',
+    selectedTab: {
+      selectedSatTab: `comparison`,
+      selectedScoreTab: '自己評価',
+      scopeSatTab: 'year'
+    },
+    satisfactionData: {
+      selfAssessment: [],
+      aiAssessment: []
+    },
     scoresData: {},
     isLoading: false,
   },
   mutations: {
+    SET_SATISFACTION_DATA(state, data) {
+      state.satisfactionData = data;
+    },
+    SET_SELECTED_SAT_TAB(state, tab) {
+      state.selectedTab.selectedSatTab = tab;
+    },
+    SET_SCOPE_TAB(state, scope) {
+      state.selectedTab.scopeSatTab = scope;
+    },
     SET_SELECTED_SCORE_TAB(state, tab) {
-      state.selectedScoreTab = tab;
+      state.selectedTab.selectedScoreTab = tab;
     },
     SET_LOADING(state, isLoading) {
       state.isLoading = isLoading;
@@ -17,6 +36,29 @@ export default {
     },
   },
   actions: {
+    async fetchSatisfactionData({ commit }, themeId) {
+      console.log("[scores.js/fetchSatisfactionData]",themeId)
+      try {
+        const themeData = await themeService.getThemeData(themeId);
+        if (themeData && themeData.assessment) {
+          commit('SET_SATISFACTION_DATA', {
+            selfAssessment: themeData.assessment.selfAssessment || [],
+            aiAssessment: themeData.assessment.aiAssessment || []
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching satisfaction data:', error);
+        throw error;
+      }
+    },
+
+    selectSatTab({ commit }, tab) {
+      commit('SET_SELECTED_SAT_TAB', tab);
+    },
+
+    selectScopeTab({ commit }, scope) {
+      commit('SET_SCOPE_TAB', scope);
+    },
     selectScoreTab({ commit }, tab) {
       commit('SET_SELECTED_SCORE_TAB', tab);
     },
@@ -54,10 +96,10 @@ export default {
   },
   getters: {
     currentScoreData: (state) => {
-      return state.scoresData[state.selectedScoreTab] || { date: '', items: {} };
+      return state.scoresData[state.selectedTab.selectedScoreTab] || { date: '', items: {} };
     },
     getCurrentTab: (state) => {
-      return state.selectedScoreTab || '自己評価';
+      return state.selectedTab.selectedScoreTab || '自己評価';
     },
     isLoading: (state) => state.isLoading,
   },
