@@ -6,11 +6,15 @@
       <header>
         <div class="logo-section">
           <h1>Solfie</h1>
+          <!--
           <span class="plan-type">{{planType}}</span>
+          -->
         </div>
+        <!--
         <button class="avatar-button">
           <img src="/avatar-placeholder.png" alt="Avatar"/>
         </button>
+        -->
       </header>
 
       <!-- Search and Create Section -->

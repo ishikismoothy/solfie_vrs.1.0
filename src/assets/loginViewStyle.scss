@@ -1,0 +1,115 @@
+.logo-section {
+    @include flex(flex-start, center, 0.5rem);
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: $text-color;
+    }
+}
+.auth-container{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    .auth-btn-container{
+        display: flex;
+        gap: 5px;
+        button{
+            height:30px;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.5em;
+            transition: background-color 0.2s;
+            background-color: #f1f1f3;
+            cursor: pointer;
+            ;
+            @media (hover: hover) {
+                &:hover {
+                    background-color: #f1f1f386;
+                }
+            }
+            &:active {
+                background-color:#f1f1f386;
+            }
+        }
+
+    }
+}
+.signup-form {
+    width: 70%;
+    min-width: 250px;
+    //margin: 0 auto;
+    padding: 20px;
+    .form-group {
+        margin-bottom: 15px;
+        .form-input-container{
+            label {
+                display: block;
+                margin-bottom: 5px;
+                margin-top: 5px;
+            }
+              
+            input {
+                width: 94%;
+                padding: 8px;
+                font-size: 16px;
+            }
+        }  
+    }
+}
+  
+.signIn-form {
+    width: 70%;
+    min-width: 250px;
+    //margin: 0 auto;
+    padding: 20px;
+    .form-group {
+        margin-bottom: 15px;
+        label {
+            display: block;
+            margin-bottom: 5px;
+            margin-top: 5px;
+        }
+          
+        input {
+            width: 94%;
+            padding: 8px;
+            font-size: 16px;
+        }
+    }
+    .error {
+        color: red;
+        margin-top: 10px;
+        text-align: center;
+    }
+} 
+  
+.button-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+
+    button {
+        width: auto;
+        min-width: 200px;
+        padding: 10px 20px;
+        font-size: 16px;
+        background-color: #fd4a1d;
+        color: white;
+        border: none;
+        cursor: pointer;
+        @media (hover: hover) {
+            &:hover {
+                background-color: #ff572d;
+            }
+        }
+        &:active {
+        transform: scale(0.98);
+        }
+        &:disabled{
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+    }
+}
