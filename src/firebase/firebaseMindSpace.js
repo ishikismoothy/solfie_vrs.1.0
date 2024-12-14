@@ -125,8 +125,8 @@ export const getThemeData = async (themeId) => {
 
   console.log("[getThemeData]",themeData);
 
-  return themeData.name;
-}
+  return themeData;
+};
 
 export const getListOfMindSpace = async (themeId) => {
   console.log("[getListOfMindSpace] 00 themeId: ",themeId);
@@ -154,7 +154,7 @@ export const getListOfMindSpace = async (themeId) => {
     return [];
   }
   
-}
+};
 
 export const getMindSpaceData = async (mindSpaceId) => {
     const mindspaceRef = doc(db, 'mindspace', mindSpaceId);
@@ -525,31 +525,42 @@ export const getItemData = async (itemId) => {
 
 // Firebase Update Function
 export const updateItemData = async (itemId, itemName, itemBlockData) => {
-  console.log('[updateItemInFirestore] Starting update...');
+  console.log('[updateItemInFirestore] Starting update...', itemBlockData);
   
   if (!itemId) {
     throw new Error('Item ID is not set');
   }
 
-  // Store the filtered array in a new variable
+  // Modified filter to handle different content types
   const cleanedContents = itemBlockData.filter(item => {
-    return item && 
-      typeof item.content === 'string' && 
-      item.content.trim() !== '';
+    if (!item) return false;
+    
+    // Handle different content types
+    if (item.type === 'todo-block') {
+      return Array.isArray(item.content) && item.content.length > 0;
+    }
+    
+    if (item.type === 'line-block') {
+      // Assuming line-block doesn't need content, or has its own format
+      return true;
+    }
+    
+    // For other types (title, body, image), keep original string check
+    return typeof item.content === 'string' && item.content.trim() !== '';
   });
 
   console.log('Original length:', itemBlockData.length);
   console.log('Cleaned length:', cleanedContents.length);
+  console.log('Cleaned contents:', cleanedContents);
 
   const itemRef = doc(db, 'items', itemId);
   
   await updateDoc(itemRef, {
     updatedAt: serverTimestamp(),
     name: itemName,
-    contents: cleanedContents  // Use the cleaned array here
+    contents: cleanedContents
   });
 }
-
 // Function to add item to Firestore and update mindspace
 export const addItemToMindspace = async (userId, mindSpaceId, pageIndex, index, newItem) => {
     
@@ -753,6 +764,176 @@ export const addItemToFolder = async (userId, mindSpaceId, folderId, item) => {
       console.error('Error adding item to folder:', error);
       throw error;
     }
+};
+
+export const duplicateItemInMindspace = async (userId, mindSpaceId, pageIndex, existingItemId) => {
+  try {
+    // 1. Fetch existing item data
+    const existingItemRef = doc(db, 'items', existingItemId);
+    const existingItemDoc = await getDoc(existingItemRef);
+    
+    if (!existingItemDoc.exists()) {
+      throw new Error('Source item not found');
+    }
+
+    // 2. Create new item with existing data
+    const itemRef = doc(collection(db, 'items'));
+    const itemId = itemRef.id;
+    
+    // Get existing data
+    const existingData = existingItemDoc.data();
+    
+    // Generate new IDs for contents first
+    const newContentIds = await Promise.all(
+      existingData.contents.map(() => generateRandomId())
+    );
+    
+    // Then create the contents array with the pre-generated IDs
+    const newContents = existingData.contents.map((content, index) => ({
+      ...content,
+      id: 'e-' + newContentIds[index],
+      createdAt: Date.now(),
+      editedAt: null,
+      createdBy: userId,
+      editedBy: [userId]
+    }));
+
+    const itemData = {
+      ...existingData,
+      id: itemId,
+      uid: userId,
+      createdAt: serverTimestamp(),
+      updatedAt: null,
+      contents: newContents,
+      name: `${existingData.name} (Copy)`
+    };
+
+    // Save duplicated item to items collection
+    await setDoc(itemRef, itemData);
+
+    // 3. Update mindspace pages
+    const mindspaceRef = doc(db, 'mindspace', mindSpaceId);
+    const mindspaceDoc = await getDoc(mindspaceRef);
+    
+    if (!mindspaceDoc.exists()) {
+      throw new Error('Mindspace not found');
+    }
+
+    const mindspaceData = mindspaceDoc.data();
+
+    // Initialize or get pages array
+    let pages = mindspaceData.pages || [];
+    
+    // Ensure pages is an array
+    if (!Array.isArray(pages)) {
+      pages = [];
+    }
+
+    // Ensure the target page exists and has an items array
+    while (pages.length <= pageIndex) {
+      pages.push({ items: [] });
+    }
+
+    // Ensure the page has an items array
+    if (!pages[pageIndex].items) {
+      pages[pageIndex].items = [];
+    }
+
+    // Simply push the new item to the end of the array
+    pages[pageIndex].items.push(itemId);
+
+    // Update mindspace document
+    await updateDoc(mindspaceRef, { pages });
+
+    console.log('[duplicateItemInMindspace] Updated mindspace with duplicated item:', {
+      itemId,
+      itemData,
+      pageIndex,
+      position: pages[pageIndex].items.length - 1,
+      updatedPages: pages
+    });
+
+    return { itemId, itemData };
+  } catch (error) {
+    console.error('Error in duplicateItemInMindspace:', error);
+    throw error;
+  }
+};
+
+export const duplicateItemToFolder = async (userId, mindSpaceId, folderId, existingItemId) => {
+  try {
+    // 1. Fetch existing item data
+    const existingItemRef = doc(db, 'items', existingItemId);
+    const existingItemDoc = await getDoc(existingItemRef);
+    
+    if (!existingItemDoc.exists()) {
+      throw new Error('Source item not found');
+    }
+
+    // 2. Create new item with existing data
+    const itemRef = doc(collection(db, 'items'));
+    const itemId = itemRef.id;
+    
+    // Get existing data
+    const existingData = existingItemDoc.data();
+    
+    // Generate new IDs for contents first
+    const newContentIds = await Promise.all(
+      existingData.contents.map(() => generateRandomId())
+    );
+    
+    // Then create the contents array with the pre-generated IDs
+    const newContents = existingData.contents.map((content, index) => ({
+      ...content,
+      id: 'e-' + newContentIds[index],
+      createdAt: Date.now(),
+      editedAt: null,
+      createdBy: userId,
+      editedBy: [userId]
+    }));
+
+    const itemData = {
+      ...existingData,
+      id: itemId,
+      uid: userId,
+      createdAt: serverTimestamp(),
+      updatedAt: null,
+      contents: newContents,
+      name: `${existingData.name} (Copy)`
+    };
+
+    // Save duplicated item to items collection
+    await setDoc(itemRef, itemData);
+
+    // Update folder in mindspace
+    const mindspaceRef = doc(db, 'mindspace', mindSpaceId);
+    const mindspaceDoc = await getDoc(mindspaceRef);
+    const mindspaceData = mindspaceDoc.data();
+
+    // Update folder items
+    const folders = mindspaceData.folders.map(folder => {
+      if (folder.id === folderId) {
+        return {
+          ...folder,
+          items: [...(folder.items || []), itemId]
+        };
+      }
+      return folder;
+    });
+
+    await updateDoc(mindspaceRef, { folders });
+
+    console.log('[duplicateItemToFolder] Updated folder with duplicated item:', {
+      itemId,
+      itemData,
+      folderId
+    });
+
+    return { itemId, itemData };
+  } catch (error) {
+    console.error('Error duplicating item to folder:', error);
+    throw error;
+  }
 };
 
 // update MindSpaceData

@@ -1,14 +1,16 @@
 <template>
-  <div class="about">
+  <div class="logo-section">
+    <h1>Solfie</h1>     
+  </div>
+  <div class="auth-container">
     <signingUp v-if="!isAuthenticated && isSigningUp  && !isForgetPassword"/>
     <signingIn v-if="!isAuthenticated && !isSigningUp  && !isForgetPassword"/>
     <ForgotPassword v-if="!isAuthenticated && isForgetPassword" />
-
-    <button v-if="!isAuthenticated && isSigningUp" @click="toggleSignUp">I have an account</button>
-    <button v-if="!isAuthenticated && !isSigningUp" @click="toggleSignUp">Create a new account</button>
-
-    <button v-if="!isAuthenticated && isSigningUp && !isForgetPassword" @click="toggleForgetPassword">Forgot Password</button>
-
+    <div class="auth-btn-container">
+      <button v-if="!isAuthenticated && isSigningUp" @click="toggleSignUp">I have an account</button>
+      <button v-if="!isAuthenticated && !isSigningUp" @click="toggleSignUp">Create a new account</button>
+      <button v-if="!isAuthenticated && isSigningUp && !isForgetPassword" @click="toggleForgetPassword">Forgot Password</button>
+    </div>
     <logoutButton v-if="isAuthenticated" />
   </div>
 </template>
@@ -54,3 +56,7 @@ export default {
   }
 }
 </script>
+
+<style>
+@import '../assets/loginViewStyle.scss';
+</style>

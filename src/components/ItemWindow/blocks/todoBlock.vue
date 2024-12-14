@@ -2,14 +2,8 @@
 <template>
   <div class="todo-block">
     <div v-for="(todo, index) in todos" :key="index" class="todo-item">
-      <div class="flex items-center gap-4">
-        <input 
-          type="checkbox" 
-          v-model="todo.tick"
-          @change="updateTodo(index)"
-          class="form-checkbox"
-        >
-        <div class="flex-grow" @click="handleClick(index)">
+      <div class="todo-item-left-section">
+        <div class="text-nm text-gray-500" @click="handleClick(index)">
           <template v-if="editingIndex !== index">
             <span :class="{ 'line-through text-gray-500': todo.tick }">
               {{ todo.name }}
@@ -17,23 +11,41 @@
           </template>
           <template v-else>
             <input
-            v-model="editedTodoName"
-            class="edit-input w-full"
-            @blur="handleBlur(index)"
-            @focus="handleFocus(index)"
-            :ref="el => { if (el) todoEditInputs[index] = el }"
+              v-model="editedTodoName"
+              class="edit-input w-full"
+              @blur="handleBlur(index)"
+              @focus="handleFocus(index)"
+              :ref="el => { if (el) todoEditInputs[index] = el }"
             >
           </template>
         </div>
-        <div class="text-sm text-gray-500">
-          Due: {{ formatDate(todo.due) }}
+        <div class="text-sm text-gray-500" @click="handleDateClick(index)">
+          Due: 
+          <template v-if="editingDateIndex !== index">
+            {{ formatDate(todo.due) }}
+          </template>
+          <template v-else>
+            <input
+              type="date"
+              v-model="editedDate"
+              class="date-input"
+              @blur="handleDateBlur(index)"
+              @focus="handleDateFocus(index)"
+              :ref="el => { if (el) dateEditInputs[index] = el }"
+            >
+          </template>
         </div>
       </div>
+      <div class="todo-item-right-section">
+        <input 
+          type="checkbox" 
+          v-model="todo.tick"
+          @change="updateTodo(index)"
+          class="form-checkbox"
+        >
+      </div> 
     </div>
-    <button 
-      @click="addTodo"
-      class="mt-2 text-blue-500 hover:text-blue-700"
-    >
+    <button @click="addTodo" class="add-block-btn">
       + Add Todo
     </button>
   </div>
@@ -54,15 +66,52 @@ export default {
   setup(props) {
     const store = useStore();
     const editingIndex = ref(null);
+    const editingDateIndex = ref(null);
     const editedTodoName = ref('');
+    const editedDate = ref('');
     const todos = ref(props.block.content || []);
-    const todoEditInputs = ref([]); // Change to array of refs
+    const todoEditInputs = ref([]);
+    const dateEditInputs = ref([]);
     const isFocused = ref(false);
 
     // Clear the refs before update
     onBeforeUpdate(() => {
       todoEditInputs.value = [];
+      dateEditInputs.value = [];
     });
+
+    // New date handlers
+    const handleDateClick = async (index) => {
+      if (isFocused.value) return;
+      editingDateIndex.value = index;
+      editedDate.value = new Date(todos.value[index].due).toISOString().split('T')[0];
+      await nextTick();
+      dateEditInputs.value[index]?.focus();
+    };
+
+    const handleDateFocus = async (index) => {
+      store.dispatch('user/setIsBlockEdit', false);
+      isFocused.value = true;
+      await nextTick();
+      dateEditInputs.value[index]?.select();
+    };
+
+    const handleDateBlur = async (index) => {
+      await saveDateChanges(index);
+      isFocused.value = false;
+    };
+
+    const saveDateChanges = (index) => {
+      if (editedDate.value) {
+        const updatedTodos = [...todos.value];
+        updatedTodos[index] = {
+          ...updatedTodos[index],
+          due: new Date(editedDate.value).toISOString()
+        };
+        updateBlockContent(updatedTodos);
+      }
+      editingDateIndex.value = null;
+    };
 
     const handleClick = async (index) => {
       if (isFocused.value) return;
@@ -73,6 +122,7 @@ export default {
     };
 
     const handleFocus = async (index) => {
+      store.dispatch('user/setIsBlockEdit', false);
       isFocused.value = true;
       await nextTick();
       todoEditInputs.value[index]?.select();
@@ -126,13 +176,19 @@ export default {
     return {
       todos,
       editingIndex,
+      editingDateIndex,
       editedTodoName,
+      editedDate,
       handleClick,
+      handleDateClick,
+      handleDateFocus,
+      handleDateBlur,
       saveTodoChanges,
       updateTodo,
       addTodo,
       formatDate,
       todoEditInputs,
+      dateEditInputs,
       isFocused,
       handleFocus,
       handleBlur

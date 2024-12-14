@@ -4,7 +4,7 @@
     <div v-if="modelValue" class="theme-modal-overlay" @click="closeModal">
       <div class="theme-modal-content" @click.stop>
         <div class="theme-modal-header">
-          <h2 class="text-xl font-semibold">Create New MindTheme</h2>
+          <h2 class="text-xl font-semibold">Establish A New Wish</h2>
           <button class="theme-modal-close-button" @click="closeModal">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -14,11 +14,11 @@
         <form @submit.prevent="handleCreate">
           
           <div class="form-group">
-            <label>名前を入力/ Enter a name:</label>
+            <label>願いを入力/ Enter your wish:</label>
             <input 
               type="text" 
               v-model="newName"
-              placeholder="例：父、プロジェクトマネジャー、生徒/ eg. father, project Manager, student. "
+              placeholder="例：円満な家族関係、 仕事で活躍、才能の発揮、豊かな暮らし/ eg. Well-being, Healthy relationship, Unleashing true potentials. "
               ref="nameInput"
               class="name-input"
             >

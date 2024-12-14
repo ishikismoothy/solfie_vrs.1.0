@@ -61,8 +61,10 @@
       </button>
 
         <!-- Dropdown content here -->
-      <div v-if="isDropdownOpen" class="dropdown-menu">
-        <LogoutButton class="button-style" />
+      <div 
+        v-if="isDropdownOpen" class="dropdown-menu"
+      >
+        <LogoutButton class="dropdown-item" />
       </div>
         <!-- Dropdown content ends -->
 
@@ -98,11 +100,11 @@ export default {
     const isDropdownOpen = ref(false);
     const user = computed(() => store.state.user.user || {});
 
-    const themeName = computed(() => store.getters['mindspace/getThemeName']);
-    const mindSpaceName = computed(() => store.getters['mindspace/getMindSpaceName']);
-    const isLoading = computed(() => store.getters['mindspace/isLoading']);
-    const themeId = computed(() => store.getters['mindspace/getThemeId']);
-    const userId = computed(() => store.getters['mindspace/getUserId']);
+    const themeName = computed(() => store.state.mindspace.currentThemeName);
+    const mindSpaceName = computed(() => store.state.mindspace.currentMindSpaceName);
+    const isLoading = computed(() => store.state.mindspace.loading);
+    const themeId = computed(() => store.state.mindspace.currentThemeId);
+    const userId = computed(() => store.state.mindspace.userId);
 
     const isEditMode = computed(() => store.getters['mindspace/getIsEditMode']);
 

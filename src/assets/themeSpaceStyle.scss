@@ -6,12 +6,12 @@ $primary-hover: #2563eb;
 $secondary-color: #888888;
 
 $border-color: #e5e7eb;
-$overlay-bg: rgba(0, 0, 0, 0.5);
+$overlay-bg: rgba(0, 0, 0, 0.3);
 $hover-bg: #f3f4f6;
 
 $text-color: #2d3748;
-$gray-light: #f7fafc;
-$gray-medium: #e2e8f0;
+$gray-light: #cccccc;
+$gray-medium: #888888;
 $gray-dark: #4a5568;
 $white: #ffffff;
 $transition: all 0.3s ease;
@@ -79,10 +79,12 @@ $transition: all 0.3s ease;
         appearance: none;
         -webkit-appearance: none;
         
-        &:hover {
-          transform: scale(1.05);
+        @media (hover: hover) {
+          &:hover {
+            transform: scale(1.05);
           border-color: $primary-color;
           box-shadow: 0 0 0 4px rgba($primary-color, 0.1);
+          }
         }
   
         &:focus {
@@ -149,117 +151,334 @@ $transition: all 0.3s ease;
       height: 40px;
       font-size: 10px;
 
-      &:hover {
-        background-color: darken($primary-color, 10%);
+      @media (hover: hover) {
+        &:hover {
+          background-color: darken($primary-color, 10%);
+        }
       }
+    }
+  }
+
+  //Responsive is defiened in ThemeSpaceView.vue
+  @include responsive(iPhoneSE) {
+    .theme-grid {
+      gap: 0.8rem;
+      padding: 0.5rem;
+      
+      .theme-card {
+        border-radius: 0.6rem;
+        .theme-content {
+          padding: 0.8rem;
+        }
+      }
+      .theme-info-group {
+        .theme-dots-icon {
+          gap: 3px;
+          .dot {
+            width: 2.5px;
+            height: 2.5px;
+          }
+        }
+        .theme-info {
+          padding: 0.3em;
+          h3 {
+            font-size: 0.8rem;
+            margin: 0;
+          }
+          .updated-time {
+            //font-size: 0.5rem;
+            display:none;
+          }
+        }
+      }
+      .action-buttons {
+        .icon-button {
+          padding: 0.2rem;
+          
+          svg {
+            width: 1rem;
+            height: 1rem;
+          }
+        }
+      }
+    }
+  }
+
+  @include responsive(iPhonePro) {
+    .theme-grid {
+      gap: 1rem;
+      padding: 0.5rem;
+
+      .theme-card {
+        border-radius: 0.9rem;
+        .theme-content {
+          padding: 1rem;
+        }
+      }
+      .theme-info-group {
+        .theme-dots-icon {
+          gap: 4px;
+          .dot {
+            width: 3px;
+            height: 3px;
+          }
+        }
+        .theme-info {
+          padding: 0.5em;
+          h3 {
+            font-size: 0.9rem;
+            margin: 0;
+            margin-bottom: 0.3rem;
+          }
+          .updated-time {
+            font-size: 0.6rem;
+            display:block;
+          }
+        }
+      }
+      .action-buttons {
+        .icon-button {
+          padding: 0.3rem;
+          
+          svg {
+            width: 1rem;
+            height: 1rem;
+          }
+        }
+      }
+    }
+  }
+
+  @include responsive(tablet) {
+    .theme-grid {
+      gap: 1rem;
+      padding: 1rem;
+
+      .theme-card {
+        border-radius: 1rem;
+        .theme-content {
+          padding: 1.25rem;
+        }
+      }
+      .theme-info-group {
+        .theme-dots-icon {
+          gap: 3px;
+          .dot {
+            width: 4px;
+            height: 4px;
+          }
+        }
+        .theme-info {
+          padding: 1em;
+          h3 {
+            font-size: 1rem;
+            margin: 0;
+            margin-bottom: 0.5rem;
+          }
+          .updated-time {
+            font-size: 0.675rem;
+            display:block;
+          }
+        }
+      }
+      .action-buttons {
+        .icon-button {
+          padding: 0.5rem;
+          svg {
+            width: 1.25rem;
+            height: 1.25rem;
+          }
+        }
+      }
+    }
+  }
+
+  @include responsive(desktop) {
+    .theme-grid {
+      gap: 1.5rem;
+      padding: 1.5rem;
+
+      .theme-card {
+        border-radius: 1rem;
+        
+        .theme-content {
+          padding: 1.25rem;
+        }
+      }
+      .theme-info-group {
+        .theme-dots-icon {
+          gap: 3px;
+          .dot {
+            width: 4px;
+            height: 4px;
+          }
+        }
+        .theme-info {
+          padding: 1em;
+          h3 {
+            font-size: 1.2rem;
+            margin: 0;
+            margin-bottom: 0.5rem;
+          }
+          .updated-time {
+            font-size: 0.675rem;
+            display:block;
+          }
+        }
+      }
+      .action-buttons {
+        .icon-button {
+          padding: 0.5rem;
+          svg {
+            width: 1.25rem;
+            height: 1.25rem;
+          }
+        }
+      }
+      
     }
   }
 
   // Theme Grid
   .theme-grid {
-    display: grid;
-    gap: 1.5rem;
-    grid-template-columns: 1fr;
-
-    //Responsive is defeined in ThemeSpaceView.vue
-    @include responsive(tablet) {
-      grid-template-columns: repeat(2, 1fr);
-    }
-
-    //Responsive is defiened in ThemeSpaceView.vue
-    @include responsive(desktop) {
-      grid-template-columns: repeat(4, 1fr);
-    }
+    display: flex;
+    flex-direction: column;
 
     .theme-card {
       background: $white;
-      border-radius: 0.5rem;
-      overflow: hidden;
+      border: 1px solid $border-color;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      cursor: pointer;
       transition: $transition;
-
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+      &.is-disabled {
+        opacity: 0.7;
+        cursor: default;
+        pointer-events: none;
+      }
+      .drag-handle {
+        cursor: grab;
+        padding: 0.5rem;
+        color: $secondary-color;
+        opacity: 0.5;
+        transition: opacity 0.2s ease;
+        
+        &:hover:not(.is-disabled) {
+          opacity: 1;
+        }
+        
+        &.is-disabled {
+          cursor: default;
+          opacity: 0.3;
+        }
+      }
+      @media (hover: hover) {
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+      }
+      .theme-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
       }
 
-      .image-container {
-        position: relative;
-        padding-top: 100%;
-        background-color: $gray-light;
-
-        img {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
+      .theme-info-group {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        
+        .theme-dots-icon {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          .dot {
+            background-color: $gray-light;
+            border-radius: 50%;
+          }
         }
-
-        .overlay-icons {
-          position: absolute;
-          top: 0.5rem;
-          right: 0.5rem;
-          @include flex(flex-start, center, 0.5rem);
-        
-          .icon-button {
-            @include flex(center, center);
-            background-color: rgba($white, 0);
-            border: none;
-            border-radius: 0.25rem;
-            padding: 0.25rem;
-            cursor: pointer;
-            transition: $transition;
-        
-            svg {
-              width: 1.5rem;
-              height: 1.5rem;
-            }
-        
-            &:hover {
-              background-color: rgba($secondary-color, 0.1);
-            }
-        
-            &.star-button {
-              color: rgba($gray-dark, 0.5);
-              
-              .star-default {
-                fill: none;
-                stroke: currentColor;
-                
-              }
-              
-              .star-active {
-                fill: $secondary-color;  // or any color you want for the filled state
-                stroke: none;
-              }
-            }
-        
-            &.more-button {
-              color: rgba($gray-dark, 0.5);
-            }
+        .theme-info {
+          h3 {
+            font-weight: 500;
+            color: $text-color;
+            font-weight: bold;
+          }
+          .updated-time {
+            color: $gray-dark;
+            margin: 0;
           }
         }
       }
-
-      .theme-info {
-        padding: 1rem;
-
-        h3 {
-          font-size: 1.125rem;
-          font-weight: 500;
-          color: $text-color;
-          margin-bottom: 0.25rem;
+      .action-buttons {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        .icon-button {
+          @media (hover: hover) {
+            &:hover {
+              background-color: $hover-bg;
+            }
+          }
         }
-
-        .updated-time {
-          font-size: 0.875rem;
-          color: $gray-dark;
+        
+        .star-button {
+          .star-default {
+            fill: none;
+            stroke: currentColor;
+          }
+          
+          .star-active {
+            fill: $gray-medium;
+            stroke: none;
+          }
+        }
+        .more-button {
+          color: $gray-medium;
         }
       }
     }
+  }
+
+  .theme-card-drag {
+    background: $white;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    transform: scale(1.02);
+    opacity: 0.9;
+  }
+  .theme-card-ghost {
+    position: relative;
+    background: #fcf9f8;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    transform: scale(0.98);
+    transition: all 0.2s ease;
+    opacity: 0.5;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border: 2px dashed #94a3b8;
+      background: #fcf9f8;
+      opacity: 0.8;
+      border-radius: inherit;
+    }
+  }
+
+  .loading-state {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    color: $secondary-color;
+    font-size: 1.1rem;
+  }
+  
+  .error-state {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    color: #ef4444;
+    font-size: 1.1rem;
   }
 
   .dropdown-container {
@@ -274,7 +493,6 @@ $transition: all 0.3s ease;
     border-radius: 16px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     min-width: 200px;
-    z-index: 1000;
     padding: 8px;
   }
   
@@ -300,9 +518,11 @@ $transition: all 0.3s ease;
     svg {
       margin-right: 12px;
     }
-  
-    &:hover {
-      background-color: #f5f5f5;
+    
+    @media (hover: hover) {
+      &:hover {
+        background-color: #f5f5f5;
+      }
     }
   }
   

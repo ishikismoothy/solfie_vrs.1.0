@@ -48,6 +48,7 @@ export default {
     };
 
     const handleFocus = async () => {
+      store.dispatch('user/setIsBlockEdit', false);
       isFocused.value = true;
       await nextTick();
       editTextarea.value.select();

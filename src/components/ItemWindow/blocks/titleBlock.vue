@@ -50,9 +50,11 @@ export default {
 
     //FOCUS ON INPUT FIELD
     const handleFocus = async () => {
+      store.dispatch('user/setIsBlockEdit', false);
       isFocused.value = true;
       await nextTick();
       editInput.value.select();
+      
     };
 
     const handleBlur = () => {

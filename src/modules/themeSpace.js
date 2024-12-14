@@ -5,6 +5,7 @@ export default {
 
     state: {
         focusedThemeId: null,
+        currentThemeId: null,
         themes: [],
         loading: false,
         initialLoading: false,
@@ -15,7 +16,12 @@ export default {
         ],
         topicsKey:[
             '暮らし方', '働き方', '表し方', '付き合い方',
-        ]
+        ],
+        satisfaction: {
+            currentSelfSatisfaction: 5,
+            currentAiSatisfaction: 5,
+            showSatWindow: false,
+        }
     },
 
     mutations: {
@@ -24,6 +30,9 @@ export default {
         },
         SET_THEMES(state, themes) {
             state.themes = themes;
+        },
+        SET_THEME_ID(state, id){
+            state.currentThemeId = id;
         },
         SET_INITIAL_LOADING(state, status) {
             state.initialLoading = status;
@@ -57,7 +66,30 @@ export default {
         },
         SET_TOPICSKEY(state, topics) {
             state.topicsKey = topics;
-        }
+        },
+        SET_SATWINDOW(state, value) {
+            state.satisfaction.showSatWindow = value;
+        },
+        SET_SELF_SATISFACTION(state, value) {
+            // Convert string to number and update
+            const numValue = Number(value);
+            if (!isNaN(numValue)) {
+                state.satisfaction = {
+                    ...state.satisfaction,  // preserve other properties
+                    currentSelfSatisfaction: numValue
+                };
+            }
+        },
+        SET_AI_SATISFACTION(state, value) {
+            // Convert string to number and update
+            const numValue = Number(value);
+            if (!isNaN(numValue)) {
+                state.satisfaction = {
+                    ...state.satisfaction,  // preserve other properties
+                    currentAiSatisfaction: numValue
+                };
+            }
+        },
     },
 
     actions: {
@@ -138,7 +170,7 @@ export default {
         },
 
         async deleteTheme({ commit, dispatch }, { userId, themeId }) {
-            console.log("[deleteTheme/themeSpace.js]", userId);
+            console.log("[deleteTheme/themeSpace.js]", themeId);
             if (!userId) {
                 commit('SET_ERROR', 'User not authenticated');
                 return;
@@ -187,8 +219,12 @@ export default {
             commit('SET_THEMESKEY', ['健やかになる', '満たされる', '成長する', '感謝される']);
             commit('SET_TOPICSKEY', ['仕事や活動', '暮らし', '人間関係', '在り方', '環境']);
         },
+        setThemeId({ commit }, id) {
+            console.log("themeSpace.js/setThemeId: TRIGGERED", id);
+            commit('SET_THEME_ID', id);
+        },
         // Load user's theme data
-        async setThemeId({ commit, state , /* dispatch*/ }, { userId }) {
+        async setFocusThemeId({ commit, state , /* dispatch*/ }, { userId }) {
             console.log("[themeSpace.js/setThemeId] TRIGGERED");
             try {
             // 1. Get user document to find focusTheme
@@ -202,7 +238,7 @@ export default {
             commit('SET_ERROR', error.message);
             }
         },
-        async changeThemeId({ dispatch }, { userId, themeId }) {
+        async changeFocusThemeId({ dispatch }, { userId, themeId }) {
             console.log("[themeSpace.js/changeThemeId] TRIGGERED");
             try {
             const result = await themeService.changeUserThemeId(userId, themeId);
@@ -219,6 +255,48 @@ export default {
             console.log(error.message);
             }
         },
+        
+        async updateThemeOrder({ commit }, themes ) {
+            commit('SET_LOADING', true);
+            console.log('themeSpace.js/updateThemesOrder',themes)
+            try {
+              // Update the order in your backend
+              await themeService.updateThemeOrder(themes);
+              // Update the local state
+              commit('SET_THEMES', themes);
+            } catch (error) {
+              console.error('Error updating theme order:', error);
+              throw error;
+            } finally{
+                commit('SET_LOADING', false);
+            }
+        },
+        async updateSatisfaction({ commit, state }, value) {
+            // Convert to number right away
+            const numValue = Number(value);
+            if (!isNaN(numValue)) {
+                commit('SET_SELF_SATISFACTION', numValue);
+                await themeService.updateAssessment(state.currentThemeId, numValue);
+            }
+        },
+        setSatWindow({ commit }, value){
+            commit('SET_SATWINDOW', value);
+        },
+        async getSelfAssessment({ commit, state }) {
+            const latestSelfAssessment = await themeService.getLatestAssessment(state.currentThemeId);
+            
+            // If no assessment exists, set to default value (0)
+            const value = latestSelfAssessment ? latestSelfAssessment.value : 0;
+            commit('SET_SELF_SATISFACTION', value);
+        },
+    
+        async getAiAssessment({ commit, state }) {
+            const latestAiAssessment = await themeService.getLatestAssessment(state.currentThemeId, 'aiAssessment');
+            
+            // If no assessment exists, set to default value (0)
+            const value = latestAiAssessment ? latestAiAssessment.value : 0;
+            commit('SET_AI_SATISFACTION', value);
+        }
     },
 
     getters: {

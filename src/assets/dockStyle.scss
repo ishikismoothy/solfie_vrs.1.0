@@ -40,7 +40,7 @@ nav {
   }
 
 
-  .sticky-nav {
+  .sticky-nav-container {
     position: fixed;
     bottom: 0;
     left: 0;
@@ -70,7 +70,7 @@ nav {
   }
   
   @include responsive(tablet) {
-    .sticky-nav {
+    .sticky-nav-container {
       position: fixed;
       bottom: 0;
       left: 0;
@@ -86,7 +86,7 @@ nav {
       height: 120px; // Increased to accommodate taller button
       margin-left: 30px;
       margin-right: 30px;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
       border-radius: 20px;
 
     
@@ -144,9 +144,15 @@ nav {
     height: 100%;
     width: 100%;
   }
-  
-  .chatbox-button:hover {
-    background-color: #e0e0e0;
+  .chatbox-button{
+    @media (hover: hover) {
+      &:hover {
+        background-color: #e0e0e0;
+      }
+    }
+    &:active{
+      background-color: #e0e0e0;
+    }
   }
   
   .chat-text {

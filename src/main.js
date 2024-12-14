@@ -1,6 +1,7 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
+import VScrollLock from 'v-scroll-lock'
 import store from './store'
 import { firebaseApp } from '@/firebase/firebaseInit'
 
@@ -10,5 +11,9 @@ if (!firebaseApp) {
 }
 
 store.dispatch('auth/initAuth').then(() => {
-    createApp(App).use(store).use(router).mount('#app')
+    createApp(App)
+        .use(store)
+        .use(router)
+        .use(VScrollLock)
+        .mount('#app')
 })

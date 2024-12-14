@@ -8,7 +8,11 @@
 
   <div class="view-container">
     <!-- Page indicator - moved outside views-wrapper -->
-    <div class="page-indicator">
+    <div 
+      class="page-indicator"
+      :class="{ 'shifted': isNavVisible, 'hidden': isChatBoxExpanded }"
+      :style="{ transform: `translateY(${indicatorPosition}px)` }"
+      >
       <PageIndicator 
         :is-app-view="isMindSpaceView"
         @view-switch="toggleView"
@@ -22,7 +26,7 @@
         transform: `translateX(${slidePosition}%)`, 
         transition: isDragging ? 'none' : 'transform 0.5s ease'
         }"
-      @touchstart="handleTouchStart"
+      @touchstart="handleTouchStart($event)"
       @touchmove="handleTouchMove"
       @touchend="handleTouchEnd"
     >
@@ -37,11 +41,52 @@
       </div>
     </div>
 
-    <DockNav />
+    <!-- Sticky Doc -->
+    <div
+      ref="navRef"
+      class="sticky-nav"
+      :class="{ 
+        'visible': isNavVisible,
+        'expanded': isChatBoxExpanded,
+        'transitioning': isTransitioning
+      }"
+      :style="{ 
+        transform: `translateY(${navPosition}px)`,
+        zIndex: navZindex 
+
+      }"
+    >
+      <DockNav />
+    </div>
     
-    <itemWindow 
+
+    <!-- Dock Button -->
+    <button 
+      class="dock-button"
+      :class="{ 'shifted': isNavVisible, 'hidden': isChatBoxExpanded }"
+      :style="{ transform: `translateY(${buttonPosition}px)` }"
+      @click="toggleNav"
+    >
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path 
+          d="M12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 13.9021 3.5901 15.6665 4.59721 17.1199C4.70168 17.2707 4.7226 17.4653 4.64529 17.6317L3.42747 20.2519C3.23699 20.5853 3.47768 21 3.86159 21H12Z" 
+          stroke="currentColor" 
+          stroke-width="2" 
+          stroke-linecap="round" 
+          stroke-linejoin="round"
+        />
+      </svg>
+    </button>
+    
+    <itemWindow class="itemWindow-view"
       :is-open="showItemWindow"
       @close="closeItemWindow"
+      @click.self="closeItemWindow"
+    />
+    <satSlider class="satWindow-view"
+      :is-open="showSatWindow"
+      @close="closeSatWindow"
+      @click.self="closeSatWindow"
     />
     
   </div>
@@ -58,6 +103,8 @@ import mindSpace from '@/components/DashBoard/mindSpace.vue';
 import PageIndicator from '@/components/DashBoard/pageIndicator.vue';
 import itemWindow from '@/components/ItemWindow/itemWindow.vue';
 import LoadingScreen from '@/components/loadingScreen.vue';
+import satSlider from '@/components/DashBoard/satisfactionSlider.vue';
+import { disableBodyScroll,  /*enableBodyScroll, /*clearAllBodyScrollLocks*/ } from 'body-scroll-lock';
 
 export default defineComponent({
   name: 'DashboardView',
@@ -68,7 +115,9 @@ export default defineComponent({
     PageIndicator,
     HeaderNav,
     itemWindow,
+    satSlider,
     LoadingScreen
+    
   },
   setup() {
     const store = useStore();
@@ -96,6 +145,7 @@ export default defineComponent({
       }
       return isMindSpaceView.value ? 0 : -50; // Changed from -100 to -50
     });
+    const bodyElement = document.querySelector('body');
 
     watch(
       () => isEditMode.value,
@@ -115,7 +165,7 @@ export default defineComponent({
 
     // Touch handling - SHIFT TO DASHBOARD OR MINDSPACE
     const handleTouchStart = (event) => {
-      if (isEditMode.value) return;
+      if (isEditMode.value) return
 
       if (currentPage.value < 1 && !isEditMode.value){
         console.log("[DashboardView.vue/handleTouchStart] start at: ",currentPage.value);
@@ -173,12 +223,102 @@ export default defineComponent({
     };
 
     //Item Window
-    const showItemWindow = computed(() => store.getters['mindspace/getShowItemWindow']);
+    const showItemWindow = computed(() => store.state.user.modalControl.showItemWindow);
     const closeItemWindow = () => {
-        store.dispatch('mindspace/triggerItemWindow', false);
+        store.dispatch('user/triggerItemWindow', false);
     };
 
+    const showSatWindow = computed(() => store.state.user.modalControl.showSatWindow);
+    const closeSatWindow = () => {
+        store.dispatch('user/triggerSatWindow', false);
+    };
+    
+
+    // Nav visibility state
+    const isNavVisible = computed(() => store.state.user.dock.isVisible);
+    const isChatBoxExpanded = computed(() => store.state.user.dock.isExpanded);
+    const isTransitioning = ref(false);
+    const navZindex = ref(700);
+    const navPosition = ref(160);
+    const indicatorPosition = ref(0);
+    const buttonPosition = ref(0);
+    const navRef = ref(null);
+
+    const updateZIndex = () => {
+      navZindex.value = isChatBoxExpanded.value ? 700 : 1000;
+    };
+    // Toggle nav visibility
+    const toggleNav = async () => {
+      const newValue = !isNavVisible.value;
+      await store.dispatch('user/setDockVisibility', newValue);
+      console.log("[DashboardView.vue] Trigger:", newValue ? "ON" : "OFF");
+      updatePositions();
+      updateZIndex();
+    };
+
+    
+
+    // Update positions based on nav visibility
+    const updatePositions = () => {
+      const navHeight = 180;
+      if (isNavVisible.value) {
+        navPosition.value = 0;
+        indicatorPosition.value = -navHeight;
+        buttonPosition.value = -navHeight;
+      } else {
+        navPosition.value = navHeight;
+        indicatorPosition.value = 0;
+        buttonPosition.value = 0;
+      }
+    };
+
+    // Watch for edit mode changes to hide nav
+    watch(() => isEditMode.value, (newValue) => {
+      if (newValue) {
+        store.dispatch('user/setDockVisibility', false);
+        updatePositions();
+      }
+    });
+
+    // Add watch for isNavVisible to handle state changes
+    watch(isNavVisible, () => {
+      updatePositions();
+    });
+
+    watch(isChatBoxExpanded, (newValue) => {
+      console.log('[DashboardView.vue] ChatBox Expanded changed:', newValue);
+      if (newValue) {
+        // When expanding
+        isTransitioning.value=true;
+        //navRef.value.classList.add('transitioning');
+        setTimeout(() => {
+          isTransitioning.value=false;
+          //navRef.value.classList.remove('transitioning');
+        }, 1000);
+      } else {
+        // When collapsing
+        isTransitioning.value=true;
+        //navRef.value.classList.add('transitioning');
+        setTimeout(() => {
+          //navRef.value.classList.remove('transitioning');
+          isTransitioning.value=false;
+        }, 1000);
+      }
+      // Force a style update if needed
+      updatePositions();
+    });
+
     onMounted(async () => {
+      //console.log("[DashboardView.vue]access store state: ",isNavVisible);
+      const dashboardView = document.querySelector('.view.dashboard-view');
+      const itemWindowView = document.querySelector('.itemWindow-view');
+      
+      disableBodyScroll(bodyElement, {
+        allowTouchMove: (el) => {
+          return dashboardView.contains(el) || itemWindowView.contains(el);
+        }
+      });
+      
       try {
         // Make sure we have a userId first
         if (!userId.value) {
@@ -188,7 +328,7 @@ export default defineComponent({
         // If no theme is selected
         if (!currentThemeId.value) {
           const loadView = await store.dispatch('mindspace/loadViewThemeId');
-          
+      
           if (!loadView) {
             return router.push('/themespace');
           }
@@ -201,6 +341,10 @@ export default defineComponent({
       } catch (error) {
         console.error('Error in setup:', error);
         router.push('/themespace');
+      }finally{
+        store.dispatch('themeSpace/setThemeId', currentThemeId.value);
+        await store.dispatch('themeSpace/getSelfAssessment');
+        await store.dispatch('scores/fetchSatisfactionData',currentThemeId.value);
       }
     });
 
@@ -214,8 +358,22 @@ export default defineComponent({
       handleTouchMove,
       handleTouchEnd,
       isEditMode,
+      
+      showItemWindow,
       closeItemWindow,
-      showItemWindow
+      showSatWindow,
+      closeSatWindow,
+
+      //Dock visibility Handlings
+      navRef,
+      isNavVisible,
+      isChatBoxExpanded,
+      isTransitioning,
+      navZindex,
+      navPosition,
+      indicatorPosition,
+      buttonPosition,
+      toggleNav,
     };
   }
 });
@@ -238,6 +396,8 @@ export default defineComponent({
 
 @import '../assets/dashboardStyle.scss';
 @import '../assets/mindSpaceStyle.scss';
+@import '../assets/deleteButtonStyle.scss';
+@import '../assets/satisfactionDataViewStyle.scss';
 @import '../assets/todosStyle.scss';
 @import '../assets/dockStyle.scss';
 </style>

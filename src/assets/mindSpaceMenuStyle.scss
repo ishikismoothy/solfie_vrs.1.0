@@ -68,6 +68,7 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 4px;
+    gap: 0.5em;
   }
 
   .content-title {
@@ -79,14 +80,7 @@
     padding: 0 12px;
   }
 
-  .more-button {
-    padding: 4px;
-    margin-right: 10px;
-    
-    svg {
-      display: block;
-    }
-  }
+  
 
   .add-button {
     width: 28px;
@@ -102,8 +96,12 @@
     justify-content: center;
     color: #333;
     padding: 0;
-    
-    &:hover {
+    @media (hover: hover) {
+      &:hover {
+        background-color: #f5f5f5;
+      }
+    }
+    &:active{
       background-color: #f5f5f5;
     }
   }
@@ -143,10 +141,6 @@
     padding: 12px 12px;
     z-index: 1;
 
-    .globe-icon {
-      margin-right: 12px;
-    }
-
     .globe-active {
       opacity: 0;
     }
@@ -162,30 +156,6 @@
     .globe-icon.is-favourite .globe-default {
       opacity: 0;
     }
-  }
-  
-  
-  
-  .globe-icon img {
-    position: absolute;
-    top: 0;
-    left: 0;
-    transition: opacity 0.2s ease;
-  }
-
-  
-  
-  .more-options {
-    margin-left: auto;
-    background: none;
-    border: none;
-    padding: 4px;
-    cursor: pointer;
-  }
-  
-  .more-options img {
-    width: 16px;
-    height: 16px;
   }
   
   .space-setMindSpace-area {
@@ -219,11 +189,15 @@
       color: #333;
       transition: all 0.2s ease;
       letter-spacing: 0.5px;
-  
-      &:hover {
+
+      @media (hover: hover) {
+        &:hover {
+          color: #000;
+        }
+      }
+      &:active{
         color: #000;
       }
-  
       &:disabled {
         opacity: 0.5;
         cursor: not-allowed;
@@ -236,20 +210,35 @@
   
       .set-active-button {
         color: white;
-  
-        &:hover {
+        
+        @media (hover: hover) {
+          &:hover {
+            color: rgba(255, 255, 255, 0.8);
+          }
+        }
+        &:active{
           color: rgba(255, 255, 255, 0.8);
         }
       }
     }
+
+    @media (hover: hover) {
+      &:hover {
+        background-color: rgba(225, 225, 225, 0.7);
   
-    &:hover {
+      &.favorite-background {
+        background-color: rgba(255, 86, 34, 0.7);
+      }
+      }
+    }
+    &:active{
       background-color: rgba(225, 225, 225, 0.7);
   
       &.favorite-background {
         background-color: rgba(255, 86, 34, 0.7);
       }
     }
+  
   }
 
   .space-setting-area {
@@ -277,13 +266,14 @@
     gap: 5px;
     
     .icon-button {
-      padding: 6px;
-      border-radius: 4px;
-      
-      &:hover {
-        background-color: rgba(0, 0, 0, 0.05);
+      @media (hover: hover) {
+        &:hover {
+          background-color: #cccccc;
+        }
       }
-      
+      &:active{
+        background-color: #cccccc;
+      }
       svg {
         display: block;
       }
@@ -529,8 +519,13 @@
       padding: 0.5rem 1rem;
       cursor: pointer;
       @include transition(background-color);
-
-      &:hover {
+      @media (hover: hover) {
+        &:hover {
+          background-color: #f3f4f6;
+          color: #888888;
+        }
+      }
+      &:active{
         background-color: #f3f4f6;
         color: #888888;
       }

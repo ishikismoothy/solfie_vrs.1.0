@@ -14,6 +14,11 @@
     65%, 95% { opacity: 1; }
   }
 
+
+  @keyframes titleBlink{
+    0%, 50%, 100% { opacity: 0.6; }
+    20%, 70% { opacity: 0.1; }
+  }
   
 .loading-screen {
     position: fixed;
@@ -45,12 +50,12 @@
     }
   
     .title {
-      font-size: 2rem;
+      font-size: 1rem;
       font-weight: bold;
       margin-bottom: 1rem;
-  
+      animation: titleBlink 3.5s infinite;
       @media screen and (max-width: 768px) {
-        font-size: 2rem;
+        font-size: 1rem;
       }
     }
   
@@ -113,13 +118,14 @@
     }
   
     .tips-text {
+      font-size: 1.5rem;
       color: #666;
       line-height: 1.6;
       margin: 0 auto;
       max-width: 90%;
   
       @media screen and (max-width: 768px) {
-        font-size: 0.95rem;
+        font-size: 1.2rem;
         line-height: 1.5;
         max-width: 95%;
       }

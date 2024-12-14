@@ -26,6 +26,18 @@ export default {
     viewHistory: {
       lastThemeId: null,
       lastMindSpaceId: null,
+    },
+    dock:{
+      isVisible: false,
+      isExpanded: false
+    },
+    editMonitor:{
+      isEditSatisfaction: false,
+      isBlockEdit: false,
+    },
+    modalControl:{
+      showItemWindow: false,
+      showSatWindow: false,
     }
   },
   mutations: {
@@ -34,6 +46,24 @@ export default {
     },
     SET_LAST_MINDSPACEID(state, id){
       state.viewHistory.lastMindSpaceId = id;
+    },
+    SET_DOCK_VISIBILITY(state, value){
+      state.dock.isVisible = value;
+    },
+    SET_DOCK_EXPANDED(state, value) {
+      state.dock.isExpanded = value;
+    },
+    SET_IS_BLOCK_EDIT(state, value){
+      state.editMonitor.isBlockEdit = value;
+    },
+    SET_IS_SATISFACTION_EDIT(state, value) {
+      state.editMonitor.isEditSatisfaction = value;
+    },
+    TRIGGER_ITEM_WINDOW (state, boolean) {
+      state.modalControl.showItemWindow = boolean;
+    },
+    TRIGGER_SAT_WINDOW (state, boolean) {
+      state.modalControl.showSatWindow = boolean;
     },
   },
   actions: {
@@ -66,10 +96,34 @@ export default {
       commit('SET_LAST_THEMEID', lastViewHistory.theme);
       commit('SET_LAST_MINDSPACEID', lastViewHistory.mindspace);
     },
+    setDockVisibility({ commit },value){
+      commit('SET_DOCK_VISIBILITY', value);
+    },
+    setDockExpanded({ commit },value){
+      commit('SET_DOCK_EXPANDED', value);
+    },
+    setIsBlockEdit({ commit },value){
+      commit('SET_IS_BLOCK_EDIT', value);
+    },
+    setIsEditSatisfaction({ commit, state },value){
+      commit('SET_IS_SATISFACTION_EDIT', value);
+      console.log(state.editMonitor.isEditSatisfaction);
+    },
+    //Modal Control
+    triggerItemWindow({ commit, state }, boolean) {
+      commit('TRIGGER_ITEM_WINDOW', boolean);
+      console.log("Item Window Set to: ", state.modalControl.showItemWindow);
+    },
+    triggerSatWindow({ commit, state }, boolean) {
+      commit('TRIGGER_SAT_WINDOW', boolean);
+      console.log("Satisfaction Window Set to: ", state.modalControl.showItemWindow);
+    },
   },
   getters: {
     getLastThemeId: state => state.viewHistory.lastThemeId,
     getLastMindSpaceId: state => state.viewHistory.lastMindSpaceId,
+    getShowItemWindow: state => state.modalControl.showItemWindow,
+    getShowSatWindow: state => state.modalControl.showSatWindow,
   }
 };
 

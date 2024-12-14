@@ -11,6 +11,8 @@ import {
   addItemToMindspace,
   addFolderToMindspace,
   addItemToFolder,
+  duplicateItemInMindspace,
+  duplicateItemToFolder,
   updateMindSpaceData,
   moveItemFromFolderToMindspace,
   moveItemToFolder,
@@ -378,9 +380,7 @@ export default {
       },
 
       //[ITEM PAGE HANDLING]
-      TRIGGER_ITEM_WINDOW (state, boolean) {
-        state.showItemWindow = boolean;
-      },
+      
       SET_ITEM_NAME (state, name) {
         state.currentItemName = name;
       },
@@ -523,8 +523,8 @@ export default {
       },
       async setThemeData({ commit, state }) {
         console.log("[setThemeData] TRIGGERED");
-        const currentThemeName = await getThemeData(state.currentThemeId);
-
+        const currentThemeData = await getThemeData(state.currentThemeId);
+        const currentThemeName = currentThemeData.name;
         commit('SET_THEME_NAME', currentThemeName);
         console.log("[setThemeData] Mindspace Name:", state.currentThemeName);
       },
@@ -764,6 +764,23 @@ export default {
           throw error;
         }
       },
+      async duplicateItemToPage({ state, dispatch }) {
+        try {
+          const { itemId, itemData } = await duplicateItemInMindspace(
+            state.userId,
+            state.currentMindSpaceId,
+            state.currentPage,
+            state.currentItemId
+          );
+    
+          console.log('[duplicateItemToPage] Completed:', { itemId, itemData });
+          await dispatch('setMindSpacePages');
+          return itemId;
+        } catch (error) {
+          console.error('Error in addItemToPage:', error);
+          throw error;
+        }
+      },
       removeItemFromPage({ commit }, { itemId }) {
         commit('REMOVE_ITEM_FROM_PAGE', { itemId });
       },
@@ -809,6 +826,25 @@ export default {
           return itemId;
         } catch (error) {
           console.error('Error in addNewItemToFolder:', error);
+          throw error;
+        }
+      },
+      async duplicateItemToFolder({ state, dispatch }) {
+        console.log('Duplicating to folder:', state.currentFolder.id);
+        
+        try {
+          const { itemId, itemData } = await duplicateItemToFolder(
+            state.userId,
+            state.currentMindSpaceId,
+            state.currentFolder.id,
+            state.currentItemId
+          );
+    
+          console.log('[duplicateItemToFolder] Completed:', { itemId, itemData });
+          await dispatch('setMindSpacePages');
+          return itemId;
+        } catch (error) {
+          console.error('Error in duplicateItemToFolder:', error);
           throw error;
         }
       },
@@ -982,10 +1018,6 @@ export default {
         }
       },
       //Item Blocks Handling
-      triggerItemWindow({ commit, state }, boolean) {
-        commit('TRIGGER_ITEM_WINDOW', boolean);
-        console.log("Item Window Set to: ", state.showItemWindow);
-      },
       async getItemName({ commit, state }, itemName) {
         commit('SET_ITEM_NAME', itemName);
         console.log("[getItemName/mindspace.js] itemName:", state.currentItemName);
@@ -1011,6 +1043,50 @@ export default {
         commit('ADD_BLOCK', block);
         console.log("[mindspace.js/itemBlocks] Currently: ", state.itemBlocks);
         updateItemData(state.currentItemId, state.currentItemName, state.itemBlocks );
+      },
+      addBlockAtIndex({ commit, state }, { block, index }) {
+        // First check if itemBlocks exists and is an array
+        const currentBlocks = state.itemBlocks || [];
+        const newBlocks = [...currentBlocks];
+        newBlocks.splice(index, 0, block);
+        commit('SET_BLOCKS', newBlocks);
+        console.log(newBlocks);
+        updateItemData(state.currentItemId, state.currentItemName, newBlocks);
+      },
+      duplicateBlock({ commit, state }, { id, index }) {
+        try {
+          // Find the block to duplicate
+          const blockToDuplicate = state.itemBlocks.find(block => block.id === id);
+          
+          if (!blockToDuplicate) {
+            throw new Error('Block not found');
+          }
+    
+          // Create a new block with duplicated content but new ID
+          const duplicatedBlock = {
+            ...blockToDuplicate,
+            id: 'e-' + Date.now(), // Generate a new unique ID
+            createdAt: Date.now(),
+            editedAt: null,
+            editedBy: [state.userId],
+            createdBy: state.userId
+          };
+    
+          // Use the existing addBlockAtIndex action to insert the duplicated block
+          const block = duplicatedBlock;
+          const currentBlocks = state.itemBlocks || [];
+          const newBlocks = [...currentBlocks];
+          // Insert after the current block
+          newBlocks.splice(index + 1, 0, block);
+          
+          commit('SET_BLOCKS', newBlocks);
+          updateItemData(state.currentItemId, state.currentItemName, newBlocks);
+          
+          console.log('[duplicateBlock] Block duplicated:', { original: id, new: duplicatedBlock.id });
+        } catch (error) {
+          console.error('Error duplicating block:', error);
+          throw error;
+        }
       },
       async updateBlock({ commit, state, dispatch }, { id, content }) {
         commit('UPDATE_BLOCK', { id, content });
@@ -1050,7 +1126,6 @@ export default {
       getCurrentPage: state => state.currentPage,
       getTotalPages: state => state.totalPages,
       getItemName: state => state.currentItemName,
-      getShowItemWindow: state => state.showItemWindow,
       isLoading: state => state.loading,
       getError: state => state.error,
       // New getter to get items from a specific page

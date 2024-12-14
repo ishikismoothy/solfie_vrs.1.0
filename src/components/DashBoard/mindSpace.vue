@@ -48,47 +48,52 @@ ADD STATUS HEADER
             class="mind-Item"
             :data-id="item.id"
           >
-            <div class="icon-wrapper"
+            <div 
+              class="icon-wrapper"
               :class="{
                 'dragging': draggingItem === item,
                 'folder-hover': item.items && isDragging && hoveredFolderId === item.id
               }"
               :data-item-id="item.id"
-              @click="handleItemClick(item)"
-              @mousedown.prevent="handleMouseDown($event, item, pageIndex, index)"
-              @touchstart.prevent="handleTouchStart($event, item, pageIndex, index)"
-              @touchend.prevent="handleTouchEnd"
-              @mouseover="handleItemHover(item)"
-              @mouseleave="handleItemLeave()"
             >
-              <!-- Add delete button -->
-              <button
-                v-if="isEditMode && !isDragging"
-                class="delete-button"
-                @click.stop.prevent="handleItemDelete(item)"
+              <!-- Separate container for delete button -->
+              <div class="delete-button-container" v-if="isEditMode && !isDragging">
+                <DeleteButton
+                  @delete="handleItemDelete(item)"
+                  @touchstart.stop="void 0"
+                />
+              </div>
+              
+              <!-- Main content wrapper -->
+              <div 
+                class="content-wrapper"
+                @click="handleItemClick(item)"
+                @mousedown.prevent="handleMouseDown($event, item, pageIndex, index)"
+                @touchstart.prevent="handleTouchStart($event, item, pageIndex, index)"
+                @touchend.prevent="handleTouchEnd"
+                @mouseover="handleItemHover(item)"
+                @mouseleave="handleItemLeave()"
               >
-                <i class="fas fa-times-circle">X</i>
-              </button>
-              <!-- icon Shadow -->
-              <div class="icon-shadow-container">
-                <div class="icon-shadow" v-html="createShadowSvg(item.shape)"></div>
-              </div>
+                <!-- icon Shadow -->
+                <div class="icon-shadow-container">
+                  <div class="icon-shadow" v-html="createShadowSvg(item.shape)"></div>
+                </div>
                 <img :src="item.shape" class="icon-shape" :alt="item.name">
-              <div class="icon-content">
-                <i v-if="item.icon" :class="item.icon"></i>
-              </div>
-              <div v-if="item.badge" class="badge" :class="item.badge">
-                <i :class="getBadgeIcon(item.badge)"></i>
+                <div class="icon-content">
+                  <i v-if="item.icon" :class="item.icon"></i>
+                </div>
+                <div v-if="item.badge" class="badge" :class="item.badge">
+                  <i :class="getBadgeIcon(item.badge)"></i>
+                </div>
               </div>
             </div>
             <TruncateText
-                class="item-name"
-                :text="item.name"
-                :mobile-cutoff="10"
-                :tablet-cutoff="15"
-                :desktop-cutoff="15"
-              />
-              <!--<span class="item-name">{{ item.name }}</span>-->
+              class="item-name"
+              :text="item.name"
+              :mobile-cutoff="10"
+              :tablet-cutoff="15"
+              :desktop-cutoff="15"
+            />
           </div>
 
           <!-- Add button only on the last page -->
@@ -147,16 +152,13 @@ ADD STATUS HEADER
                   }"
                   @click="handleFolderItemClick(item)"
                   @mousedown.prevent="handleFolderMouseDown($event, item, pageIndex, index)"
-                  @touchstart.prevent="handleFolderTouchStart($event, item, pageIndex, index)"
+                  @touchstart="handleFolderTouchStart($event, item, pageIndex, index)"
                 >
                   <!-- Add delete button -->
-                  <button
-                    v-if="isEditMode"
-                    class="delete-button"
-                    @click.stop.prevent="handleItemDelete(item)"
-                  >
-                  <i class="fas fa-times-circle">X</i>
-                  </button>
+                  <DeleteButton
+                      v-if="isEditMode"
+                      @delete="handleItemDelete(item)"
+                  />
                   <div class="icon-shadow-container">
                     <div class="icon-shadow" v-html="createShadowSvg(item.shape)"></div>
                   </div>
@@ -248,6 +250,7 @@ ADD STATUS HEADER
     //import octagonSvg from '../assets/shapes/octagon.svg';
     //import cloudSvg from '../assets/shapes/cloud.svg';
     //import folderSvg from '../assets/shapes/folder.svg';
+    import DeleteButton from './deleteButton.vue';
     import AddItemPopup from './addItemPopup.vue';
     import TruncateText from '../TruncateText/truncateSpanItemText.vue';
 
@@ -257,6 +260,7 @@ ADD STATUS HEADER
       components: {
         AddItemPopup,
         TruncateText,
+        DeleteButton
       },
       setup() {
         const store = useStore();
@@ -441,6 +445,7 @@ ADD STATUS HEADER
         };
 
         const handleItemDelete = async (item) => {
+          console.error('mindSpace.vue/handleItemDelete: TRIGGERED');
           try {
             if (!item || !item.id) {
               console.error('Invalid item for deletion');
@@ -643,7 +648,7 @@ ADD STATUS HEADER
             if(!isEditMode.value){
               await store.dispatch('mindspace/setItemId', item.id);
               await store.dispatch('mindspace/getItemName', item.name);
-              await store.dispatch('mindspace/triggerItemWindow', true);
+              await store.dispatch('user/triggerItemWindow', true);
             }
 
             // Here you can add any additional functionality for non-folder items
@@ -1357,7 +1362,7 @@ ADD STATUS HEADER
           if(!isEditMode.value){
             await store.dispatch('mindspace/setItemId', item.id);
             await store.dispatch('mindspace/getItemName', item.name);
-            await store.dispatch('mindspace/triggerItemWindow', true);
+            await store.dispatch('user/triggerItemWindow', true);
           }
         };
 
@@ -1421,11 +1426,13 @@ ADD STATUS HEADER
         };
 
         const handleFolderTouchStart = (event, item, pageIndex, index) => {
+          console.log('[handleFolderTouchStart] TRIGGERED');
+          folderDragStartX.value = event.touches[0].clientX;
+          folderDragStartY.value = event.touches[0].clientY;
+          folderDragStartTime.value = Date.now();
+
           if (isEditMode.value) {
             isFolderMouseDown.value = true;
-            folderDragStartX.value = event.touches[0].clientX;
-            folderDragStartY.value = event.touches[0].clientY;
-            folderDragStartTime.value = Date.now();
             draggingFolderItem.value = item;
             folderDragStartIndex.value = index;
             folderDragStartPageIndex.value = pageIndex;
@@ -1445,9 +1452,34 @@ ADD STATUS HEADER
               x: folderDragStartX.value - rect.left,
               y: folderDragStartY.value - rect.top
             };
-
+            
             document.addEventListener('touchmove', handleFolderTouchMove, { passive: false });
             document.addEventListener('touchend', handleFolderTouchEnd);
+          }else {
+              // Non-edit mode - handle clicks
+              const handleTouchEnd = (endEvent) => {
+              const touchEndTime = Date.now();
+              const touchDuration = touchEndTime - folderDragStartTime.value;
+              
+              // Calculate movement
+              const touch = endEvent.changedTouches[0];
+              const moveX = Math.abs(touch.clientX - folderDragStartX.value);
+              const moveY = Math.abs(touch.clientY - folderDragStartY.value);
+              
+              // If it was a short touch without much movement, treat as click
+              if (touchDuration < 500 && moveX < 10 && moveY < 10) {
+                handleFolderItemClick(item);
+              }
+              
+              document.removeEventListener('touchend', handleTouchEnd);
+            };
+
+            document.addEventListener('touchend', handleTouchEnd);
+          }
+
+          // Only prevent default in edit mode
+          if (isEditMode.value) {
+            event.preventDefault();
           }
         };
 
