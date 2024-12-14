@@ -1,7 +1,7 @@
 <template>
     <div>
       <h1>User Management Dashboard</h1>
-  
+
       <!-- User List -->
       <div v-if="loading">Loading users...</div>
       <div v-else-if="error">{{ error }}</div>
@@ -27,7 +27,7 @@
           </tbody>
         </table>
       </div>
-  
+
       <!-- Add/Edit User Form -->
       <div>
         <h2>{{ isEditing ? 'Edit User' : 'Add New User' }}</h2>
@@ -42,35 +42,35 @@
 
     <div>
         <h1>File Upload Test</h1>
-        
-        <input 
-            type="file" 
-            @change="handleFileUpload" 
+
+        <input
+            type="file"
+            @change="handleFileUpload"
             accept="application/pdf"
             :disabled="isUploading"
         >
-        
+
         <p v-if="isUploading">Uploading...</p>
-        
+
         <div v-if="localUploadedFileId">
             <h2>Upload Successful!</h2>
             <p>Uploaded File ID: {{ localUploadedFileId }}</p>
         </div>
-        
+
         <div v-if="errorMessage">
             <h2>Error</h2>
             <p>{{ errorMessage }}</p>
         </div>
-    
-        <button 
-            @click="handleDataExtraction" 
+
+        <button
+            @click="handleDataExtraction"
             :disabled="!localUploadedFileId || isExtracting"
         >
             Extract File
         </button>
-    
-        <button 
-            @click="handleFileDelete" 
+
+        <button
+            @click="handleFileDelete"
             :disabled="!localUploadedFileId || isDeleting"
         >
             Delete File
@@ -95,7 +95,7 @@
                 </tr>
             </tbody>
         </table>
-    
+
         <!-- New section to display extracted data -->
         <div v-if="extractedData.length > 0">
             <h2>Extracted Data:</h2>
@@ -107,7 +107,7 @@
         </div>
     </div>
 </template>
-  
+
 <script>
     import { defineComponent, ref, computed, watch, nextTick, onMounted } from 'vue';
     import { useStore } from 'vuex';
@@ -117,7 +117,7 @@
 
     export default defineComponent({
     name: 'FileUploadTest',
-    
+
     setup() {
         const store = useStore();
 
@@ -125,7 +125,7 @@
         const userForm = ref({ name: '' });
         const isEditing = ref(false);
         const editingUserId = ref(null);
-    
+
         //const users = computed(() => store.state.users);
         const loading = computed(() => store.state.loading);
         //const error = computed(() => store.state.error);
@@ -160,17 +160,17 @@
             isEditing.value = true;
             editingUserId.value = user.id;
         };
-    
+
         const deleteUser = async (userId) => {
             if (confirm('Are you sure you want to delete this user?')) {
             await store.dispatch('deleteUser', userId);
             }
         };
-    
+
         const cancelEdit = () => {
             resetForm();
         };
-    
+
         const resetForm = () => {
             userForm.value = { name: '' };
             isEditing.value = false;
@@ -191,19 +191,19 @@
         watch(uploadedFileId, (newId) => {
         console.log('Watch - uploadedFileId changed:', newId);
         }, { immediate: true });
-        
+
         const handleDataExtraction = async () => {
         if (localUploadedFileId.value) {
             isExtracting.value = true;
             try {
             console.log('Starting data extraction in component...');
             const result = await store.dispatch('readAndRetrieveAnalysisData');
-            
+
             console.log('result:', result);
-            
+
             // Store the extracted data
             extractedData.value = result.result;
-            
+
             } catch (error) {
             console.error('Error in extractData:', error);
             errorMessage.value = error.message || 'An error occurred while extracting Data.';
@@ -212,22 +212,22 @@
             }
         }
         };
-        
+
         const handleFileUpload = async (event) => {
         const file = event.target.files[0];
         if (file) {
             isUploading.value = true;
             errorMessage.value = null;
-            
+
             try {
             console.log('Starting file upload in component...');
             const result = await store.dispatch('fileUpload', { uploadedFile: file });
-            
+
             console.log('File upload result:', result);
-            
+
             localUploadedFileId.value = result.fileId;
             console.log('Local ID set:', localUploadedFileId.value);
-            
+
             nextTick(() => {
                 console.log('Next tick - ID from state:', uploadedFileId.value);
             });
