@@ -24,4 +24,4 @@ pnpm-debug.log*
 *.sw?
 
 # Local testing files
-firestore-emulator-data/
+emulator-data/
