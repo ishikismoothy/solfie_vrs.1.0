@@ -97,7 +97,7 @@ export default {
             console.log("[fetchTheme/themeSpace.js] TRIGGERED")
             // Clear any existing errors
             commit('SET_ERROR', null);
-            
+
             try {
             // Check for userId
             const userId = uid;
@@ -106,14 +106,14 @@ export default {
             if (!userId) {
                 throw new Error('User not authenticated');
             }
-    
+
             // Set loading state
             commit('SET_INITIAL_LOADING', true);
-    
+
             // Fetch themes
             const themes = await themeService.getThemes(userId);
             commit('SET_THEMES', themes);
-            
+
             console.log("[fetchTheme/themeSpace.js] themes: ",themes);
 
             return themes;
@@ -131,12 +131,12 @@ export default {
         async addTheme({ commit }, { themeData, userId }) {
             console.log("[addTheme/themeSpace.js] uid:", userId);
             console.log("[addTheme/themeSpace.js] themeData:", themeData);
-            
+
             if (!userId) {
               commit('SET_ERROR', 'User not authenticated');
               return;
             }
-      
+
             commit('SET_LOADING', true);
             try {
               const newTheme = await themeService.addTheme(themeData, userId);
@@ -184,7 +184,7 @@ export default {
                 commit('SET_ERROR', error.message);
                 throw error;
             } finally {
-                await dispatch('fetchThemes', userId);  
+                await dispatch('fetchThemes', userId);
                 commit('SET_LOADING', false);
             }
         },
@@ -229,7 +229,7 @@ export default {
             try {
             // 1. Get user document to find focusTheme
             const focusedThemeId = await themeService.getUserThemeId(userId);
-            
+
             commit('SET_FOCUS_THEME_ID', focusedThemeId);
             console.log("[setThemeId] Default Theme Id",state.focusedThemeId);
 
@@ -242,7 +242,7 @@ export default {
             console.log("[themeSpace.js/changeThemeId] TRIGGERED");
             try {
             const result = await themeService.changeUserThemeId(userId, themeId);
-            
+
             if(result.success) {
                 console.log(result.message);
 
@@ -255,7 +255,7 @@ export default {
             console.log(error.message);
             }
         },
-        
+
         async updateThemeOrder({ commit }, themes ) {
             commit('SET_LOADING', true);
             console.log('themeSpace.js/updateThemesOrder',themes)
@@ -284,15 +284,15 @@ export default {
         },
         async getSelfAssessment({ commit, state }) {
             const latestSelfAssessment = await themeService.getLatestAssessment(state.currentThemeId);
-            
+
             // If no assessment exists, set to default value (0)
             const value = latestSelfAssessment ? latestSelfAssessment.value : 0;
             commit('SET_SELF_SATISFACTION', value);
         },
-    
+
         async getAiAssessment({ commit, state }) {
             const latestAiAssessment = await themeService.getLatestAssessment(state.currentThemeId, 'aiAssessment');
-            
+
             // If no assessment exists, set to default value (0)
             const value = latestAiAssessment ? latestAiAssessment.value : 0;
             commit('SET_AI_SATISFACTION', value);

@@ -1,12 +1,12 @@
 // blockWrapper.vue
 <template>
-  <div class="block-wrapper relative" 
+  <div class="block-wrapper relative"
     :class="{
       block: block.type,
       'onBlockEdit':isBlockEdit
     }"
   >
-    <div 
+    <div
       class="block-content"
     >
         <div class="block-controls" v-if="isBlockEdit">
@@ -20,7 +20,7 @@
           </button>
           <button @click="deleteBlock" class="control-btn text-red-500">×</button>
         </div>
-        <component 
+        <component
             :is="getBlockComponent"
             :block="block"
             @edit="handleEdit"
@@ -68,7 +68,7 @@ export default {
   setup(props) {
     const store = useStore();
     const isBlockEdit = computed(() => store.state.user.editMonitor.isBlockEdit);
-    
+
     const isFirst = computed(() => props.index === 0);
     const isLast = computed(() => props.index === props.totalBlocks - 1);
 

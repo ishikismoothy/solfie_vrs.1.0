@@ -12,11 +12,11 @@
           </button>
         </div>
         <form @submit.prevent="handleCreate">
-          
+
           <div class="form-group">
             <label>願いを入力/ Enter your wish:</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               v-model="newName"
               placeholder="例：円満な家族関係、 仕事で活躍、才能の発揮、豊かな暮らし/ eg. Well-being, Healthy relationship, Unleashing true potentials. "
               ref="nameInput"
@@ -27,26 +27,26 @@
           <!-- Hashtag Input Section -->
           <div class="form-group">
             <div class="hashtag-input-container">
-              <div 
+              <div
                 class="hashtag-input-wrapper"
                 @click="focusHashtagInput"
               >
                 <div class="hashtag-list">
-                  <span 
-                    v-for="(tag, index) in hashtags" 
+                  <span
+                    v-for="(tag, index) in hashtags"
                     :key="index"
                     class="hashtag-badge"
                   >
                     #{{ tag }}
-                    <button 
-                      @click.prevent="removeHashtag(index)" 
+                    <button
+                      @click.prevent="removeHashtag(index)"
                       class="remove-button"
                     >
                       ×
                     </button>
                   </span>
                 </div>
-                
+
                 <input
                   ref="hashtagInput"
                   v-model="currentHashtagInput"
@@ -58,12 +58,12 @@
                 />
               </div>
 
-              <div 
+              <div
                 v-if="isTypingHashtag && filteredSuggestions.length"
                 class="hashtag-suggestions"
               >
-                <div 
-                  v-for="suggestion in filteredSuggestions" 
+                <div
+                  v-for="suggestion in filteredSuggestions"
                   :key="suggestion"
                   class="suggestion-item"
                   @click="selectHashtag(suggestion)"
@@ -73,17 +73,23 @@
               </div>
             </div>
           </div>
-          
+
+          <!-- image upload -->
+          <div class="form-group">
+            <label>Upload Image:</label>
+            <input type="file" @change="handleImageUpload" />
+          </div>
+
           <div class="button-group">
-            <button 
-              type="button" 
+            <button
+              type="button"
               class="cancel-button"
               @click="closeModal"
             >
               Cancel
             </button>
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               class="submit-button"
             >
               Ok
@@ -94,14 +100,19 @@
     </div>
   </Transition>
 </template>
-  
+
 <script>
 import { ref, computed } from 'vue';
 import { useStore } from 'vuex';
+import 'firebase/storage';
+import { ref as storageRef, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+
+import { storage } from '../../firebase/firebaseInit';
+
 
 export default {
   name: 'ThemeCreateModal',
-  
+
   props: {
     modelValue: {
       type: Boolean,
@@ -121,15 +132,15 @@ export default {
 
     // Suggested tags - you can modify this list or load from your store
     const suggestedTags = [
-      'work', 'family', 'study', 'personal', 'project', 
+      'work', 'family', 'study', 'personal', 'project',
       'leadership', 'teamwork', 'management', 'learning'
     ];
 
     const filteredSuggestions = computed(() => {
       if (!isTypingHashtag.value || !currentHashtagInput.value.startsWith('#')) return [];
       const searchTerm = currentHashtagInput.value.slice(1).toLowerCase();
-      return suggestedTags.filter(tag => 
-        tag.toLowerCase().includes(searchTerm) && 
+      return suggestedTags.filter(tag =>
+        tag.toLowerCase().includes(searchTerm) &&
         !hashtags.value.includes(tag)
       );
     });
@@ -164,6 +175,45 @@ export default {
     const focusHashtagInput = () => {
       hashtagInput.value?.focus();
     };
+
+      // image upload
+    const imageUrl = ref('');
+
+    const handleImageUpload = async (event) => {
+      try {
+        const file = event.target.files[0];
+        if (!file) return; // If no file is selected, exit the function
+
+        const storageReference = storageRef(storage, `theme_images/${file.name}`);
+        const uploadTask = uploadBytesResumable(storageReference, file);
+
+        uploadTask.on('state_changed',
+          (snapshot) => {
+            // Track upload progress
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            console.log(`Upload is ${progress}% done`);
+          },
+          (error) => {
+            // Handle error
+            console.error(error);
+          },
+          () => {
+            // Handle successful upload
+            getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+              console.log('File available at', downloadURL);
+              imageUrl.value = downloadURL;
+            });
+          }
+        );
+      } catch (error) {
+        console.error("Error uploading image: ", error);
+      }
+    };
+      // image upload end
+
+
+
+
 
     const closeModal = () => {
       emit('update:modelValue', false);
@@ -201,7 +251,9 @@ export default {
       handleHashtagKeydown,
       selectHashtag,
       removeHashtag,
-      focusHashtagInput
+      focusHashtagInput,
+      handleImageUpload,
+      imageUrl
     };
   },
 };

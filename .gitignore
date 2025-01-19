@@ -22,3 +22,6 @@ pnpm-debug.log*
 *.njsproj
 *.sln
 *.sw?
+
+# Local testing files
+firestore-emulator-data/
