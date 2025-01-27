@@ -41,7 +41,7 @@ export default {
         password: password.value 
       });
       if (store.getters['auth/isAuthenticated']) {
-        router.push('/dashboard');
+        router.push('/themespace');
       }
     };
 
