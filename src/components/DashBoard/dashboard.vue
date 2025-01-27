@@ -120,25 +120,26 @@
       </section>
 
       <!-- Add Todo Modal -->
-      <div v-if="showModal" class="modal">
-        <div class="modal-content">
+      <div v-if="showModal" class="modal-overlay-todo">
+        <div class="modal-content-todo">
           <h2>今月は何を選択する？</h2>
-          <input v-model="newTodo.title" placeholder="選択を入力" />
-          <input v-model="newTodo.date" type="date" :min="today" />
-          <textarea v-model="newTodo.description" placeholder="説明を入力"></textarea>
-          <div class="file-upload">
-            <label for="file-upload" class="custom-file-upload">
-              Upload Image
-            </label>
-            <input id="file-upload" type="file" @change="handleFileUpload" />
-          </div>
-          <div class="modal-actions">
-            <button @click="addTodo">Add</button>
-            <button @click="closeModal">Cancel</button>
+          <div class="modal-content-todo">
+            <input v-model="newTodo.title" placeholder="選択を入力" />
+            <input v-model="newTodo.date" type="date" :min="today" />
+            <textarea v-model="newTodo.description" placeholder="説明を入力"></textarea>
+            <div class="file-upload">
+              <label for="file-upload" class="custom-file-upload">
+                Upload Image
+              </label>
+              <input id="file-upload" type="file" @change="handleFileUpload" />
+            </div>
+            <div class="modal-actions">
+              <button @click="addTodo">Add</button>
+              <button @click="closeModal">Cancel</button>
+            </div>
           </div>
         </div>
       </div>
-
     </main>
   </div>
 </template>

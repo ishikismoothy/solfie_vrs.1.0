@@ -12,9 +12,9 @@ $hashtag-border-radius: 2rem;
 @mixin transition($property: all) {
   transition: $property 0.2s ease;
 }
-
 // Modal styles
 .theme-modal {
+  /*
   &-overlay {
     position: fixed;
     top: 0;
@@ -51,7 +51,7 @@ $hashtag-border-radius: 2rem;
     &-leave-to {
       opacity: 0;
     }
-  }
+  }*/
   
   &-create-button{
     width: 100%;

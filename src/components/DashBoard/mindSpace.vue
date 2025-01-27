@@ -229,11 +229,11 @@ ADD STATUS HEADER
       </button>
 
       <!-- Add this at the end of your template -->
-      <AddItemPopup
-        v-if="showAddItemPopup"
+      <AddItemModal
+        v-if="showAddItemModal"
         :isInFolder="addItemTarget === 'folder'"
         @add="handleAddItemSelection"
-        @close="showAddItemPopup = false"
+        @close="showAddItemModal = false"
       />
 
     </div>
@@ -251,16 +251,16 @@ ADD STATUS HEADER
     //import cloudSvg from '../assets/shapes/cloud.svg';
     //import folderSvg from '../assets/shapes/folder.svg';
     import DeleteButton from './deleteButton.vue';
-    import AddItemPopup from './addItemPopup.vue';
+    import AddItemModal from './addItemModal.vue';
     import TruncateText from '../TruncateText/truncateSpanItemText.vue';
 
     export default defineComponent({
       name: 'iPhoneStyleMaestroUI',
 
       components: {
-        AddItemPopup,
+        AddItemModal,
         TruncateText,
-        DeleteButton
+        DeleteButton,
       },
       setup() {
         const store = useStore();
@@ -317,13 +317,13 @@ ADD STATUS HEADER
         );
 
         //[ADD-ITEM]
-        const showAddItemPopup = ref(false);
+        const showAddItemModal = ref(false);
 
         const addItemTarget = ref(null);
         const addItemPageIndex = ref(null);
 
         const showAddItemMenu = (target, pageIndex) => {
-          showAddItemPopup.value = true;
+          showAddItemModal.value = true;
           addItemTarget.value = target;
           addItemPageIndex.value = pageIndex;
         };
@@ -337,7 +337,7 @@ ADD STATUS HEADER
             addNewFolderImpl(addItemTarget.value, addItemPageIndex.value);
           }
 
-          showAddItemPopup.value = false;
+          showAddItemModal.value = false;
 
           // Re-initialize pages if needed
           if (addItemTarget.value === 'folder') {
@@ -1924,7 +1924,7 @@ ADD STATUS HEADER
           cancelEditModeTimer,
 
           // Add New Item
-          showAddItemPopup,
+          showAddItemModal,
           addItemTarget,  // Make sure to return this
           showAddItemMenu,
           handleAddItemSelection,

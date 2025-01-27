@@ -1,11 +1,11 @@
 <!-- ThemeCreateModal.vue -->
 <template>
-  <Transition name="theme-modal-fade">
-    <div v-if="modelValue" class="theme-modal-overlay" @click="closeModal">
-      <div class="theme-modal-content" @click.stop>
-        <div class="theme-modal-header">
+  <Transition name="modal-fade">
+    <div v-if="modelValue" class="modal-overlay" @click="close">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
           <h2 class="text-xl font-semibold">Establish A New Wish</h2>
-          <button class="theme-modal-close-button" @click="closeModal">
+          <button class="theme-modal-close-button" @click="close">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -78,7 +78,7 @@
             <button 
               type="button" 
               class="cancel-button"
-              @click="closeModal"
+              @click="close"
             >
               Cancel
             </button>
@@ -165,7 +165,7 @@ export default {
       hashtagInput.value?.focus();
     };
 
-    const closeModal = () => {
+    const close = () => {
       emit('update:modelValue', false);
     };
 
@@ -176,7 +176,7 @@ export default {
           tags: hashtags.value // Include tags in the create event
         });
         resetForm();
-        closeModal();
+        close();
       }
     };
 
@@ -188,7 +188,7 @@ export default {
 
     return {
       handleCreate,
-      closeModal,
+      close,
       themes: computed(() => store.getters['themeSpace/getThemesKey']),
       topics: computed(() => store.getters['themeSpace/getTopicsKey']),
       newName,

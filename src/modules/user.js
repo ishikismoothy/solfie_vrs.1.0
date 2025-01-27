@@ -38,6 +38,7 @@ export default {
     modalControl:{
       showItemWindow: false,
       showSatWindow: false,
+      showMoveItemWindow: false,
     }
   },
   mutations: {
@@ -64,6 +65,9 @@ export default {
     },
     TRIGGER_SAT_WINDOW (state, boolean) {
       state.modalControl.showSatWindow = boolean;
+    },
+    TRIGGER_MOVEITEM_WINDOW (state, boolean) {
+      state.modalControl.showMoveItemWindow = boolean;
     },
   },
   actions: {
@@ -117,6 +121,10 @@ export default {
     triggerSatWindow({ commit, state }, boolean) {
       commit('TRIGGER_SAT_WINDOW', boolean);
       console.log("Satisfaction Window Set to: ", state.modalControl.showItemWindow);
+    },
+    triggerMoveItemWindow({ commit, state }, boolean){
+      commit('TRIGGER_MOVEITEM_WINDOW', boolean);
+      console.log("Move Item Window Set to: ", state.modalControl.showMoveItemWindow);
     },
   },
   getters: {

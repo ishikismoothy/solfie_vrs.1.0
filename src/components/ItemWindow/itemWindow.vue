@@ -27,7 +27,13 @@
                         <path d="M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/>
                         </svg>
                     </button>
-
+                    <button class="icon-button moveItem-button" @click="openMoveItemModal()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 6h18v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6z"/>
+                            <path d="M3 6l2-4h3l2 4"/>
+                            <path d="M8 14h8M16 14l-3 3M16 14l-3-3"/>
+                        </svg>
+                    </button>
                     <button class="icon-button duplicateBlock-button" @click="openDuplicateDialog()">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
@@ -198,6 +204,10 @@ export default {
                 } 
             }
         }
+        const openMoveItemModal = () => {
+            store.dispatch('user/triggerMoveItemWindow', true);
+            close();
+        };
         const openDuplicateDialog = async () => {
             console.log(selectedItemId.value);
             const currentFolder = store.state.mindspace.currentFolder;
@@ -267,6 +277,7 @@ export default {
             toggleEditBlock,
             openDeleteDialog,
             openDuplicateDialog,
+            openMoveItemModal
         };
     }
 };

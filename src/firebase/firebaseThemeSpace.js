@@ -15,10 +15,7 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebaseInit';
 import store from '@/store'; // Import your Vuex store
-import {
-    createMindspace,
-    setDefaultMindspace,
-  } from '@/firebase/firebaseMindSpace';
+import { mindspaceService } from '@/firebase/firebaseMindSpace';
 
 const themesCollection = collection(db, 'themes');
 
@@ -168,7 +165,7 @@ export const themeService = {
             const docRef = await addDoc(themesCollection, themeDocData);
 
 
-            const result = await createMindspace({
+            const result = await mindspaceService.createMindspace({
                 uid, 
                 themeId: docRef.id, 
                 name: 'welcome to solfie!',
@@ -177,7 +174,7 @@ export const themeService = {
             if(result.success) {
                 console.log("[addTheme/firebaseThemeSpace.js] Successfully created first mind space.");
 
-                await setDefaultMindspace(docRef.id, result.mindspaceId);
+                await mindspaceService.setDefaultMindspace(docRef.id, result.mindspaceId);
             }else{
                 console.log("[addTheme/firebaseThemeSpace.js] ", result.error);
             }

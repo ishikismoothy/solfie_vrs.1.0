@@ -244,7 +244,7 @@
   import createMindSpacePopUp from '@/components/Header/createMindSpace.vue';
   import RenameDialog from './renameDialog.vue'
   import TruncateText from '../TruncateText/truncateSpanText.vue';
-  import { updateMindSpaceName, deleteMindspace, setDefaultMindspace, duplicateMindspace, setPrivacyMindspace } from '@/firebase/firebaseMindSpace';
+  import { mindspaceService } from '@/firebase/firebaseMindSpace';
   
   export default {
     name: 'SlideMenu',
@@ -324,7 +324,7 @@
         if (selectedMindspace.value) {
           try {
             // Implement your rename API call here
-            const result = await updateMindSpaceName(selectedMindspace.value.id, newName);
+            const result = await mindspaceService.updateMindSpaceName(selectedMindspace.value.id, newName);
             if (result.success) {
               await store.dispatch('mindspace/setMindSpaceList');
             } else {
@@ -342,7 +342,7 @@
         closeSettings();
 
         // Implement favorite toggle logic
-        const result = await setDefaultMindspace(props.themeId, mindSpace.id);
+        const result = await mindspaceService.setDefaultMindspace(props.themeId, mindSpace.id);
 
         if (result.success) {
           console.log("[mindSpaceMenu.vue]",result.message)
@@ -357,7 +357,7 @@
         closeSettings();
 
         // Implement visibility toggle logic
-        const result = await setPrivacyMindspace(mindspace.id);
+        const result = await mindspaceService.setPrivacyMindspace(mindspace.id);
         if (result.success) {
           console.log("[mindSpaceMenu.vue/togglePrivacy]",result.message)
           await store.dispatch('mindspace/setMindSpaceId');
@@ -381,7 +381,7 @@
 
         closeSettings(mindspaceId);
 
-        const result = await duplicateMindspace(mindspaceId);
+        const result = await mindspaceService.duplicateMindspace(mindspaceId);
         console.log ("[mindSpaceMenu.vue/openDuplicateDialog] Reading: ",mindspaceId)
         if (result.success) {
           console.log("[mindSpaceMenu.vue/openDuplicateDialog]: ", result.newId, " ",result.message);
@@ -399,7 +399,7 @@
           return;
         }
 
-        const result = await deleteMindspace(mindspaceId);
+        const result = await mindspaceService.deleteMindspace(mindspaceId);
         if (result.success) {
           await store.dispatch('mindspace/setMindSpaceList');
         }else{

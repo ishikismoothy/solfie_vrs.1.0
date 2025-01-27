@@ -69,7 +69,7 @@
 
 <script>
 import { ref, computed, watch } from 'vue';
-import { createMindspace } from '@/firebase/firebaseMindSpace';
+import { mindspaceService } from '@/firebase/firebaseMindSpace';
 import { useStore } from 'vuex';
 
 export default {
@@ -164,7 +164,7 @@ export default {
       error.value = '';
 
       try {
-        const result = await createMindspace({
+        const result = await mindspaceService.createMindspace({
           uid: props.userId,
           themeId: props.themeId,
           name: mindspaceName.value,

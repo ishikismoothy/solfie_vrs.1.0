@@ -1,0 +1,70 @@
+@mixin flex-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal{
+    &-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: $overlay-bg;
+        @include flex-center;
+    }
+    &-content {
+        background: white;
+        padding: 2rem;
+        border-radius: 1rem;
+        width: 80%;
+        max-width: 600px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        overflow-y: auto;
+    }
+    &-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+    
+    &-fade {
+        &-enter-active,
+        &-leave-active {
+          transition: opacity 0.3s ease;
+        }
+    
+        &-enter-from,
+        &-leave-to {
+          opacity: 0;
+        }
+    }
+
+    //TODOs
+    &-overlay-todo {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 50%;
+        height: 100%;
+        background-color: $overlay-bg;
+        @include flex-center;
+    }
+    &-content-todo {
+        //position: fixed;
+        //top: 20%;
+        background-color: white;
+        padding: 2rem;
+        border-radius: 1rem;
+        width: 80%;
+        max-width: 500px;
+        input, textarea{
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 5px;
+        }
+    }
+    
+}

@@ -4,23 +4,7 @@
 //import octagonSvg from '../assets/shapes/octagon.svg';
 //import cloudSvg from '../assets/shapes/cloud.svg';
 //import folderSvg from '../assets/shapes/folder.svg';
-import { 
-  getThemeData,
-  getMindSpaceData,
-  getDefaultMindSpaceId,
-  addItemToMindspace,
-  addFolderToMindspace,
-  addItemToFolder,
-  duplicateItemInMindspace,
-  duplicateItemToFolder,
-  updateMindSpaceData,
-  moveItemFromFolderToMindspace,
-  moveItemToFolder,
-  deleteItem,
-  getListOfMindSpace,
-  getItemData,
-  updateItemData,
-} from '@/firebase/firebaseMindSpace';
+import { mindspaceService} from '@/firebase/firebaseMindSpace';
 import { 
   updateViewThemeHistory,
   updateViewMindspaceHistory,
@@ -476,7 +460,7 @@ export default {
           
           commit('SET_THEME_ID', themeId);
           console.log("[setViewThemeId] Current", state.currentThemeId);
-          updateViewThemeHistory( state.userId, state.currentThemeId);
+          await updateViewThemeHistory( state.userId, state.currentThemeId);
 
           // 2. Load theme data to get theme name
           await dispatch('setThemeData');
@@ -493,11 +477,11 @@ export default {
         console.log("[setMindSpaceId] TRIGGERED");
         try {
           // Get theme document to find defaultMindSpace
-          const defaultMindSpaceId = await getDefaultMindSpaceId(state.currentThemeId, state.userId);
+          const defaultMindSpaceId = await mindspaceService.getDefaultMindSpaceId(state.currentThemeId, state.userId);
 
           commit('SET_MINDSPACE_ID', defaultMindSpaceId);
           console.log("[setMindSpaceId]",state.currentMindSpaceId);
-          updateViewMindspaceHistory( state.userId, state.currentMindSpaceId);
+          await updateViewMindspaceHistory( state.userId, state.currentMindSpaceId);
 
           // Now load the mindspace pages
           await dispatch('setMindSpacePages');
@@ -523,7 +507,7 @@ export default {
       },
       async setThemeData({ commit, state }) {
         console.log("[setThemeData] TRIGGERED");
-        const currentThemeData = await getThemeData(state.currentThemeId);
+        const currentThemeData = await mindspaceService.getThemeData(state.currentThemeId);
         const currentThemeName = currentThemeData.name;
         commit('SET_THEME_NAME', currentThemeName);
         console.log("[setThemeData] Mindspace Name:", state.currentThemeName);
@@ -531,7 +515,7 @@ export default {
       async setMindSpaceList({ commit, state }) {
         try {
           console.log("[setMindSpaceList] TRIGGERED");
-          const result = await getListOfMindSpace(state.currentThemeId);
+          const result = await mindspaceService.getListOfMindSpace(state.currentThemeId);
 
           // Validate that result is an array
           if (!Array.isArray(result)) {
@@ -564,7 +548,7 @@ export default {
         try {
           console.log("[setMindSpacePages] TRIGGERED");
           
-          const result = await getMindSpaceData(state.currentMindSpaceId);
+          const result = await mindspaceService.getMindSpaceData(state.currentMindSpaceId);
           console.log("[setMindSpacePages] Got result:", result);
           
           if (!result || !result.pages) {
@@ -635,7 +619,7 @@ export default {
           commit('SET_LOADING', true);
           commit('SET_ERROR', null);
   
-          await updateMindSpaceData(state.currentMindSpaceId, state.mindSpacePages);
+          await mindspaceService.updateMindSpaceData(state.currentMindSpaceId, state.mindSpacePages);
           
           console.log('[updateMindSpace] Successfully updated mindspace');
         } catch (error) {
@@ -715,7 +699,7 @@ export default {
         try {
           console.log('[addItemToPage] Starting with:', { pageIndex, index, item });
           console.log('[addItemToPage] userId: ',state.userId)
-          const { itemId, itemData } = await addItemToMindspace(
+          const { itemId, itemData } = await mindspaceService.addNewItemToMindspace(
             state.userId,
             state.currentMindSpaceId,
             pageIndex,
@@ -744,7 +728,7 @@ export default {
         try {
           console.log('[addNewFolder] Starting with:', { pageIndex, index });
           
-          const { folderId, folderData } = await addFolderToMindspace(
+          const { folderId, folderData } = await mindspaceService.addFolderToMindspace(
             state.currentMindSpaceId,
             pageIndex,
             index
@@ -766,7 +750,7 @@ export default {
       },
       async duplicateItemToPage({ state, dispatch }) {
         try {
-          const { itemId, itemData } = await duplicateItemInMindspace(
+          const { itemId, itemData } = await mindspaceService.duplicateItemInMindspace(
             state.userId,
             state.currentMindSpaceId,
             state.currentPage,
@@ -784,10 +768,6 @@ export default {
       removeItemFromPage({ commit }, { itemId }) {
         commit('REMOVE_ITEM_FROM_PAGE', { itemId });
       },
-      /*
-      removeItemFromPage({ commit }, payload) {
-        commit('REMOVE_ITEM_FROM_PAGE', payload);
-      },*/
       // New action for updating folder items
       updateFolderItems({ commit }, { folderId, items }) {
         commit('UPDATE_FOLDER_ITEMS', { folderId, items });
@@ -810,7 +790,7 @@ export default {
       },
       async addNewItemToFolder({ commit, state, dispatch }, { folderId, item }) {
         try {
-          const { itemId, itemData } = await addItemToFolder(
+          const { itemId, itemData } = await mindspaceService.addItemToFolder(
             state.userId,
             state.currentMindSpaceId,
             folderId,
@@ -833,7 +813,7 @@ export default {
         console.log('Duplicating to folder:', state.currentFolder.id);
         
         try {
-          const { itemId, itemData } = await duplicateItemToFolder(
+          const { itemId, itemData } = await mindspaceService.duplicateItemToFolder(
             state.userId,
             state.currentMindSpaceId,
             state.currentFolder.id,
@@ -856,7 +836,7 @@ export default {
           console.log('[moveItemFromFolderToPage] Starting move operation');
     
           // 1. Update Firestore and get raw data
-          const { rawPages, rawFolders } = await moveItemFromFolderToMindspace(
+          const { rawPages, rawFolders } = await mindspaceService.moveItemFromFolderToMindspace(
             state.currentMindSpaceId,
             { folderId, itemId, targetPageIndex, targetIndex }
           );
@@ -933,7 +913,7 @@ export default {
           });
       
           // 1. Update Firestore
-          const { rawPages, rawFolders } = await moveItemToFolder(
+          const { rawPages, rawFolders } = await mindspaceService.moveItemToFolder(
             state.currentMindSpaceId,
             {
               pageIndex,
@@ -985,7 +965,7 @@ export default {
           console.log('[deleteItem] Starting deletion of item:', itemId);
           
           // 1. First delete from Firestore and get raw data
-          const { rawPages, rawFolders } = await deleteItem(state.currentMindSpaceId, itemId);
+          const { rawPages, rawFolders } = await mindspaceService.deleteItem(state.currentMindSpaceId, itemId);
 
           // 2. Filter out the deleted item from current state
           const updatedPages = state.mindSpacePages.map(page => ({
@@ -1025,11 +1005,11 @@ export default {
       async setItemName({ commit, state, dispatch }, itemName) {
         commit('SET_ITEM_NAME', itemName);
         console.log("[setItemName/mindspace.js] itemName:", state.currentItemName);
-        updateItemData(state.currentItemId, state.currentItemName, state.itemBlocks );
+        await mindspaceService.updateItemData(state.currentItemId, state.currentItemName, state.itemBlocks );
         await dispatch('setMindSpacePages');
       },
       async setBlocks({ commit }, itemId) {
-        const itemData = await getItemData(itemId);
+        const itemData = await mindspaceService.getItemData(itemId);
 
         if(itemData.success){
           console.log(itemData.data);
@@ -1039,21 +1019,21 @@ export default {
           console.log(itemData.message);
         }
       },
-      addBlock({ commit, state }, block) {
+      async addBlock({ commit, state }, block) {
         commit('ADD_BLOCK', block);
         console.log("[mindspace.js/itemBlocks] Currently: ", state.itemBlocks);
-        updateItemData(state.currentItemId, state.currentItemName, state.itemBlocks );
+        await mindspaceService.updateItemData(state.currentItemId, state.currentItemName, state.itemBlocks );
       },
-      addBlockAtIndex({ commit, state }, { block, index }) {
+      async addBlockAtIndex({ commit, state }, { block, index }) {
         // First check if itemBlocks exists and is an array
         const currentBlocks = state.itemBlocks || [];
         const newBlocks = [...currentBlocks];
         newBlocks.splice(index, 0, block);
         commit('SET_BLOCKS', newBlocks);
         console.log(newBlocks);
-        updateItemData(state.currentItemId, state.currentItemName, newBlocks);
+        await mindspaceService.updateItemData(state.currentItemId, state.currentItemName, newBlocks);
       },
-      duplicateBlock({ commit, state }, { id, index }) {
+      async duplicateBlock({ commit, state }, { id, index }) {
         try {
           // Find the block to duplicate
           const blockToDuplicate = state.itemBlocks.find(block => block.id === id);
@@ -1080,7 +1060,7 @@ export default {
           newBlocks.splice(index + 1, 0, block);
           
           commit('SET_BLOCKS', newBlocks);
-          updateItemData(state.currentItemId, state.currentItemName, newBlocks);
+          await mindspaceService.updateItemData(state.currentItemId, state.currentItemName, newBlocks);
           
           console.log('[duplicateBlock] Block duplicated:', { original: id, new: duplicatedBlock.id });
         } catch (error) {
@@ -1090,19 +1070,19 @@ export default {
       },
       async updateBlock({ commit, state, dispatch }, { id, content }) {
         commit('UPDATE_BLOCK', { id, content });
-        await updateItemData(state.currentItemId, state.currentItemName, state.itemBlocks);
+        await mindspaceService.updateItemData(state.currentItemId, state.currentItemName, state.itemBlocks);
         // Optionally update the store with the cleaned contents
         await dispatch('setBlocks', state.currentItemId);
       },
-      deleteBlock({ commit, state }, id) {
+      async deleteBlock({ commit, state }, id) {
         commit('DELETE_BLOCK', id);
         console.log("[mindspace.js/itemBlocks] Currently: ", state.itemBlocks);
-        updateItemData(state.currentItemId, state.currentItemName, state.itemBlocks );
+        await mindspaceService.updateItemData(state.currentItemId, state.currentItemName, state.itemBlocks );
       },
-      moveBlock({ commit, state }, { id, direction }) {
+      async moveBlock({ commit, state }, { id, direction }) {
         commit('MOVE_BLOCK', { id, direction });
         console.log("[mindspace.js/itemBlocks] Currently: ", state.itemBlocks);
-        updateItemData(state.currentItemId, state.currentItemName, state.itemBlocks );
+        await mindspaceService.updateItemData(state.currentItemId, state.currentItemName, state.itemBlocks );
       },
       setEditingBlock({ commit }, id) {
         commit('SET_EDITING_BLOCK', id);

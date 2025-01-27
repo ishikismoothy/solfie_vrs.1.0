@@ -21,12 +21,12 @@ const routes = [
     component: () => import('../views/DashboardView.vue'),
     meta: { requiresAuth: true }
   },
-  // {
-  //   path: '/dataextract',
-  //   name: 'dataextract',
-  //   component: () => import('../views/DataExtractTestView.vue'),
-  //   meta: { requiresAuth: true }
-  // },
+   {
+     path: '/dataextract',
+     name: 'dataextract',
+     component: () => import('../views/DataExtractTestView.vue'),
+     meta: { requiresAuth: true }
+   },
   {
     path: '/themespace',
     name: 'themespace',

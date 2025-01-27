@@ -88,6 +88,15 @@
       @close="closeSatWindow"
       @click.self="closeSatWindow"
     />
+
+    <MoveItemModal class="moveItemWindow-view"
+      :is-open="showMoveItemWindow"
+      :item-id="currentItemId"
+      :current-mind-space-id="currentMindSpaceId"
+      @close="closeMoveItemWindow"
+      @click.self="closeMoveItemWindow"
+      @item-moved="updateMindSpace"
+    />
     
   </div>
 </template>
@@ -102,6 +111,7 @@ import Dashboard from '@/components/DashBoard/dashboard.vue';
 import mindSpace from '@/components/DashBoard/mindSpace.vue';
 import PageIndicator from '@/components/DashBoard/pageIndicator.vue';
 import itemWindow from '@/components/ItemWindow/itemWindow.vue';
+import MoveItemModal from '@/components/ItemWindow/moveItemModal.vue';
 import LoadingScreen from '@/components/loadingScreen.vue';
 import satSlider from '@/components/DashBoard/satisfactionSlider.vue';
 import { disableBodyScroll,  /*enableBodyScroll, /*clearAllBodyScrollLocks*/ } from 'body-scroll-lock';
@@ -115,6 +125,7 @@ export default defineComponent({
     PageIndicator,
     HeaderNav,
     itemWindow,
+    MoveItemModal,
     satSlider,
     LoadingScreen
     
@@ -136,6 +147,8 @@ export default defineComponent({
     const isEditMode = computed(() => store.getters['mindspace/getIsEditMode']);
     const currentPage = computed(() => store.getters['mindspace/getCurrentPage']);
     const currentThemeId = computed(() => store.getters['mindspace/getThemeId']);
+    const currentMindSpaceId = computed(() => store.state.mindspace.currentMindSpaceId);
+    const currentItemId = computed(() => store.state.mindspace.currentItemId);
     const slidePosition = computed(() => {
       if (isDragging.value) {
         const delta = currentX.value - startX.value;
@@ -226,6 +239,11 @@ export default defineComponent({
     const showItemWindow = computed(() => store.state.user.modalControl.showItemWindow);
     const closeItemWindow = () => {
         store.dispatch('user/triggerItemWindow', false);
+    };
+
+    const showMoveItemWindow = computed(() => store.state.user.modalControl.showMoveItemWindow);
+    const closeMoveItemWindow = () => {
+        store.dispatch('user/triggerMoveItemWindow', false);
     };
 
     const showSatWindow = computed(() => store.state.user.modalControl.showSatWindow);
@@ -348,6 +366,11 @@ export default defineComponent({
       }
     });
 
+
+    const updateMindSpace = async () => {
+      await store.dispatch('mindspace/setMindSpacePages');
+    };
+
     return {
       isLoading,
       isMindSpaceView,
@@ -358,11 +381,17 @@ export default defineComponent({
       handleTouchMove,
       handleTouchEnd,
       isEditMode,
+
+      currentMindSpaceId,
+      currentItemId,
       
       showItemWindow,
       closeItemWindow,
+      showMoveItemWindow,
+      closeMoveItemWindow,
       showSatWindow,
       closeSatWindow,
+      updateMindSpace,
 
       //Dock visibility Handlings
       navRef,
