@@ -3,6 +3,7 @@ import {
   updateViewMindspaceHistory,
   loadViewHistory,
 } from '@/firebase/firebaseFirestore';
+import { getCurrentUserId } from '@/firebase/firebaseAuth';
 
 export default {
   namespaced: true,
@@ -42,6 +43,9 @@ export default {
     }
   },
   mutations: {
+    SET_USER_ID(state, id){
+      state.user.uid = id;
+    },
     SET_LAST_THEMEID(state, id){
       state.viewHistory.lastThemeId = id;
     },
@@ -71,6 +75,22 @@ export default {
     },
   },
   actions: {
+    async setUserId({ commit, state }) {
+      console.log("[user.js/setUserId] TRIGGERED");
+      try {
+        
+        const userId = await getCurrentUserId();
+        
+        commit('SET_USER_ID', userId);
+        console.log("[user.js/setUserId]",state.user.uid);
+        
+      } catch (error) {
+        console.error('Error initializing user ID:', error);
+        commit('SET_ERROR', error.message);
+      } finally {
+        console.log("[user.js/setUserId] Finish Process");
+      }
+    },
     setLastViewThemeHistory({ commit, state }, { uid, themeId }){
       //Triggered when user swap mindspace view page.
 

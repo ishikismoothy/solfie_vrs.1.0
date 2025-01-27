@@ -480,7 +480,8 @@ export default {
       console.log("[ThemeSapceView.vue]: isLoading from mindspace.js", isLoading);
       try {
         console.log('Store state:', store.state);
-        await store.dispatch('mindspace/setUserId');
+        await store.dispatch('user/setUserId');
+        await store.dispatch('mindspace/setUserId', store.state.user.user.uid);
         console.log('uid:', userId.value);
         await initializeThemes();
         console.log("[ThemeSapceView.vue]: sortableThemes", sortableThemes);

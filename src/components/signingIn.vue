@@ -41,6 +41,7 @@ export default {
         password: password.value 
       });
       if (store.getters['auth/isAuthenticated']) {
+        await store.dispatch('user/setUserId');
         router.push('/themespace');
       }
     };

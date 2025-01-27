@@ -264,7 +264,7 @@ ADD STATUS HEADER
       },
       setup() {
         const store = useStore();
-        const currentUser = computed(() =>store.getters['mindspace/getUserId']);
+        const currentUser = computed(() => store.state.user.user.userId);
         const currentTime = ref('');
 
         //[BACKGROUND]
@@ -1883,6 +1883,7 @@ ADD STATUS HEADER
 
         onMounted(async () => {
             if(!currentUser.value) {
+              await store.dispatch('user/setUserId');
               await store.dispatch('mindspace/setUserId');
             }
             updateTime();

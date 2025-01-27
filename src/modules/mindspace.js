@@ -10,7 +10,7 @@ import {
   updateViewMindspaceHistory,
   loadViewHistory,
 } from '@/firebase/firebaseFirestore';
-import { getCurrentUserId } from '@/firebase/firebaseAuth';
+//import { getCurrentUserId } from '@/firebase/firebaseAuth';
 
 export default {
     namespaced: true,
@@ -402,21 +402,21 @@ export default {
     },
     
     actions: {
-      async setUserId({ commit, state, /*dispatch*/ }) {
-        console.log("[setUserId] TRIGGERED");
+      async setUserId({ commit, state },userId) {
+        console.log("[mindspace.js/setUserId] TRIGGERED");
         try {
           commit('SET_LOADING', true);
           
-          const userId = await getCurrentUserId();
+          //const userId = await getCurrentUserId();
           
           commit('SET_USER_ID', userId);
-          console.log("[setUserId]",state.userId);
+          console.log("[mindspace.js/setUserId]",state.userId);
           
         } catch (error) {
           console.error('Error initializing user ID:', error);
           commit('SET_ERROR', error.message);
         } finally {
-          console.log("[setUserId] Finish Process");
+          console.log("[mindspace.js/setUserId] Finish Process");
         }
       },
       async loadViewThemeId({ commit, state, dispatch }) {

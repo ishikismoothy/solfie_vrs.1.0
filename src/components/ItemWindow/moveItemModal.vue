@@ -96,7 +96,7 @@ export default {
   setup(props, { emit }) {
     const store = useStore();
     const debug = ref(true); // Set to true for debugging
-    const userId = computed(() => store.state.mindspace.userId);
+    const userId = computed(() => store.state.user.user.userId);
     const selectedTheme = ref(null);
     const selectedMindSpace = ref(null);
     const themeSpaces = ref([]);
