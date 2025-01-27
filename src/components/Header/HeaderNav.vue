@@ -61,8 +61,10 @@
       </button>
 
         <!-- Dropdown content here -->
-      <div 
-        v-if="isDropdownOpen" class="dropdown-menu"
+      <div
+        v-if="isDropdownOpen"
+        class="dropdown-menu"
+        ref="elementRef"
       >
         <LogoutButton class="dropdown-item" />
       </div>
@@ -86,6 +88,7 @@ import { useStore } from 'vuex';
 import SlideMenu from './mindSpaceMenu.vue';
 import TruncateText from '../TruncateText/truncateHeaderText.vue';
 import LogoutButton from '@/components/logoutButton.vue';
+import useClickOutside from '../composables/useClickOutside.js';
 
 export default {
   name: 'HeaderNav',
@@ -97,7 +100,6 @@ export default {
   setup() {
     const store = useStore();
     const isMenuOpen = ref(false);
-    const isDropdownOpen = ref(false);
     const user = computed(() => store.state.user.user || {});
 
     const themeName = computed(() => store.state.mindspace.currentThemeName);
@@ -108,14 +110,28 @@ export default {
 
     const isEditMode = computed(() => store.getters['mindspace/getIsEditMode']);
 
+      // handle clicking outside the popup menu
+    const isDropdownOpen = ref(false);
+    const isButtonClicked = ref(false);
+    const closeDropdown = () => {
+      if (!isButtonClicked.value) {
+        isDropdownOpen.value = false;
+        console.log('Popup closed');
+      }
+      isButtonClicked.value = false;
+    };
+    const { elementRef } = useClickOutside(closeDropdown);
+    const toggleDropdown = () => {
+      isButtonClicked.value = true;
+      isDropdownOpen.value = !isDropdownOpen.value;
+      console.log('Toggling popup. Is open:', isDropdownOpen.value);
+    };
+      // handle clicking outside the popup menu ends
+
     console.log("[HeaderNav.vue] Reading",userId.value);
 
     const toggleMenu = () => {
       isMenuOpen.value = !isMenuOpen.value;
-    };
-
-    const toggleDropdown = () => {
-      isDropdownOpen.value = !isDropdownOpen.value;
     };
 
     const closeMenu = () => {
@@ -141,6 +157,7 @@ export default {
     };
 
 
+
     return {
       user,
       isLoading,
@@ -154,10 +171,12 @@ export default {
       toggleDropdown,
       closeMenu,
       isEditMode,
-      exitEditMode
+      exitEditMode,
+      elementRef,
     };
   }
 };
+
 </script>
 
 <style lang="scss">

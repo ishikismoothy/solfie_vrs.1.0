@@ -1,8 +1,9 @@
 // src/firebase/firebaseInit.js
 
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getAuth,connectAuthEmulator } from 'firebase/auth';
+import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
+import { getStorage, connectStorageEmulator } from 'firebase/storage';
 
 const firebaseConfig = {
   apiKey: process.env.VUE_APP_FIREBASE_API_KEY,
@@ -24,4 +25,21 @@ const auth = getAuth(firebaseApp);
 // Initialize Cloud Firestore and get a reference to the service
 const db = getFirestore(firebaseApp);
 
-export { firebaseApp, auth, db };
+// Initialize Firebase Storage and get a reference to the service
+const storage = getStorage(firebaseApp);
+
+// Connect to Firestore emulator (only for local development)
+if (window.location.hostname === 'localhost') {
+  // Firestore Emulator
+  connectFirestoreEmulator(db, '127.0.0.1', 8081);
+  console.log('Firestore Emulator Connected');
+  // Auth Emulator
+  connectAuthEmulator(auth, 'http://127.0.0.1:9099'); // Ensure this matches your emulator's port
+  console.log('Auth Emulator Connected');
+  // Storage Emulator
+  connectStorageEmulator(storage, '127.0.0.1', 9199);
+  console.log('Storage Emulator Connected');
+}
+
+
+export { firebaseApp, auth, db, storage };

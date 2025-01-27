@@ -24,7 +24,7 @@ const routes = [
    {
      path: '/dataextract',
      name: 'dataextract',
-     component: () => import('../views/DataExtractTestView.vue'),
+     component: () => import('../views/dataExtractTestView.vue'),
      meta: { requiresAuth: true }
    },
   {

@@ -13,7 +13,7 @@ import {
 
   export const getUsersCollections = async () => {
       console.log('Start Fetching users...');
-      let users; 
+      let users;
       try {
           const querySnapshot = await getDocs(collection(db, 'users'));
           users = querySnapshot.docs.map(doc => ({
@@ -32,6 +32,9 @@ import {
       name: 'John Doe',
       email: data.email,
       dateOfBirth: 'None',
+      viewHistory: {},
+      mindspace: "",
+      theme: "NYf"
       // Add more default fields if needed
     };
     return setDoc(doc(db, 'users', uid), { ...defaultData, ...data });
@@ -113,14 +116,14 @@ import {
     try {
       const userRef = doc(db, 'users', uid);
       const userRefSnap = await getDoc(userRef);
-  
+
       if (!userRefSnap.exists()) {
         throw new Error('User document not found');
       }
-  
+
       const userData = userRefSnap.data();
       const existingViewHistory = userData.viewHistory || {};
-      
+
       await updateDoc(userRef, {
         viewHistory: {
           ...existingViewHistory,  // Preserve existing fields
@@ -128,25 +131,25 @@ import {
         }
       });
       return { message: "successful." };
-  
+
     } catch (error) {
       console.error("Error updating view history:", error);
       throw error;
     }
   };
-  
+
   export const updateViewMindspaceHistory = async (uid, mindSpaceId) => {
     try {
       const userRef = doc(db, 'users', uid);
       const userRefSnap = await getDoc(userRef);
-  
+
       if (!userRefSnap.exists()) {
         throw new Error('User document not found');
       }
-  
+
       const userData = userRefSnap.data();
       const existingViewHistory = userData.viewHistory || {};
-      
+
       await updateDoc(userRef, {
         viewHistory: {
           ...existingViewHistory,    // Preserve existing fields
@@ -154,23 +157,23 @@ import {
         }
       });
       return { message: "successful." };
-  
+
     } catch (error) {
       console.error("Error updating view history:", error);
       throw error;
     }
   };
-  
+
   export const loadViewHistory = async (uid) => {
     try {
       const userDoc = await getDoc(doc(db, 'users', uid));
       if (!userDoc.exists()) {
         throw new Error('User document not found');
       }
-  
+
       const userData = userDoc.data();
       const viewHistoryData = userData.viewHistory;
-  
+
       if (!viewHistoryData) {
         return null;
       } else {

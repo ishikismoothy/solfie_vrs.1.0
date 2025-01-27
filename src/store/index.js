@@ -19,6 +19,6 @@ export default createStore({
     auth,
     dataExtraction,
     mindspace,
-    themeSpace
+    themeSpace,
   },
 });
