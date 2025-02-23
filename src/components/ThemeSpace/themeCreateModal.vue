@@ -77,7 +77,7 @@
           <!-- image upload -->
           <div class="form-group">
             <label>Upload Image:</label>
-            <input type="file" @change="handleImageUpload" />
+            <input type="file" accept="image/*" @change="handleImageUpload" />
           </div>
 
           <div class="button-group">
@@ -183,6 +183,19 @@ export default {
       try {
         const file = event.target.files[0];
         if (!file) return; // If no file is selected, exit the function
+
+        const MAX_SIZE = 5 * 1024 * 1024; // 5MB size limit
+        if (file.size > MAX_SIZE) {
+          alert("The file is too large. Please upload a file smaller than 5MB.");
+          return;
+        }
+
+        // Check if the file type is an image (JPEG, PNG, or GIF)
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+        if (!allowedTypes.includes(file.type)) {
+          alert("Please upload a valid image file (JPEG, PNG, GIF).");
+          return; // Exit the function if it's not an image
+        }
 
         const storageReference = storageRef(storage, `theme_images/${file.name}`);
         const uploadTask = uploadBytesResumable(storageReference, file);

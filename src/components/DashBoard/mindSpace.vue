@@ -48,7 +48,7 @@ ADD STATUS HEADER
             class="mind-Item"
             :data-id="item.id"
           >
-            <div 
+            <div
               class="icon-wrapper"
               :class="{
                 'dragging': draggingItem === item,
@@ -63,9 +63,9 @@ ADD STATUS HEADER
                   @touchstart.stop="void 0"
                 />
               </div>
-              
+
               <!-- Main content wrapper -->
-              <div 
+              <div
                 class="content-wrapper"
                 @click="handleItemClick(item)"
                 @mousedown.prevent="handleMouseDown($event, item, pageIndex, index)"
@@ -1452,7 +1452,7 @@ ADD STATUS HEADER
               x: folderDragStartX.value - rect.left,
               y: folderDragStartY.value - rect.top
             };
-            
+
             document.addEventListener('touchmove', handleFolderTouchMove, { passive: false });
             document.addEventListener('touchend', handleFolderTouchEnd);
           }else {
@@ -1460,17 +1460,17 @@ ADD STATUS HEADER
               const handleTouchEnd = (endEvent) => {
               const touchEndTime = Date.now();
               const touchDuration = touchEndTime - folderDragStartTime.value;
-              
+
               // Calculate movement
               const touch = endEvent.changedTouches[0];
               const moveX = Math.abs(touch.clientX - folderDragStartX.value);
               const moveY = Math.abs(touch.clientY - folderDragStartY.value);
-              
+
               // If it was a short touch without much movement, treat as click
               if (touchDuration < 500 && moveX < 10 && moveY < 10) {
                 handleFolderItemClick(item);
               }
-              
+
               document.removeEventListener('touchend', handleTouchEnd);
             };
 
