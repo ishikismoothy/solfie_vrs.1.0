@@ -96,7 +96,7 @@ export default {
   setup(props, { emit }) {
     const store = useStore();
     const debug = ref(true); // Set to true for debugging
-    const userId = computed(() => store.state.user.user.userId);
+    const userId = computed(() => store.state.user.user.uid);
     const selectedTheme = ref(null);
     const selectedMindSpace = ref(null);
     const themeSpaces = ref([]);
@@ -106,6 +106,7 @@ export default {
     let lastAction = null;
 
     const fetchThemeSpaces = async () => {
+      console.log("[moveItemModal.vue/fetchThemeSpace] TRIGGERED.")
       isLoading.value = true;
       error.value = null;
       try {
@@ -141,7 +142,7 @@ export default {
 
     const getMindspaceName = (mindspace) => {
       // Implement your logic to get a display name
-      return `Mindspace ${mindspace.name.slice(0, 6)}`;
+      return `${mindspace.name.slice(0)}`;
     };
 
     // Debug watcher
@@ -247,6 +248,9 @@ export default {
     };
 
     onMounted(async () => {
+      if(!userId.value){
+         await store.dispatch('user/setUserId');
+      }
       await fetchThemeSpaces();
     });
 
@@ -316,6 +320,9 @@ export default {
   margin: 5px 0;
   border: 1px solid #ddd;
   border-radius: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   cursor: pointer;
 }
 

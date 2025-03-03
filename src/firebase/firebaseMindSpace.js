@@ -493,7 +493,7 @@ export const mindspaceService = {
       };
     }
   },
-  
+
   async getItemData (itemId) {
     try {
       const itemsRef = doc(db, 'items', itemId);
@@ -520,6 +520,172 @@ export const mindspaceService = {
       }
     }
     
+  },
+
+  // Fetch mindspace slots by ID
+  async fetchMindspaceSlots(mindspaceId) {
+    try {
+        if (!mindspaceId) {
+            throw new Error('Mindspace ID is required');
+        }
+
+        const docRef = doc(db, 'mindspace', mindspaceId);
+        const docSnap = await getDoc(docRef);
+
+        if (!docSnap.exists()) {
+            // Create a new mindspace document while preserving any existing data
+            const initialData = {
+                name: '', // This should come from somewhere else initially
+                mindslot: []
+            };
+            await setDoc(docRef, initialData);
+            return initialData;
+        }
+
+        const data = docSnap.data();
+        // If mindslot doesn't exist, add it while preserving existing data
+        if (!data.mindslot) {
+            const updatedData = {
+                ...data, // Preserve existing data including name
+                mindslot: []
+            };
+            await updateDoc(docRef, { mindslot: [] });
+            return updatedData;
+        }
+
+        return data;
+    } catch (error) {
+        console.error('Error fetching mindspace slots:', error);
+        throw error;
+    }
+  },
+
+  // Update mindspace slots
+  async updateMindspaceSlots(mindspaceId, mindspaceData) {
+    try {
+        if (!mindspaceId) {
+            throw new Error('Mindspace ID is required');
+        }
+
+        const docRef = doc(db, 'mindspace', mindspaceId);
+        
+        // Get existing data first
+        const docSnap = await getDoc(docRef);
+        const existingData = docSnap.exists() ? docSnap.data() : {};
+
+        // Merge existing data with new data
+        const updatedData = {
+            ...existingData,
+            ...mindspaceData,
+            mindslot: mindspaceData.mindslot || existingData.mindslot || []
+        };
+
+        await updateDoc(docRef, updatedData);
+    } catch (error) {
+        console.error('Error updating mindspace:', error);
+        throw error;
+    }
+  },
+
+  // Fetch all items from the 'items' collection
+  async fetchItemsForSlots(uid) {
+    const items = {};
+
+    try {
+        // Add more detailed error message
+        if (!uid) {
+            throw new Error('User ID is required - please ensure user is logged in');
+        }
+
+        const itemsCollection = collection(db, 'items');
+        const userItemsQuery = query(
+            itemsCollection,
+            where('uid', '==', uid)
+        );
+
+        const querySnapshot = await getDocs(userItemsQuery);
+        querySnapshot.forEach((doc) => {
+            items[doc.id] = doc.data();
+        });
+
+        return items;
+    } catch (error) {
+        console.error('Error in fetchItemsForSlots:', error);
+        throw error;
+    }
+  },
+
+  // Get item image URL
+  async getItemImage(itemId, items) {
+    try {
+      // Check if items is defined and has the correct structure
+      if (!items || !items.value) {
+        throw new Error('Invalid items object structure');
+      }
+
+      // If itemId doesn't exist or no matching item, return empty string
+      if (!itemId || !items.value[itemId]) {
+        return '';
+      }
+
+      // Check if img property exists
+      if (!items.value[itemId].img) {
+        console.warn(`No image found for item ${itemId}`);
+        return '';
+      }
+
+      return `url(${items.value[itemId].img})`;
+    } catch (error) {
+      console.error('Error getting item image:', error);
+      return ''; // Return empty string on error
+    }
+  },
+
+  // Get item name
+  async getItemName(itemId, items) {
+      try {
+          // Check if items is defined and has the correct structure
+          if (!items || !items.value) {
+              throw new Error('Invalid items object structure');
+          }
+
+          // If itemId doesn't exist or no matching item, return empty string
+          if (!itemId || !items.value[itemId]) {
+              return '';
+          }
+
+          // Check if name property exists
+          if (!items.value[itemId].name) {
+              console.warn(`No name found for item ${itemId}`);
+              return '';
+          }
+
+          return items.value[itemId].name;
+      } catch (error) {
+          console.error('Error getting item name:', error);
+          return ''; // Return empty string on error
+      }
+  },
+
+  // Additional helper method to get a single item by ID
+  async getItemById(itemId) {
+      try {
+          const itemDoc = doc(db, 'items', itemId);
+          const itemSnapshot = await getDoc(itemDoc);
+          
+          if (!itemSnapshot.exists()) {
+              console.warn(`No item found with ID: ${itemId}`);
+              return null;
+          }
+
+          return {
+              id: itemSnapshot.id,
+              ...itemSnapshot.data()
+          };
+      } catch (error) {
+          console.error('Error fetching single item:', error);
+          throw error;
+      }
   },
   
   // Firebase Update Function

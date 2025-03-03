@@ -74,11 +74,14 @@
             </div>
           </div>
 
+          
           <!-- image upload -->
+          <!--
           <div class="form-group">
             <label>Upload Image:</label>
             <input type="file" @change="handleImageUpload" />
           </div>
+          -->
 
           <div class="button-group">
             <button

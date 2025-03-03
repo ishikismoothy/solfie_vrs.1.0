@@ -419,13 +419,13 @@ export default {
           console.log("[mindspace.js/setUserId] Finish Process");
         }
       },
-      async loadViewThemeId({ commit, state, dispatch }) {
+      async loadViewThemeId({ commit, state, dispatch }, uid) {
         console.log("[loadViewThemeId] TRIGGERED");
         try {
           // Check if userId exists
           if (!state.userId) {
             console.log("[loadViewThemeId] No userId available");
-            return null;
+            commit('SET_USER_ID', uid);
           }
       
           // Add await here

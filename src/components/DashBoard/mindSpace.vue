@@ -5,10 +5,7 @@
 <!--
 FUTURE DEVELOPMENT
 ADD STATUS HEADER
-1 NAME
-2 Avator Icon
-3 Plan Name
-4 Menu bar with logout button
+
 -->
 
 <template>
@@ -1884,7 +1881,7 @@ ADD STATUS HEADER
         onMounted(async () => {
             if(!currentUser.value) {
               await store.dispatch('user/setUserId');
-              await store.dispatch('mindspace/setUserId');
+              //await store.dispatch('mindspace/setUserId');
             }
             updateTime();
             setInterval(updateTime, 60000); // Update time every minute
