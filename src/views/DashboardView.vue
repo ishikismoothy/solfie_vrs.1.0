@@ -132,7 +132,8 @@ export default defineComponent({
   },
   setup() {
     const store = useStore();
-    const userId = computed(() => store.getters['mindspace/getUserId']);
+    const userId = computed(() => store.state.user.user.uid);
+    //const userId = computed(() => store.getters['mindspace/getUserId']);
     const router = useRouter();
     const isLoading = computed(() => store.getters['mindspace/isLoading']);
     const isMindSpaceView = ref(true);
@@ -340,13 +341,16 @@ export default defineComponent({
       try {
         // Make sure we have a userId first
         if (!userId.value) {
-          await store.dispatch('mindspace/setUserId');
+          await store.dispatch('user/setUserId');
+          console.log("[DashboardView.vue]",userId.value);
+          //await store.dispatch('mindspace/setUserId');
+          //await store.dispatch('mindspace/setUserId', userId.value);
         }
 
         // If no theme is selected
         if (!currentThemeId.value) {
-          const loadView = await store.dispatch('mindspace/loadViewThemeId');
-      
+          const loadView = await store.dispatch('mindspace/loadViewThemeId',store.state.user.user.uid);
+          
           if (!loadView) {
             return router.push('/themespace');
           }
@@ -354,12 +358,13 @@ export default defineComponent({
 
         // Load pages if we have a theme
         await store.dispatch('mindspace/setMindSpacePages');
-        toggleView();
+        //toggleView();
 
       } catch (error) {
         console.error('Error in setup:', error);
         router.push('/themespace');
       }finally{
+        await store.dispatch('user/setLastViewLocationHistory', {lastLocation:"mindspace"});
         store.dispatch('themeSpace/setThemeId', currentThemeId.value);
         await store.dispatch('themeSpace/getSelfAssessment');
         await store.dispatch('scores/fetchSatisfactionData',currentThemeId.value);

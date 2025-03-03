@@ -1,7 +1,7 @@
 <template>
 <div class="dashboard">
     <main>
-      
+
       <section class="overview-block">
         <!--
         <div class="image-placeholder"></div>-->
@@ -16,7 +16,10 @@
         </div>
       </section>
 
+      <MindSlotView/>
+
       <SatisfactionDataView/>
+
 
       <section class="decision-section">
         <div class="ability-tab-menu" v-if="Object.keys(abilitiesData).length">
@@ -150,10 +153,13 @@
   import { defineComponent, ref, computed, watch, onMounted } from 'vue';
   import { useStore } from 'vuex';
   import SatisfactionDataView from './satisfactionDataView.vue';
+  import MindSlotView from './mindSlot.vue'
+
   export default defineComponent({
     name: 'DashboardView',
     components:{
-      SatisfactionDataView
+      SatisfactionDataView,
+      MindSlotView,
     },
     setup() {
       const store = useStore();

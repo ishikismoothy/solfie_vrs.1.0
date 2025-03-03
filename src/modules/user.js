@@ -25,6 +25,7 @@ export default {
       mindSpaceId: null,// Focused mindSpace    
     },
     viewHistory: {
+      lastLocation: "themespace",
       lastThemeId: null,
       lastMindSpaceId: null,
     },
@@ -45,6 +46,9 @@ export default {
   mutations: {
     SET_USER_ID(state, id){
       state.user.uid = id;
+    },
+    SET_LAST_LOCATION(state, location){
+      state.viewHistory.lastLocation = location;
     },
     SET_LAST_THEMEID(state, id){
       state.viewHistory.lastThemeId = id;
@@ -90,6 +94,10 @@ export default {
       } finally {
         console.log("[user.js/setUserId] Finish Process");
       }
+    },
+    setLastViewLocationHistory({ commit, state }, location){
+      commit('SET_LAST_LOCATION', location.lastLocation);
+      console.log("[user.js/setLastViewLocationHistory] Last Vie Location Set to: ", state.viewHistory.lastLocation);
     },
     setLastViewThemeHistory({ commit, state }, { uid, themeId }){
       //Triggered when user swap mindspace view page.
