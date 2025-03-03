@@ -77,7 +77,7 @@
           <!-- image upload -->
           <div class="form-group">
             <label>Upload Image:</label>
-            <input type="file" accept="image/*" @change="handleImageUpload" />
+            <input type="file" accept="image/*" @change="handleImageUpload"/>
           </div>
 
           <div class="button-group">
@@ -178,6 +178,7 @@ export default {
 
       // image upload
     const imageUrl = ref('');
+    // const isFileInputVisible = ref(false);
 
     const handleImageUpload = async (event) => {
       try {
