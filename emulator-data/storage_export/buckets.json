@@ -1,6 +1,9 @@
 {
   "buckets": [
     {
+      "id": "solfie-398005.firebasestorage.app"
+    },
+    {
       "id": "solfie-398005.appspot.com"
     }
   ]
