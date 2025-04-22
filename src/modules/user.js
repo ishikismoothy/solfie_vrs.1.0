@@ -1,7 +1,12 @@
-import { 
+import {
   updateViewThemeHistory,
   updateViewMindspaceHistory,
   loadViewHistory,
+  getFirestore,
+  collection,
+  query,
+  where,
+  getDocs,
 } from '@/firebase/firebaseFirestore';
 import { getCurrentUserId } from '@/firebase/firebaseAuth';
 
@@ -22,7 +27,7 @@ export default {
     data: {
       themeId: null,// Focused theme
       recordId: null,//Latest recordId
-      mindSpaceId: null,// Focused mindSpace    
+      mindSpaceId: null,// Focused mindSpace
     },
     viewHistory: {
       lastLocation: "themespace",
@@ -41,7 +46,9 @@ export default {
       showItemWindow: false,
       showSatWindow: false,
       showMoveItemWindow: false,
-    }
+    },
+    userImages: []
+    // userIcons: [] NOT YET IN USE
   },
   mutations: {
     SET_USER_ID(state, id){
@@ -77,17 +84,23 @@ export default {
     TRIGGER_MOVEITEM_WINDOW (state, boolean) {
       state.modalControl.showMoveItemWindow = boolean;
     },
+    SET_USER_IMAGES(state, images) {
+      state.userImages = images;
+    },
+    ADD_USER_IMAGE(state, imageUrl) {
+      state.userImages.push(imageUrl);
+    },
   },
   actions: {
     async setUserId({ commit, state }) {
       console.log("[user.js/setUserId] TRIGGERED");
       try {
-        
+
         const userId = await getCurrentUserId();
-        
+
         commit('SET_USER_ID', userId);
         console.log("[user.js/setUserId]",state.user.uid);
-        
+
       } catch (error) {
         console.error('Error initializing user ID:', error);
         commit('SET_ERROR', error.message);
@@ -113,7 +126,7 @@ export default {
 
       //1) Update firebase
       updateViewMindspaceHistory(uid, mindSpaceId)
-      //2) Set id  
+      //2) Set id
       commit('SET_LAST_MINDSPACEID', mindSpaceId);
       console.log("[user.js/setLastMindSpaceId] mindspaceId History: ", state.viewHistory.lastMindSpaceId);
     },
@@ -123,7 +136,7 @@ export default {
       //1) read from firebase
       const lastViewHistory = loadViewHistory(uid);
       console.log("[user.js/loadLastViewHistory] ViewHistory: ", lastViewHistory);
-      
+
       //2) Set id
       commit('SET_LAST_THEMEID', lastViewHistory.theme);
       commit('SET_LAST_MINDSPACEID', lastViewHistory.mindspace);
@@ -154,12 +167,41 @@ export default {
       commit('TRIGGER_MOVEITEM_WINDOW', boolean);
       console.log("Move Item Window Set to: ", state.modalControl.showMoveItemWindow);
     },
+
+    async fetchUserImages({ commit, state }) {
+      try {
+        // Fetch images from Firebase or your backend (replace this with actual fetching logic)
+        const userId = state.user.uid;
+        if (!userId) {
+          throw new Error("User ID is not available.");
+        }
+        const db = getFirestore();
+        const q = query(collection(db, 'user_images'), where('userId', '==', userId));
+        const querySnapshot = await getDocs(q);
+
+        const images = [];
+        querySnapshot.forEach((doc) => {
+          images.push(doc.data().imageUrl);  // Assuming 'imageUrl' field stores the image URL
+        });
+
+        commit('SET_USER_IMAGES', images);
+        console.log("[user.js/fetchUserImages] Fetched Images: ", images);
+      } catch (error) {
+        console.error('Error fetching user images:', error);
+      }
+    },
+
+    addUserImage({ commit }, imageUrl) {
+      commit('ADD_USER_IMAGE', imageUrl);
+      console.log("[user.js/addUserImage] Image Added: ", imageUrl);
+    },
   },
+
   getters: {
     getLastThemeId: state => state.viewHistory.lastThemeId,
     getLastMindSpaceId: state => state.viewHistory.lastMindSpaceId,
     getShowItemWindow: state => state.modalControl.showItemWindow,
     getShowSatWindow: state => state.modalControl.showSatWindow,
+    getUserImages: state => state.userImages,
   }
 };
-

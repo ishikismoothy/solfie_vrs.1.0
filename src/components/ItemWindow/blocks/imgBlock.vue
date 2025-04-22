@@ -2,7 +2,7 @@
 <template>
   <div class="image-block">
     <img
-      :src="block.image"
+      :src="block.content"
       :alt="'Image for block ' + block.id"
       class="image-item"
     >

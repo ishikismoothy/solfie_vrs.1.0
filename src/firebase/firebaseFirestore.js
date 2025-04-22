@@ -184,3 +184,49 @@ import {
       throw error;
     }
   };
+
+  //===[HANDLING USER GALLERIES]===
+
+  export const createDefaultUserGalleries = async (uid) => {
+    try {
+      const iconsRef = doc(db, 'users', uid, 'galleries', 'icons');
+      const imagesRef = doc(db, 'users', uid, 'galleries', 'images');
+
+      const [iconsSnap, imagesSnap] = await Promise.all([
+        getDoc(iconsRef),
+        getDoc(imagesRef),
+      ]);
+
+      const ops = [];
+
+      if (!iconsSnap.exists()) {
+        ops.push(
+          setDoc(iconsRef, {
+            name: 'Icons',
+            type: 'icon',
+            createdAt: new Date(),
+          })
+        );
+      }
+
+      if (!imagesSnap.exists()) {
+        ops.push(
+          setDoc(imagesRef, {
+            name: 'Images',
+            type: 'image',
+            createdAt: new Date(),
+          })
+        );
+      }
+
+      if (ops.length > 0) {
+        await Promise.all(ops);
+        console.log(`Default galleries created for user ${uid}.`);
+      } else {
+        console.log(`Default galleries already exist for user ${uid}.`);
+      }
+    } catch (error) {
+      console.error('Error creating default galleries:', error);
+      throw error;
+    }
+  };
