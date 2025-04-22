@@ -42,11 +42,13 @@ export default {
       });
       if (store.getters['auth/isAuthenticated']) {
         await store.dispatch('user/setUserId');
+        router.push('/themespace');
+        /*
         if(store.state.user.viewHistory.lastLocation != "mindspace") {
           router.push('/themespace');
         }else{
           router.push('/mindspace');
-        }
+        }*/
       }
     };
 

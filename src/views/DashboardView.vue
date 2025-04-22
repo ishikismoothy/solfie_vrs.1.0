@@ -357,7 +357,9 @@ export default defineComponent({
         }
 
         // Load pages if we have a theme
-        await store.dispatch('mindspace/setMindSpacePages');
+        await store.dispatch('mindspace/setMindSpaceId');
+        await store.dispatch('mindspace/setMindSpaceList');
+        //await store.dispatch('mindspace/setMindSpacePages');
         //toggleView();
 
       } catch (error) {

@@ -214,7 +214,7 @@ export default {
     const searchQuery = ref('');
 
     // Computed properties
-    const userId = computed(() => store.getters['mindspace/getUserId']);
+    const userId = computed(() => store.state.user.user.uid);
     const themes = computed(() => store.getters['themeSpace/getThemes']);
     const themeInitialLoading = computed(() => store.getters['themeSpace/isInitialLoading']);
     const themeLoading = computed(() => store.getters['themeSpace/isLoading']);
@@ -480,10 +480,10 @@ export default {
       console.log("[ThemeSapceView.vue]: isLoading from mindspace.js", isLoading);
       try {
         await store.dispatch('user/setLastViewLocationHistory', {lastLocation:"themespace"});
-        console.log('Store state:', store.state);
+        //console.log('Store state:', store.state);
         await store.dispatch('user/setUserId');
         //await store.dispatch('mindspace/setUserId', store.state.user.user.uid);
-        console.log('uid:', userId.value);
+        console.log('[ThemeSpaceVuew.vue] uid:', userId.value);
         await initializeThemes();
         console.log("[ThemeSapceView.vue]: sortableThemes", sortableThemes);
       } catch (error) {

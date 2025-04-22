@@ -25,6 +25,34 @@
 </style>
 
 <script>
+import { defineComponent, computed, watch } from 'vue';
+import { useStore } from 'vuex';
+import { 
+  updateViewThemeHistory,
+  updateViewMindspaceHistory,
+} from '@/firebase/firebaseFirestore';
+
+export default defineComponent({
+  name: 'DashboardView',
+
+  setup() {
+    const store = useStore();
+    const userId = computed(() => store.state.user.user.uid);
+    const currentThemeId = computed(() => store.state.themeSpace.currentThemeId);
+    const currentMindSpaceId = computed(() => store.state.mindspace.currentMindSpaceId);
+  
+    watch(
+    [ () => currentThemeId.value, () => currentMindSpaceId.value],([newValue1,newValue2]) => {
+        if (newValue1) {
+          updateViewThemeHistory(userId.value, currentThemeId.value);
+        }
+        if (newValue2) {
+          updateViewMindspaceHistory(userId.value, currentMindSpaceId.value);
+        }
+      }
+    );
+  }
+})
 // uncomment the following lines to use the FirestoreTest component
 
 // import FirestoreTest from './components/firestoreTest.vue'; // Adjust path if needed
