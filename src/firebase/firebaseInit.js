@@ -9,7 +9,7 @@ const firebaseConfig = {
   apiKey: process.env.VUE_APP_FIREBASE_API_KEY,
   authDomain: "solfie-398005.firebaseapp.com",
   projectId: "solfie-398005",
-  storageBucket: "solfie-398005.appspot.com",
+  storageBucket: "solfie-398005.firebasestorage.app",//WORNG NAME BEFORE!!!
   messagingSenderId: "682411258127",
   appId: "1:682411258127:web:a881faddedf6e7db0f0e7a",
   measurementId: "G-CWK4FRNC7S"

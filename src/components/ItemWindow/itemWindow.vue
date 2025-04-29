@@ -309,11 +309,12 @@ export default {
             console.error('Upload failed:', error);
           },
           () => {
+            console.log('Upload is DONE');
             // Upload complete, get the file URL
             getDownloadURL(uploadTask.snapshot.ref).then(async (downloadURL) => {
-
-              handleAddBlock({ type: 'image-block', index, content: downloadURL });
-
+                console.log('URL retrieved:',downloadURL);
+                //CREATE BLOCK
+                handleAddBlock({ type: 'image-block', index, content: downloadURL });
             });
           }
         );

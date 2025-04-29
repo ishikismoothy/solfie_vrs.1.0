@@ -1,7 +1,8 @@
 [
   {
-    "origin": ["http://localhost:8080"],
-    "method": ["GET", "POST", "PUT", "DELETE"],
+    "origin": ["http://localhost:8080", "http://192.168.0.41:8080"],
+    "method": ["GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS"],
+    "responseHeader": ["Content-Type", "Content-Disposition", "Content-Length", "Accept", "Authorization", "X-Requested-With"],
     "maxAgeSeconds": 3600
   }
 ]
