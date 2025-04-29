@@ -3,3 +3,6 @@ npm install vue-draggable-next
 
 Chart handlings plugin
 npm install vue-chartjs chart.js
+
+To handle emit
+npm install mitt

@@ -7,7 +7,7 @@ export default function useClickOutside(closeCallback) {
       // Check if the click target is inside the popup
     const isInside = elementRef.value && elementRef.value.contains(event.target);
     if (!isInside) {
-      console.log('Clicked outside of popup');
+      //console.log('Clicked outside of popup');
       closeCallback(); // Close the popup when clicking outside
     }
   };

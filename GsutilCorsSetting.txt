@@ -1,0 +1,22 @@
+How to set up cors.json (firebase/storage related)
+1)Set up cars.json
+[
+  {
+    "origin": ["http://localhost:8080", "http://192.168.0.41:8080"],
+    "method": ["GET", "POST", "PUT", "DELETE"],
+    "responseHeader": ["Content-Type", "Content-Disposition"],
+    "maxAgeSeconds": 3600
+  }
+]
+
+2)Login gsutil
+gcloud auth login
+
+3)Check you are in the right project
+gcloud config list
+
+4)Set a project
+gcloud config set project solfie-398005
+
+5)Set cors.json on gcloud
+gsutil cors set cors.json gs://solfie-398005.firebasestorage.app
