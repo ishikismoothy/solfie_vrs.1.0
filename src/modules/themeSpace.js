@@ -94,14 +94,14 @@ export default {
 
     actions: {
         async fetchThemes({ commit }, uid ) {
-            console.log("[fetchTheme/themeSpace.js] TRIGGERED")
+            //console.log("[fetchTheme/themeSpace.js] TRIGGERED")
             // Clear any existing errors
             commit('SET_ERROR', null);
 
             try {
             // Check for userId
             const userId = uid;
-            console.log("[fetchThemes/themeSpace.js] userId:" , userId)
+            //console.log("[fetchThemes/themeSpace.js] userId:" , userId)
 
             if (!userId) {
                 throw new Error('User not authenticated');
@@ -114,7 +114,7 @@ export default {
             const themes = await themeService.getThemes(userId);
             commit('SET_THEMES', themes);
 
-            console.log("[fetchTheme/themeSpace.js] themes: ",themes);
+            //console.log("[fetchTheme/themeSpace.js] themes: ",themes);
 
             return themes;
 
@@ -224,18 +224,17 @@ export default {
             commit('SET_THEME_ID', id);
         },
         // Load user's theme data
-        async setFocusThemeId({ commit, state , /* dispatch*/ }, { userId }) {
-            console.log("[themeSpace.js/setThemeId] TRIGGERED");
+        async setFocusThemeId({ commit, state , /* dispatch*/ }, userId) {
+            //console.log("[themeSpace.js/setThemeId] TRIGGERED");
             try {
-            // 1. Get user document to find focusTheme
-            const focusedThemeId = await themeService.getUserThemeId(userId);
-
-            commit('SET_FOCUS_THEME_ID', focusedThemeId);
-            console.log("[setThemeId] Default Theme Id",state.focusedThemeId);
-
+                // 1. Get user document to find focusTheme
+                const focusedThemeId = await themeService.getUserThemeId(userId);
+                commit('SET_FOCUS_THEME_ID', focusedThemeId);
+                console.log('[themeSpace.js/setFocusThemeId] Focused ThemeId:', state.focusedThemeId);
+            
             } catch (error) {
-            console.error('Error loading user theme data:', error);
-            commit('SET_ERROR', error.message);
+                console.error('Error loading user theme data:', error);
+                commit('SET_ERROR', error.message);
             }
         },
         async changeFocusThemeId({ dispatch }, { userId, themeId }) {

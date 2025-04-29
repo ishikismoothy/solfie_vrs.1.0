@@ -19,6 +19,7 @@ const firebaseConfig = {
 const firebaseApp = initializeApp(firebaseConfig);
 console.log('Firebase Initialized:', firebaseApp);
 
+
 // Initialize Firebase Authentication and get a reference to the service
 const auth = getAuth(firebaseApp);
 
@@ -39,6 +40,9 @@ if (window.location.hostname === 'localhost') {
   // Storage Emulator
   connectStorageEmulator(storage, '127.0.0.1', 9199);
   console.log('Storage Emulator Connected');
+} else {
+  // Production setup
+  console.log('Using Production Firebase services');
 }
 
 

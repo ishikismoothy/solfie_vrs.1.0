@@ -645,7 +645,10 @@ ADD STATUS HEADER
             if(!isEditMode.value){
               await store.dispatch('mindspace/setItemId', item.id);
               await store.dispatch('mindspace/getItemName', item.name);
-              await store.dispatch('user/triggerItemWindow', true);
+              await store.dispatch('user/triggerItemWindow', {
+                show: true,
+                imageUrl: item.imageUrl // Assuming item.imageUrl contains the image URL
+              });
             }
 
             // Here you can add any additional functionality for non-folder items

@@ -7,7 +7,7 @@ import {
     getCurrentUser,
     onAuthStateChange
   } from '@/firebase/firebaseAuth';
-  import { createUserDocument, getUserDocument } from '@/firebase/firebaseFirestore';
+  import { createUserDocument, getUserDocument, createDefaultUserGalleries } from '@/firebase/firebaseFirestore';
 
   export default {
     namespaced: true,
@@ -34,6 +34,7 @@ import {
           const userCredential = await registerUser(email, password);
           const user = userCredential.user;
           await createUserDocument(user.uid, { email: user.email });
+          await createDefaultUserGalleries(user.uid);
           commit('SET_USER', user);
         } catch (error) {
           commit('SET_ERROR', error.message);
@@ -67,6 +68,7 @@ import {
         try {
           commit('SET_LOADING', true);
           const user = await getCurrentUser();
+          console.log('Fetched user:', user);
           if (user) {
             const userDoc = await getUserDocument(user.uid);
             const userData = userDoc.data();

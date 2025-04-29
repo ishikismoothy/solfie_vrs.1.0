@@ -2,9 +2,7 @@
   <LoadingScreen v-model="isLoading" />
 
   <!-- header Menu -->
-  <HeaderNav 
-    :on-edit="isEditMode"
-  />
+  <HeaderNav/>
 
   <div class="view-container">
     <!-- Page indicator - moved outside views-wrapper -->
@@ -40,6 +38,11 @@
         <mindSpace/>
       </div>
     </div>
+
+    <!-- MindUniverse view -->
+    <MindUniverse
+      v-if = "showMindUniverseModal"
+    />
 
     <!-- Sticky Doc -->
     <div
@@ -91,13 +94,12 @@
 
     <MoveItemModal class="moveItemWindow-view"
       :is-open="showMoveItemWindow"
-      :item-id="currentItemId"
-      :current-mind-space-id="currentMindSpaceId"
+      :item-id="currentItemId || ''"
+      :current-mind-space-id="currentMindSpaceId || ''"
       @close="closeMoveItemWindow"
       @click.self="closeMoveItemWindow"
       @item-moved="updateMindSpace"
-    />
-    
+    /> 
   </div>
 </template>
 
@@ -114,6 +116,7 @@ import itemWindow from '@/components/ItemWindow/itemWindow.vue';
 import MoveItemModal from '@/components/ItemWindow/moveItemModal.vue';
 import LoadingScreen from '@/components/loadingScreen.vue';
 import satSlider from '@/components/DashBoard/satisfactionSlider.vue';
+import MindUniverse from '@/components/Universe/widgetGallary.vue';
 import { disableBodyScroll,  /*enableBodyScroll, /*clearAllBodyScrollLocks*/ } from 'body-scroll-lock';
 
 export default defineComponent({
@@ -127,13 +130,12 @@ export default defineComponent({
     itemWindow,
     MoveItemModal,
     satSlider,
-    LoadingScreen
-    
+    LoadingScreen,
+    MindUniverse 
   },
   setup() {
     const store = useStore();
     const userId = computed(() => store.state.user.user.uid);
-    //const userId = computed(() => store.getters['mindspace/getUserId']);
     const router = useRouter();
     const isLoading = computed(() => store.getters['mindspace/isLoading']);
     const isMindSpaceView = ref(true);
@@ -160,6 +162,14 @@ export default defineComponent({
       return isMindSpaceView.value ? 0 : -50; // Changed from -100 to -50
     });
     const bodyElement = document.querySelector('body');
+
+    //[MONITOR] MODAL AND EDIT TOGGLE
+    const showMindUniverseModal = computed(() => store.state.user.modalControl.showMindUniverseWindow);
+    watch(
+      () => showMindUniverseModal.value, (newValue) => {
+        console.log('[DashboardView.vue] showMindUniverseModal changed:', { new: newValue })
+      }
+    )
 
     watch(
       () => isEditMode.value,
@@ -358,8 +368,6 @@ export default defineComponent({
 
         // Load pages if we have a theme
         await store.dispatch('mindspace/setMindSpaceId');
-        await store.dispatch('mindspace/setMindSpaceList');
-        //await store.dispatch('mindspace/setMindSpacePages');
         //toggleView();
 
       } catch (error) {
@@ -410,6 +418,9 @@ export default defineComponent({
       indicatorPosition,
       buttonPosition,
       toggleNav,
+
+      //Dock Menu visibility Handlings
+      showMindUniverseModal,
     };
   }
 });

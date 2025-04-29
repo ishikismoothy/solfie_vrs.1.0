@@ -12,7 +12,7 @@
       <span class="theme-title" v-if="!isLoading">{{themeName}}/</span>
       <TruncateText
         v-if="!isLoading"
-        :text="mindSpaceName"
+        :text="mindSpaceName || ''"
         :mobile-cutoff="10"
         :tablet-cutoff="18"
         :desktop-cutoff="25"
@@ -75,8 +75,8 @@
 
   <SlideMenu
       :is-open="isMenuOpen"
-      :user-id="userId"
-      :theme-id="themeId"
+      :user-id="user.uid"
+      :theme-id="themeId || ''"
       :is-loading="isLoading"
       @close="closeMenu"
   />
@@ -106,7 +106,7 @@ export default {
     const mindSpaceName = computed(() => store.state.mindspace.currentMindSpaceName);
     const isLoading = computed(() => store.state.mindspace.loading);
     const themeId = computed(() => store.state.mindspace.currentThemeId);
-    const userId = computed(() => store.state.mindspace.userId);
+    //const userId = computed(() => store.state.user.user.uid);
 
     const isEditMode = computed(() => store.getters['mindspace/getIsEditMode']);
 
@@ -126,9 +126,6 @@ export default {
       isDropdownOpen.value = !isDropdownOpen.value;
       console.log('Toggling popup. Is open:', isDropdownOpen.value);
     };
-      // handle clicking outside the popup menu ends
-
-    console.log("[HeaderNav.vue] Reading",userId.value);
 
     const toggleMenu = () => {
       isMenuOpen.value = !isMenuOpen.value;
@@ -163,7 +160,7 @@ export default {
       isLoading,
       themeName,
       mindSpaceName,
-      userId,
+      //userId,
       themeId,
       isMenuOpen,
       isDropdownOpen,

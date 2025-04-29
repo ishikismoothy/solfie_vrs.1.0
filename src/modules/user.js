@@ -1,9 +1,17 @@
-import { 
+import {
   updateViewThemeHistory,
   updateViewMindspaceHistory,
   loadViewHistory,
 } from '@/firebase/firebaseFirestore';
+import { db } from '@/firebase/firebaseInit';
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+} from 'firebase/firestore';
 import { getCurrentUserId } from '@/firebase/firebaseAuth';
+import { widgetService } from '@/firebase/firebaseWidget';
 
 export default {
   namespaced: true,
@@ -22,7 +30,7 @@ export default {
     data: {
       themeId: null,// Focused theme
       recordId: null,//Latest recordId
-      mindSpaceId: null,// Focused mindSpace    
+      mindSpaceId: null,// Focused mindSpace
     },
     viewHistory: {
       lastLocation: "themespace",
@@ -41,7 +49,11 @@ export default {
       showItemWindow: false,
       showSatWindow: false,
       showMoveItemWindow: false,
-    }
+      showMindUniverseWindow: false,
+    },
+    userImages: [],
+    userWidgets: [],
+    // userIcons: [] NOT YET IN USE
   },
   mutations: {
     SET_USER_ID(state, id){
@@ -77,22 +89,34 @@ export default {
     TRIGGER_MOVEITEM_WINDOW (state, boolean) {
       state.modalControl.showMoveItemWindow = boolean;
     },
+    TRIGGER_MINDUNIVERSE_WINDOW (state, boolean) {
+      state.modalControl.showMindUniverseWindow = boolean;
+    },
+    SET_USER_IMAGES(state, images) {
+      state.userImages = images;
+    },
+    ADD_USER_IMAGE(state, imageUrl) {
+      state.userImages.push(imageUrl);
+    },
+    SET_USER_WIDGETS(state, widgets) {
+      state.userWidgets = widgets;
+    },
   },
   actions: {
     async setUserId({ commit, state }) {
-      console.log("[user.js/setUserId] TRIGGERED");
+      //console.log("[user.js/setUserId] TRIGGERED");
       try {
-        
+
         const userId = await getCurrentUserId();
-        
+
         commit('SET_USER_ID', userId);
-        console.log("[user.js/setUserId]",state.user.uid);
-        
+        console.log("[user.js/setUserId] UserId: ",state.user.uid);
+
       } catch (error) {
         console.error('Error initializing user ID:', error);
         commit('SET_ERROR', error.message);
       } finally {
-        console.log("[user.js/setUserId] Finish Process");
+        //console.log("[user.js/setUserId] Finish Process");
       }
     },
     setLastViewLocationHistory({ commit, state }, location){
@@ -113,7 +137,7 @@ export default {
 
       //1) Update firebase
       updateViewMindspaceHistory(uid, mindSpaceId)
-      //2) Set id  
+      //2) Set id
       commit('SET_LAST_MINDSPACEID', mindSpaceId);
       console.log("[user.js/setLastMindSpaceId] mindspaceId History: ", state.viewHistory.lastMindSpaceId);
     },
@@ -123,7 +147,7 @@ export default {
       //1) read from firebase
       const lastViewHistory = loadViewHistory(uid);
       console.log("[user.js/loadLastViewHistory] ViewHistory: ", lastViewHistory);
-      
+
       //2) Set id
       commit('SET_LAST_THEMEID', lastViewHistory.theme);
       commit('SET_LAST_MINDSPACEID', lastViewHistory.mindspace);
@@ -154,12 +178,80 @@ export default {
       commit('TRIGGER_MOVEITEM_WINDOW', boolean);
       console.log("Move Item Window Set to: ", state.modalControl.showMoveItemWindow);
     },
+    triggerMindUniverseWindow({ commit, state }, boolean){
+      commit('TRIGGER_MINDUNIVERSE_WINDOW', boolean);
+      console.log("MindUniverse Window Set to: ", state.modalControl.showMindUniverseWindow);
+    },
+
+    async fetchUserImages({ commit, state }) {
+      try {
+        // Fetch images from Firebase or your backend (replace this with actual fetching logic)
+        const userId = state.user.uid;
+        if (!userId) {
+          throw new Error("User ID is not available.");
+        }
+        const q = query(collection(db, 'user_images'), where('userId', '==', userId));
+        const querySnapshot = await getDocs(q);
+
+        const images = [];
+        querySnapshot.forEach((doc) => {
+          images.push(doc.data().imageUrl);  // Assuming 'imageUrl' field stores the image URL
+        });
+
+        commit('SET_USER_IMAGES', images);
+        console.log("[user.js/fetchUserImages] Fetched Images: ", images);
+      } catch (error) {
+        console.error('Error fetching user images:', error);
+      }
+    },
+
+    addUserImage({ commit }, imageUrl) {
+      commit('ADD_USER_IMAGE', imageUrl);
+      console.log("[user.js/addUserImage] Image Added: ", imageUrl);
+    },
+
+    async getUserWidgets({ commit, state }) {
+      
+      if (!state.user.uid) {
+          console.error("No user is signed in");
+          return;
+      }
+      try {
+          const userWidgets = await widgetService.getUsersWidgets(state.user.uid);
+          commit('SET_USER_WIDGETS', userWidgets || []);
+          return userWidgets;
+      } catch (error) {
+          console.error("Error getting user widgets:", error);
+          return [];
+      }
+    },
+    async addUserWidget({ dispatch, state }, widgetId) {
+      try {
+          await widgetService.addUsersWidgets(state.user.uid, widgetId);
+          // Refresh user widgets after adding
+          await dispatch('getUserWidgets');
+      } catch (error) {
+          console.error("Error adding user widget:", error);
+      }
+    },
+    
+    async removeUserWidget({ dispatch, state }, widgetId) {
+        try {
+            // Add this function to your widgetService
+            await widgetService.removeUsersWidgets(state.user.uid, widgetId);
+            // Refresh user widgets after removing
+            await dispatch('getUserWidgets');
+        } catch (error) {
+            console.error("Error removing user widget:", error);
+        }
+    }
   },
+
   getters: {
     getLastThemeId: state => state.viewHistory.lastThemeId,
     getLastMindSpaceId: state => state.viewHistory.lastMindSpaceId,
     getShowItemWindow: state => state.modalControl.showItemWindow,
     getShowSatWindow: state => state.modalControl.showSatWindow,
+    getUserImages: state => state.userImages,
   }
 };
-

@@ -1,8 +1,16 @@
 <!-- AddBlockButton.vue -->
 <template>
     <div class="add-block-wrapper">
-        <button 
-            @click="toggleOptions" 
+          <!-- Hidden file input -->
+      <input
+        type="file"
+        ref="fileInput"
+        accept="image/*"
+        style="display: none"
+        @change="onFileChange"
+      />
+        <button
+            @click="toggleOptions"
             class="icon-button"
             v-show="isBlockEdit"
         >
@@ -11,7 +19,7 @@
                     <line x1="5" y1="12" x2="19" y2="12"></line>
                 </svg>
         </button>
-        
+
         <!-- Modal Overlay -->
         <div v-if="showOptions" class="modal-overlay">
             <div class="modal-content" @click.stop>
@@ -25,8 +33,8 @@
                     </button>
                 </div>
                 <div class="options-grid">
-                    <button 
-                        v-for="option in blockOptions" 
+                    <button
+                        v-for="option in blockOptions"
                         :key="option.type"
                         @click="addBlock(option.type)"
                         class="block-option"
@@ -39,10 +47,10 @@
         </div>
     </div>
 </template>
-  
-  <script>
+
+<script>
   import { ref, onMounted, onUnmounted } from 'vue';
-  
+
   export default{
     name: 'AddBlockButton',
     props:{
@@ -55,10 +63,19 @@
             required: true
         }
     },
-    emits: ['add'],
+    emits: ['add', 'add-image'],
     setup(props, { emit }){
         const showOptions = ref(false);
-  
+        const fileInput = ref(null);
+        const onFileChange = (event) => {
+          const file = event.target.files[0];
+          if (file) {
+            emit('add-image', { file: file, index: props.index });
+            console.log('File selected:', file);
+          }
+        };
+
+
         const blockOptions = [
             {
                 type: 'title-block',
@@ -86,29 +103,33 @@
                 icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>'
             }
         ];
-        
+
         const toggleOptions = () => {
             showOptions.value = !showOptions.value;
         };
-        
+
         const addBlock = (type) => {
+          if (type === 'image-block') {
+            fileInput.value?.click(); // trigger the hidden file input
+          } else {
             emit('add', { type, index: props.index });
-            showOptions.value = false;
+          }
+          showOptions.value = false;
         };
-        
+
         // Close options menu when clicking outside
         const handleClickOutside = (event) => {
             if (event.target.closest('.modal-overlay') && !event.target.closest('.modal-content')) {
                 showOptions.value = false;
             }
         };
-        
-        
+
+
         // Add and remove click outside listener
         onMounted(() => {
             document.addEventListener('click', handleClickOutside);
         });
-        
+
         onUnmounted(() => {
             document.removeEventListener('click', handleClickOutside);
         });
@@ -117,15 +138,15 @@
             showOptions,       // Add this
             blockOptions,
             toggleOptions,
-            addBlock
-
+            addBlock,
+            fileInput,
+            onFileChange,
         };
     }
   }
- 
-  
+
   </script>
-  
+
   <style lang="scss" scoped>
   // Base Layout
   .add-block-wrapper {
@@ -134,7 +155,7 @@
     justify-content: center;
     margin: 4px 0;
   }
-  
+
   // Add Button
   .add-block-button {
     width: 24px;
@@ -148,18 +169,18 @@
     cursor: pointer;
     opacity: 0.2;
     transition: opacity 0.2s;
-  
+
     &:hover {
       opacity: 1;
       background: #f5f5f5;
     }
-  
+
     .plus-icon {
       color: #666;
       font-size: 16px;
     }
   }
-  
+
   // Modal Layout
   .modal-overlay {
     position: fixed;
@@ -173,7 +194,7 @@
     background: rgba(0, 0, 0, 0.5);
     z-index: 1000;
   }
-  
+
   .modal-content {
     width: 90%;
     max-width: 300px;
@@ -183,7 +204,7 @@
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
     margin: 0;
   }
-  
+
   // Modal Header
   .modal-header {
     display: flex;
@@ -191,14 +212,14 @@
     justify-content: space-between;
     margin-bottom: 16px;
     padding-bottom: 8px;
-  
+
     h3 {
       margin: 0;
       color: #333;
       font-size: 18px;
     }
   }
-  
+
   // Options Grid
   .options-grid {
     display: flex;
@@ -207,7 +228,7 @@
     max-height: 70vh; // Add max height in case there are many options
     overflow-y: auto; // Enable scroll if content overflows
   }
-  
+
   // Block Options
   .block-option {
     display: flex;

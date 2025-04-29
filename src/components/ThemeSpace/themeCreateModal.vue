@@ -74,14 +74,14 @@
             </div>
           </div>
 
-          
+
           <!-- image upload -->
-          <!--
+
           <div class="form-group">
             <label>Upload Image:</label>
-            <input type="file" accept="image/*" @change="handleImageUpload" />
+            <input type="file" accept="image/*" @change="handleImageUpload"/>
           </div>
-          -->
+
 
           <div class="button-group">
             <button
@@ -132,6 +132,8 @@ export default {
     const currentHashtagInput = ref('');
     const isTypingHashtag = ref(false);
     const hashtagInput = ref(null);
+    const currentUid = computed(() => store.getters['mindspace/getUserId']);
+
 
     // Suggested tags - you can modify this list or load from your store
     const suggestedTags = [
@@ -181,11 +183,17 @@ export default {
 
       // image upload
     const imageUrl = ref('');
+    // const isFileInputVisible = ref(false);
 
     const handleImageUpload = async (event) => {
       try {
         const file = event.target.files[0];
         if (!file) return; // If no file is selected, exit the function
+        const uid = currentUid.value;
+          if (!uid) {
+            console.error("No user ID found!");
+            return;
+          }
 
         const MAX_SIZE = 5 * 1024 * 1024; // 5MB size limit
         if (file.size > MAX_SIZE) {
@@ -200,7 +208,7 @@ export default {
           return; // Exit the function if it's not an image
         }
 
-        const storageReference = storageRef(storage, `theme_images/${file.name}`);
+        const storageReference = storageRef(storage, `images/${uid}/${file.name}`);
         const uploadTask = uploadBytesResumable(storageReference, file);
 
         uploadTask.on('state_changed',

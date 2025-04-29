@@ -424,7 +424,7 @@ export default {
         try {
           // Check if userId exists
           if (!state.userId) {
-            console.log("[loadViewThemeId] No userId available");
+            console.log("[mindspace.js/loadViewThemeId] No userId available");
             commit('SET_USER_ID', uid);
           }
       
@@ -438,30 +438,37 @@ export default {
           // Add null check for theme
           if (viewHistory.theme) {
             commit('SET_THEME_ID', viewHistory.theme);
-            console.log("[setViewThemeId] Current", state.currentThemeId);
+            console.log("[mindspace.js/loadViewThemeId] Current ThemeId", state.currentThemeId);
       
             // 2. Load theme data to get theme name
             await dispatch('setThemeData');
               
+            /*
             // 3. Load theme data to get defaultMindSpace
             await dispatch('setMindSpaceId'); 
-            console.log("[loadViewThemeId] reset mindspaceId: ",state.currentMindSpaceId);
+            console.log("[mindspace.js/loadViewThemeId] reset mindspaceId: ",state.currentMindSpaceId);*/
           }
       
           return viewHistory;
         } catch (error) {
-          console.error("[loadViewThemeId] Error:", error.message);
+          console.error("[mindspace.js/loadViewThemeId] Error:", error.message);
           return null;
         }
       },
-      async setViewThemeId({ commit, state, dispatch }, themeId) {
-        console.log("[setViewThemeId] TRIGGERED", themeId);
+      async setSelectedThemeId({ commit, state, dispatch }, data) {
+        //console.log("[setSelectedThemeId] TRIGGERED");
         try {
+          // First validate that we have the user ID
+          if (!state.userId) {
+            commit('SET_USER_ID', data.uid); // Assuming you have this mutation
+          }
           
-          commit('SET_THEME_ID', themeId);
-          console.log("[setViewThemeId] Current", state.currentThemeId);
-          await updateViewThemeHistory( state.userId, state.currentThemeId);
-
+          commit('SET_THEME_ID', data.themeId);
+          console.log("[mindspace.js/setSelectedThemeId] Current ThemeId: ", state.currentThemeId);
+    
+          // Now this should have a valid userId
+          await updateViewThemeHistory(state.userId, state.currentThemeId);
+    
           // 2. Load theme data to get theme name
           await dispatch('setThemeData');
             
@@ -469,18 +476,18 @@ export default {
           await dispatch('setMindSpaceId');  
           
         } catch (error) {
-          console.log(error.message);
+          console.error("[mindspace.js/setSelectedThemeId] Error:", error);
         }
       },
       // Load theme's mindspace data
       async setMindSpaceId({ commit, state, dispatch }) {
-        console.log("[setMindSpaceId] TRIGGERED");
+        //console.log("[setMindSpaceId] TRIGGERED");
         try {
           // Get theme document to find defaultMindSpace
           const defaultMindSpaceId = await mindspaceService.getDefaultMindSpaceId(state.currentThemeId, state.userId);
 
           commit('SET_MINDSPACE_ID', defaultMindSpaceId);
-          console.log("[setMindSpaceId]",state.currentMindSpaceId);
+          //console.log("[setMindSpaceId]",state.currentMindSpaceId);
           await updateViewMindspaceHistory( state.userId, state.currentMindSpaceId);
 
           // Now load the mindspace pages
@@ -505,16 +512,17 @@ export default {
           commit('SET_ERROR', error.message);
         }
       },
+      
       async setThemeData({ commit, state }) {
-        console.log("[setThemeData] TRIGGERED");
+        //console.log("[setThemeData] TRIGGERED");
         const currentThemeData = await mindspaceService.getThemeData(state.currentThemeId);
         const currentThemeName = currentThemeData.name;
         commit('SET_THEME_NAME', currentThemeName);
-        console.log("[setThemeData] Mindspace Name:", state.currentThemeName);
+        console.log("[mindspace.js/setThemeData] Theme Name:", state.currentThemeName);
       },
       async setMindSpaceList({ commit, state }) {
         try {
-          console.log("[setMindSpaceList] TRIGGERED");
+          //console.log("[setMindSpaceList] TRIGGERED");
           const result = await mindspaceService.getListOfMindSpace(state.currentThemeId);
 
           // Validate that result is an array

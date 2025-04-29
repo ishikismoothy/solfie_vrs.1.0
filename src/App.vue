@@ -25,7 +25,7 @@
 </style>
 
 <script>
-import { defineComponent, computed, watch } from 'vue';
+import { defineComponent, computed, onMounted, watch } from 'vue';
 import { useStore } from 'vuex';
 import { 
   updateViewThemeHistory,
@@ -40,7 +40,13 @@ export default defineComponent({
     const userId = computed(() => store.state.user.user.uid);
     const currentThemeId = computed(() => store.state.themeSpace.currentThemeId);
     const currentMindSpaceId = computed(() => store.state.mindspace.currentMindSpaceId);
-  
+    
+    onMounted(async () => {
+      if (!userId.value) {
+        await store.dispatch('user/setUserId');
+        console.log("[App.vue/onMounted -> store/user] Assigned uid: ",userId.value);
+      }
+    })
     watch(
     [ () => currentThemeId.value, () => currentMindSpaceId.value],([newValue1,newValue2]) => {
         if (newValue1) {

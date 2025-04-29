@@ -1,14 +1,16 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
-import { getAuth } from 'firebase/auth'
+import { getAuth, onAuthStateChanged } from 'firebase/auth'
+import { firebaseApp } from '@/firebase/firebaseInit'
+
+if (!firebaseApp) {
+  throw new Error('Firebase has not been initialized');
+}
 
 const routes = [
   {
     path: '/',
     name: 'home',
-    redirect: () => {
-      const auth = getAuth();
-      return auth.currentUser ? '/themespace' : '/login'
-    }
+    redirect: '/login'
   },
   {
     path: '/login',
@@ -39,6 +41,21 @@ const router = createRouter({
   history: createWebHashHistory(),
   routes
 })
+
+let isAuthInitialized = false;
+
+onAuthStateChanged(getAuth(), (user) => {
+  if (!isAuthInitialized) {
+    isAuthInitialized = true;
+    if (user) {
+      // Redirect to themespace if authenticated
+      router.push('/themespace');
+    } else {
+      // Redirect to login if not authenticated
+      router.push('/login');
+    }
+  }
+});
 
 router.beforeEach((to, from, next) => {
   const auth = getAuth();

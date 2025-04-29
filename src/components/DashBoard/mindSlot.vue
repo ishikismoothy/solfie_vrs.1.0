@@ -49,7 +49,7 @@
   </template>
   
   <script>
-  import { ref, computed, onMounted, watch } from 'vue'
+  import { ref, computed, onMounted, watch } from 'vue';
   import { useStore } from 'vuex';
   import { mindspaceService } from '@/firebase/firebaseMindSpace';
   //import { db } from '@/firebase/config' // Adjust path as needed

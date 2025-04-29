@@ -88,13 +88,6 @@
                     <path fill="currentColor" d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/>
                   </svg>
                 </div>
-                <!--
-                <div class="theme-dots-icon">
-                  <span class="dot"></span>
-                  <span class="dot"></span>
-                  <span class="dot"></span>
-                  <span class="dot"></span>
-                </div>-->
                 <div class="theme-info">
                   <h3>{{ theme.name }}</h3>
                   <p class="updated-time">{{ formatDate(theme.updatedAt) }}</p>
@@ -383,12 +376,11 @@ export default {
     };
 
     const initializeThemes = async () => {
-      console.log('[ThemeSpaceView.vue/initializeThemes] TRIGGERED');
+      //console.log('[ThemeSpaceView.vue/initializeThemes] TRIGGERED');
       try {
         if (userId.value) {
           await fetchThemes();
-          await store.dispatch('themeSpace/setFocusThemeId', {userId: userId.value});
-          console.log('Focused Theme:', focusedThemeId.value);
+          await store.dispatch('themeSpace/setFocusThemeId', userId.value);
         }
       } catch (error) {
         console.error('Error initializing themes:', error);
@@ -399,7 +391,8 @@ export default {
 
     const selectTheme = async (id) => {
       try {
-        await store.dispatch('mindspace/setViewThemeId', id);
+        const selectedThemeData = {uid: userId.value, themeId: id}
+        await store.dispatch('mindspace/setSelectedThemeId', selectedThemeData);
         await store.dispatch('user/setLastViewThemeHistory', {uid: userId.value, themeId: id});
         await store.dispatch('themeSpace/setThemeId', id);
         router.push('/dashboard');  // Add navigation
@@ -477,24 +470,13 @@ export default {
     // Lifecycle hooks
     onMounted(async () => {
       enableBodyScroll(bodyElement);
-      console.log("[ThemeSapceView.vue]: isLoading from mindspace.js", isLoading);
       try {
         await store.dispatch('user/setLastViewLocationHistory', {lastLocation:"themespace"});
-        //console.log('Store state:', store.state);
-        await store.dispatch('user/setUserId');
-        //await store.dispatch('mindspace/setUserId', store.state.user.user.uid);
-        console.log('[ThemeSpaceVuew.vue] uid:', userId.value);
         await initializeThemes();
-        console.log("[ThemeSapceView.vue]: sortableThemes", sortableThemes);
+       // console.log("[ThemeSapceView.vue]: sortableThemes", sortableThemes.value);
       } catch (error) {
         console.error('Error in onMounted:', error);
       }
-    });
-
-    // Debug logging
-    console.log('Initial store state:', {
-      themes: store.state.themes,
-      mindspace: store.state.mindspace
     });
 
     return {
