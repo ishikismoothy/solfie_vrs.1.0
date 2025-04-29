@@ -8,6 +8,7 @@ import auth from '../modules/auth';
 import dataExtraction from '../modules/dataExtraction';
 import mindspace from '../modules/mindspace';
 import themeSpace from '../modules/themeSpace';
+import analysisRecords from '../modules/analysisRecords';
 
 export default createStore({
   modules: {
@@ -16,6 +17,7 @@ export default createStore({
     todos,
     scores,
     abilities,
+    analysisRecords,
     auth,
     dataExtraction,
     mindspace,

@@ -75,14 +75,14 @@ export const themeService = {
     // Get all themes for current user
     async getThemes(uid) {
         try {
-            console.log("[getThemes/firebaseThemeSpace.js] Starting theme fetch for uid:", uid);
+            //console.log("[getThemes/firebaseThemeSpace.js] Starting theme fetch for uid:", uid);
             
             // First, get the user's theme order
             const userRef = doc(db, 'users', uid);
             const userDoc = await getDoc(userRef);
             const themeOrder = userDoc.data()?.themeOrder || [];
             
-            console.log("[getThemes] Theme order from user document:", themeOrder);
+            //console.log("[getThemes] Theme order from user document:", themeOrder.length);
     
             // Get all themes for the user
             const q = query(
@@ -96,7 +96,7 @@ export const themeService = {
                 ...doc.data()
             }));
     
-            console.log("[getThemes] Raw themes before ordering:", themes);
+            //console.log("[getThemes] Raw themes before ordering:", themes);
     
             if (themeOrder.length > 0) {
                 // Create a map for quick theme lookup

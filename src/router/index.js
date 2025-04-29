@@ -34,7 +34,7 @@ const routes = [
     name: 'themespace',
     component: () => import('@/views/ThemeSpaceView.vue'),
     meta: { requiresAuth: true }
-  },
+  }
 ]
 
 const router = createRouter({

@@ -16,55 +16,14 @@
         </div>
       </section>
 
+      <!-- MindSlot Section -->
       <MindSlotView/>
 
+      <!-- Analysis Section -->
       <SatisfactionDataView/>
 
-
-      <section class="decision-section">
-        <div class="ability-tab-menu" v-if="Object.keys(abilitiesData).length">
-          <button
-            v-for="tab in Object.keys(abilitiesData)"
-            :key="tab"
-            @click="selectedAbilityTab = tab"
-            :class="{ active: selectedAbilityTab === tab }"
-            :disabled="isAbilitiesLoading"
-          >
-            {{ tab }}
-          </button>
-        </div>
-        <section v-if="isAbilitiesLoading" class="abilities-section-loading">
-          <!-- <div class="abilities-loading-text">Loading...</div> -->
-        </section>
-        <section v-if="!isAbilitiesLoading && currentAbilities.items" class="abilities-section">
-          <div class="ability-chart">
-            <svg width="0" height="0">
-              <defs>
-                <linearGradient id="abilityChartGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" style="stop-color:#ff500b;stop-opacity:1" />
-                  <stop offset="100%" style="stop-color:#E190CB;stop-opacity:1" />
-                </linearGradient>
-              </defs>
-            </svg>
-            <svg viewBox="0 0 100 100">
-              <circle cx="50" cy="50" r="45" fill="none" stroke="#eee" stroke-width="10" />
-              <circle cx="50" cy="50" r="45" fill="none" stroke="url(#abilityChartGradient)" stroke-width="10"
-                      stroke-dasharray="282.7" :stroke-dashoffset="282.7 - (282.7 * (animatedAbilities[selectedAbilityTab]?.percentage || 0) / 100)"
-                      stroke-linecap="round" class="ability-fill-circle" />
-            </svg>
-            <span class="ability-percentage">{{ Math.round(animatedAbilities[selectedAbilityTab]?.percentage || 0) }}%</span>
-          </div>
-
-          <div v-for="(value, key) in currentAbilities.items" :key="key" class="ability-item">
-            <span class="ability-label">{{ key }}</span>
-            <div class="ability-bar">
-              <div class="ability-fill" :style="{ width: `${animatedAbilities[selectedAbilityTab]?.items[key] || 0}%` }"></div>
-            </div>
-            <span class="ability-value">{{ Math.round(animatedAbilities[selectedAbilityTab]?.items[key] || 0) }}%</span>
-          </div>
-        </section>
-        <div v-else class="no-data">No ability data available.</div>
-      </section>
+      <!-- Widget Section -->
+      <WidgetDecisionPower/>
 
       <section class="stats-section">
         <div class="stat-item">
@@ -150,16 +109,18 @@
 
 <script>
 // Dashboard.vue
-  import { defineComponent, ref, computed, watch, onMounted } from 'vue';
+  import { defineComponent, ref, computed, onMounted } from 'vue';
   import { useStore } from 'vuex';
   import SatisfactionDataView from './satisfactionDataView.vue';
   import MindSlotView from './mindSlot.vue'
+  import WidgetDecisionPower from './Widget/widgetDecisionPower.vue';
 
   export default defineComponent({
     name: 'DashboardView',
     components:{
       SatisfactionDataView,
       MindSlotView,
+      WidgetDecisionPower,
     },
     setup() {
       const store = useStore();
@@ -183,93 +144,7 @@
         store.dispatch('user/triggerSatWindow', true)
       };
 
-
-      //=====[SYSTEM01 : TAB FOR POTENTIAL GRAPH]=====
-
-      
-
-      //=====[SYSTEM02 : TAB FOR DECISION GRAPH]=====
-      const lerp = (start, end, t) => start * (1 - t) + end * t;
-
-      const selectedAbilityTab = computed({
-        get: () => store.state.abilities.selectedAbilityTab,
-        set: (value) => store.dispatch('abilities/selectAbilityTab', value)
-      });
-
-      const currentAbilities = computed(() => store.getters['abilities/currentAbilities'] || { percentage: 0, items: {} });
-      const abilitiesData = computed(() => store.state.abilities.abilitiesData);
-      const isAbilitiesLoading = computed(() => store.getters['abilities/isLoading']);
-
-      const animatedAbilities = ref({
-        '姿': {
-          percentage: 0,
-          items: {
-            '意識': 0,
-            '同期': 0,
-            '選択': 0
-          }
-        },
-        '環境': {
-          percentage: 0,
-          items: {
-            '意識': 0,
-            '同期': 0,
-            '選択': 0
-          }
-        },
-        '活動': {
-          percentage: 0,
-          items: {
-            '意識': 0,
-            '同期': 0,
-            '選択': 0
-          }
-        }
-       });
-
-      const initializeAnimatedAbilities = () => {
-        Object.keys(abilitiesData.value).forEach(tab => {
-          if (abilitiesData.value[tab] && abilitiesData.value[tab].items) {
-            animatedAbilities.value[tab] = {
-              percentage: 0,
-              items: Object.fromEntries(
-                Object.keys(abilitiesData.value[tab].items).map(key => [key, 0])
-              )
-            };
-          }
-        });
-      };
-
-      watch([selectedAbilityTab, isAbilitiesLoading], ([newTab, isLoading]) => {
-        if (!isLoading && abilitiesData.value[newTab]?.items) {
-          const targetAbilities = abilitiesData.value[newTab];
-          const duration = 500;
-          const start = performance.now();
-
-          const animate = (time) => {
-            const elapsed = time - start;
-            const progress = Math.min(elapsed / duration, 1);
-
-            animatedAbilities.value[newTab] = {
-              percentage: lerp(animatedAbilities.value[newTab].percentage, targetAbilities.percentage, progress),
-              items: Object.fromEntries(
-                Object.entries(targetAbilities.items).map(([key, value]) => [
-                  key,
-                  lerp(animatedAbilities.value[newTab].items[key], value, progress)
-                ])
-              )
-            };
-
-            if (progress < 1) {
-              requestAnimationFrame(animate);
-            }
-          };
-
-          requestAnimationFrame(animate);
-        }
-      }, { immediate: true });
-
-      //=====[SYSTEM03 : TODOS]=====
+      //=====[SYSTEM01 : TODOS]=====
       const todos = computed(() => store.state.todos.todos);
       const completedCount = computed(() => store.getters['todos/getCurrentCompleted']);
       const isTodosLoading = computed(() => store.getters['todos/isLoading']);
@@ -326,16 +201,12 @@
       onMounted(async () => {
         await store.dispatch('chat/addRandomMessages');
         await store.dispatch('scores/loadScoresData');
-        await store.dispatch('abilities/loadAbilitiesData');
         await store.dispatch('todos/loadTodosData');
-        initializeAnimatedAbilities();
       });
 
-      console.log('Entire store state:', store.state);
-      console.log('Current User:', store.state.user.user.name);
-      console.log('Store state:', store.state);
-      console.log('Selected ability tab:', selectedAbilityTab.value);
-      console.log('Current abilities:', currentAbilities.value);
+      //console.log('Entire store state:', store.state);
+      //console.log('Current User:', store.state.user.user.name);
+      //console.log('Store state:', store.state);
 
 
       return {
@@ -345,13 +216,6 @@
         themeName,
         result,
         triggerSatisfaction,
-
-        //ABILITY DISPLAY FUNCTION
-        selectedAbilityTab,
-        currentAbilities,
-        abilitiesData,
-        isAbilitiesLoading,
-        animatedAbilities,
 
         //TODO FUNCTION
         todos,

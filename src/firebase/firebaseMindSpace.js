@@ -27,59 +27,6 @@ export const mindspaceService = {
     return result;
   },
   
-  /*
-  export const getUserThemeId = async (userId) => {
-      try {
-          const userDoc = await getDoc(doc(db, 'users', userId));
-            
-            if (!userDoc.exists()) {
-              throw new Error('User document not found');
-            }
-            
-            const userData = userDoc.data();
-            const focusThemeId = userData.focusTheme;
-            
-            if (!focusThemeId) {
-              throw new Error('No focus theme set for user');
-            }
-            return focusThemeId;
-      } catch (error) {
-          console.error('Error loading user theme data:', error);
-          return error.message;
-      }
-  };
-  
-  export const changeUserThemeId = async (userId, themeId) => {
-    try {
-      console.log('[changeUserThemeId/firebaseMindSpace.js] Starting update...');
-      if (!userId) {
-        throw new Error('User ID is not set');
-      }
-  
-      const userRef = doc(db, 'users', userId);
-      
-      await updateDoc(userRef, 
-        {
-          focusTheme: themeId
-        }
-      );
-      
-      console.log('[updateMindSpaceInFirestore] Successfully updated mindspace');
-      
-      return {
-        message: "successfully updated focus theme.",
-        success: true,
-      };
-  
-    } catch (error) {
-      return {
-        message: error.message,
-        success: false,
-      };
-      
-    }
-  };*/
-  
   async getDefaultMindSpaceId (themeId, uid) {
       try {
           // Get theme document to find defaultMindSpace
@@ -123,7 +70,7 @@ export const mindspaceService = {
   
     const themeData = themeDoc.data();
   
-    console.log("[getThemeData]",themeData);
+    //console.log("[getThemeData]",themeData);
   
     return themeData;
   },
@@ -132,16 +79,17 @@ export const mindspaceService = {
     console.log("[getListOfMindSpace] 00 themeId: ",themeId);
     try {
       const mindspacesRef = collection(db, 'mindspace');
-      console.log("[getListOfMindSpace] 01 mindspaceRef: ",mindspacesRef);
+      //console.log("[getListOfMindSpace] 01 mindspaceRef: ",mindspacesRef);
       
       const q = query(mindspacesRef, where('themeId', '==', themeId));
       
       const querySnapshot = await getDocs(q);
-      console.log("[getListOfMindSpace] querySnapshot size:", querySnapshot.size);
-    
+      //console.log("[getListOfMindSpace] querySnapshot size:", querySnapshot.size);
+      
+      /*
       querySnapshot.docs.forEach(doc => {
-        console.log("[getListOfMindSpace] doc data:", doc.data());
-      });
+        //console.log("[getListOfMindSpace] doc data:", doc.data());
+      });*/
     
       const mindSpaceList = querySnapshot.docs.map(doc => ({
                 id: doc.id,

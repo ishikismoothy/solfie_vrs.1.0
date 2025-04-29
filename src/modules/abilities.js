@@ -1,7 +1,7 @@
 export default {
   namespaced: true,
   state: {
-    selectedAbilityTab: '姿',
+    selectedAbilityTab: '今日',
     abilitiesData: {},
     isLoading: false,
   },
@@ -26,28 +26,28 @@ export default {
         // Simulating an API call
         setTimeout(() => {
           const abilitiesData = {
-            '姿': {
+            '1年': {
               percentage: 65,
               items: {
-                '意識': 45,
-                '同期': 50,
-                '選択': 75
+                '主体性': 45,
+                '方向性': 50,
+                '安定性': 75
               }
             },
-            '環境': {
+            '6ヶ月': {
               percentage: 70,
               items: {
-                '意識': 60,
-                '同期': 80,
-                '選択': 70
+                '主体性': 60,
+                '方向性': 80,
+                '安定性': 70
               }
             },
-            '活動': {
+            '今日': {
               percentage: 55,
               items: {
-                '意識': 50,
-                '同期': 60,
-                '選択': 55
+                '主体性': 50,
+                '方向性': 60,
+                '安定性': 55
               }
             }
           };

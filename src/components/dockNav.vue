@@ -4,19 +4,19 @@
       <div class="nav-icons" v-if="!isChatBoxExpanded">
         <a href="#" class="nav-icon">
           <img src="../assets/icons/journalIcon.svg" alt="Journal" />
-          <span class="icon-label">Solfie Journal</span>
+          <span class="icon-label">Mindspace</span>
         </a>
-        <a href="#" class="nav-icon">
+        <button href="#" class="nav-icon" @click = "toggleMindUniverseModal">
           <img src="../assets/icons/eventIcon.svg" alt="Event" />
-          <span class="icon-label">Solfie Events</span>
-        </a>
+          <span class="icon-label">Mind Universe</span>
+        </button>
         <a href="#" class="nav-icon">
           <img src="../assets/icons/squareIcon.svg" alt="Square" />
-          <span class="icon-label">Solfie Square</span>
+          <span class="icon-label">Mind Square</span>
         </a>
         <a href="#" class="nav-icon">
           <img src="../assets/icons/statusIcon.svg" alt="Status" />
-          <span class="icon-label">Status</span>
+          <span class="icon-label">Settings</span>
         </a>
       </div>
       <button class="chatbox-button" @click="toggleChatBox" v-if="!isChatBoxExpanded">
@@ -81,8 +81,12 @@ export default defineComponent({
     const store = useStore();
     const user = computed(() => store.state.user.user || {});
     const stats = computed(() => store.state.user.stats || {});
+    
+    const toggleMindUniverseModal = async() => {
+      store.dispatch('user/triggerMindUniverseWindow',true);
+    };
+    
     const chatMessagesContainer = ref(null);
-
     const selectedImage = ref({
       title: 'Title',
       date: '2024/01/01',
@@ -159,6 +163,9 @@ export default defineComponent({
       user,
       stats,
       selectedImage,
+
+      //Menu Toggles
+      toggleMindUniverseModal,
 
       //CHAT FUNCTION
       isChatBoxExpanded,

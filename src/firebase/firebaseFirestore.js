@@ -114,16 +114,24 @@ import {
 
   export const updateViewThemeHistory = async (uid, themeId) => {
     try {
+      // Validate parameters
+      if (!uid) {
+        throw new Error('User ID is required for updating view history');
+      }
+      if (!themeId) {
+        throw new Error('Theme ID is required for updating view history');
+      }
+  
       const userRef = doc(db, 'users', uid);
       const userRefSnap = await getDoc(userRef);
-
+  
       if (!userRefSnap.exists()) {
         throw new Error('User document not found');
       }
-
+  
       const userData = userRefSnap.data();
       const existingViewHistory = userData.viewHistory || {};
-
+  
       await updateDoc(userRef, {
         viewHistory: {
           ...existingViewHistory,  // Preserve existing fields
@@ -131,7 +139,7 @@ import {
         }
       });
       return { message: "successful." };
-
+  
     } catch (error) {
       console.error("Error updating view history:", error);
       throw error;
