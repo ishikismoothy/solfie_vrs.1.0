@@ -1,3 +1,4 @@
+<!-- itemWindow.vue -->
 <template>
 
     <div v-if="isOpen" class="item-window-overlay">
@@ -48,6 +49,10 @@
                       </svg>
                   </button>
 
+                  <button class="icon-button" @click="triggerAddMindslot">
+                    +MIND
+                  </button>
+
                   <button @click="close" class="icon-button close-button">
                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -91,7 +96,7 @@ import { useStore } from 'vuex';
 import BlockWrapper from './blockWrapper.vue';
 import AddBlockButton from './addBlockButton.vue';
 import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-// import { getFirestore, doc, updateDoc } from 'firebase/firestore';
+import emitter from '@/eventBus';
 
 // Move helper functions outside of setup
 const generateRandomId = (length = 10) => {
@@ -136,7 +141,7 @@ export default {
           required: true
       }
     },
-    emits: ['close'],
+    emits: ['close', 'addMindslot'],
     setup(props, { emit }) {
         const store = useStore();
         const selectedItemId = computed(() => store.getters['mindspace/getItemId']);
@@ -314,6 +319,12 @@ export default {
         );
       };
 
+      // add mindslot
+      function triggerAddMindslot() {
+        console.log("[itemWindow.vue/triggerAddMindslot] TRIGGERED");
+        emitter.emit('addMindslot');
+      }
+
         return {
             blocks,
             close,
@@ -332,6 +343,7 @@ export default {
             openMoveItemModal,
             handleImageUpload,
             coverImageUrl,
+            triggerAddMindslot,
         };
     }
 };

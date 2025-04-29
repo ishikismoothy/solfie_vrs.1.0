@@ -6,7 +6,7 @@
         type="file"
         ref="fileInput"
         accept="image/*"
-        style="display: none"
+        :style="{ display: isMobile ? 'block' : 'none' }"
         @change="onFileChange"
       />
         <button

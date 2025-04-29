@@ -77,10 +77,10 @@
 
           <!-- image upload -->
 
-          <div class="form-group">
+          <!-- <div class="form-group">
             <label>Upload Image:</label>
             <input type="file" accept="image/*" @change="handleImageUpload"/>
-          </div>
+          </div> -->
 
 
           <div class="button-group">

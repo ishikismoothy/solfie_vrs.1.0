@@ -2,13 +2,13 @@
 <template>
     <div class="return-to-myself">
       <h2 class="title">Return to myself</h2>
-      
+
       <!-- Mind Slots Container -->
       <div class="mind-slots">
         <div v-for="(slot, index) in mindspace.mindslot" :key="index" class="mind-slot">
           <!-- Slot Header with Edit Option -->
           <div class="slot-header">
-            <input 
+            <input
               v-if="isEditing && editingSlotIndex === index"
               v-model="editingSlotName"
               @blur="saveSlotName(index)"
@@ -20,7 +20,7 @@
             </h3>
             <button @click="deleteSlot(index)" class="delete-btn">×</button>
           </div>
-  
+
           <!-- Slot Content -->
           <div
             class="slot-content"
@@ -36,24 +36,28 @@
           </div>
         </div>
       </div>
-  
+
       <!-- Add Slot Button -->
-      <button 
+      <button
         v-if="mindspace.mindslot.length < 5"
-        @click="addSlot" 
+        @click="addSlot"
         class="add-slot-btn"
       >
         Add a new slot ({{ 5 - mindspace.mindslot.length }} Remaining)
       </button>
+      <!-- Listen for the event emitted by the ItemWindow component -->
+      <ItemWindow @addMindslot="addSlot" />
+
     </div>
   </template>
-  
+
   <script>
-  import { ref, computed, onMounted, watch } from 'vue'
+  import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
   import { useStore } from 'vuex';
   import { mindspaceService } from '@/firebase/firebaseMindSpace';
+  import emitter from '@/eventBus';
   //import { db } from '@/firebase/config' // Adjust path as needed
-  
+
   export default {
     name: 'ReturnToMyself',
     setup() {
@@ -68,7 +72,7 @@
         const isEditing = ref(false)
         const editingSlotIndex = ref(null)
         const editingSlotName = ref('')
-    
+
         // Fetch mindspace slots with name preservation
         const fetchMindspaceSlots = async () => {
           console.log("[mindSlot.vue/fetchMindspaceSlots] TRIGGERED ");
@@ -104,13 +108,13 @@
                     await new Promise(resolve => setTimeout(resolve, 1000));
                     return fetchItems(); // Retry
                 }
-                
+
                 items.value = await mindspaceService.fetchItemsForSlots(currentUser.value);
             } catch (error) {
                 console.error('Error fetching items:', error);
             }
         };
-    
+
         // Get item image
         const getItemImage = async(itemId) => {
             return await mindspaceService.getItemImage(itemId, items);
@@ -120,7 +124,7 @@
         const getItemName = async(itemId) => {
             return await mindspaceService.getItemName(itemId, items);
         };
-    
+
         // Add new slot
         const addSlot = async () => {
             if (mindspace.value.mindslot.length >= 5) return;
@@ -135,13 +139,13 @@
                 ...mindspace.value,                      // Spread existing properties (including name)
                 mindslot: [...mindspace.value.mindslot]  // Create new array with existing slots
             };
-            
+
             // Add the new slot
             updatedMindspace.mindslot.push(newSlot);
-            
+
             // Update the ref
             mindspace.value = updatedMindspace;
-            
+
             // Save to Firebase
             await updateMindspace();
         };
@@ -178,9 +182,9 @@
                     mindslot: mindspace.value.mindslot || [],  // Ensure mindslot exists
                     ...mindspace.value  // Include any other properties
                 };
-                
+
                 await mindspaceService.updateMindspaceSlots(
-                    currentMindSpaceId.value, 
+                    currentMindSpaceId.value,
                     updatedData
                 );
             } catch (error) {
@@ -193,6 +197,16 @@
             // Emit event to parent to handle item selection
             //emit('open-item-selection', slotIndex);
         };
+
+            // Listen for the add-mindslot event
+        onMounted(() => {
+          emitter.on('addMindslot', addSlot);
+        });
+
+        // Cleanup listener on unmount
+        onUnmounted(() => {
+          emitter.off('addMindslot', addSlot);  // Cleanup to avoid memory leaks
+        });
 
         // Add a watch for currentUser
         watch(currentUser, async (newUserId) => {
@@ -218,7 +232,8 @@
                 await fetchItems();
             }
         });
-    
+
+
         return {
             mindspace,
             isEditing,
@@ -235,7 +250,7 @@
     }
   }
   </script>
-  
+
   <style scoped>
   .return-to-myself {
     padding: 20px;
@@ -243,24 +258,24 @@
     border-radius: 30px;
     margin-bottom: 20px;
   }
-  
+
   .title {
     font-size: 24px;
     margin-bottom: 20px;
   }
-  
+
   .mind-slots {
     display: flex;
     flex-direction: column;
     gap: 15px;
   }
-  
+
   .mind-slot {
     border-radius: 12px;
     overflow: hidden;
     background: #f5f5f5;
   }
-  
+
   .slot-header {
     display: flex;
     justify-content: space-between;
@@ -268,14 +283,14 @@
     padding: 10px;
     background: rgba(0, 0, 0, 0.05);
   }
-  
+
   .slot-name-input {
     border: none;
     border-radius: 4px;
     padding: 4px 8px;
     width: 80%;
   }
-  
+
   .slot-content {
     height: 120px;
     background-size: cover;
@@ -286,18 +301,18 @@
     cursor: pointer;
     position: relative;
   }
-  
+
   .item-content {
     background: rgba(0, 0, 0, 0.5);
     color: white;
     padding: 8px;
     border-radius: 4px;
   }
-  
+
   .empty-slot {
     color: #666;
   }
-  
+
   .delete-btn {
     background: none;
     border: none;
@@ -306,7 +321,7 @@
     font-size: 20px;
     padding: 0 8px;
   }
-  
+
   .add-slot-btn {
     width: 100%;
     padding: 12px;
@@ -317,7 +332,7 @@
     cursor: pointer;
     color: #666;
   }
-  
+
   .add-slot-btn:hover {
     background: #e5e5e5;
   }
