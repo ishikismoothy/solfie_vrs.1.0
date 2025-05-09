@@ -20,7 +20,8 @@ export default {
       name: '寺岡 佑記',
       uid: null,
       planType: 'Free Account',
-      notifications: 3
+      notifications: 3,
+      isMobile: null,
     },
     stats: {
       solfieLevel: 10,
@@ -47,6 +48,7 @@ export default {
     },
     modalControl:{
       showItemWindow: false,
+      showItemWindowFromMindSlot: false,
       showSatWindow: false,
       showMoveItemWindow: false,
       showMindUniverseWindow: false,
@@ -56,6 +58,9 @@ export default {
     // userIcons: [] NOT YET IN USE
   },
   mutations: {
+    SET_DEVICE_TYPE(state, value){
+      state.user.isMobile = value;
+    },
     SET_USER_ID(state, id){
       state.user.uid = id;
     },
@@ -83,6 +88,9 @@ export default {
     TRIGGER_ITEM_WINDOW (state, boolean) {
       state.modalControl.showItemWindow = boolean;
     },
+    TRIGGER_ITEM_WINDOW_FROM_MINDSLOT (state, boolean) {
+      state.modalControl.showItemWindowFromMindSlot = boolean;
+    },
     TRIGGER_SAT_WINDOW (state, boolean) {
       state.modalControl.showSatWindow = boolean;
     },
@@ -103,6 +111,18 @@ export default {
     },
   },
   actions: {
+    async setDeviceType({ commit }, size){
+      try {
+        if (size <= 768){
+          commit('SET_DEVICE_TYPE', true);
+        }
+        else {
+          commit('SET_DEVICE_TYPE', false);
+        }
+      } catch (error) {
+        commit('SET_ERROR', error.message);
+      }
+    },
     async setUserId({ commit, state }) {
       //console.log("[user.js/setUserId] TRIGGERED");
       try {
@@ -121,7 +141,7 @@ export default {
     },
     setLastViewLocationHistory({ commit, state }, location){
       commit('SET_LAST_LOCATION', location.lastLocation);
-      console.log("[user.js/setLastViewLocationHistory] Last Vie Location Set to: ", state.viewHistory.lastLocation);
+      console.log("[user.js/setLastViewLocationHistory] Last View Location Set to: ", state.viewHistory.lastLocation);
     },
     setLastViewThemeHistory({ commit, state }, { uid, themeId }){
       //Triggered when user swap mindspace view page.
@@ -130,7 +150,7 @@ export default {
       updateViewThemeHistory(uid, themeId)
       //2) Set id
       commit('SET_LAST_THEMEID', themeId);
-      console.log("[user.js/setLastMindSpaceId] themeId History: ", state.viewHistory.lastThemeId);
+      console.log("[user.js/setLastViewThemeHistory] themeId History: ", state.viewHistory.lastThemeId);
     },
     setLastViewMindSpaceHistory({ commit, state }, { uid, mindSpaceId }){
       //Triggered when user swap mindspace view page.
@@ -169,6 +189,10 @@ export default {
     triggerItemWindow({ commit, state }, boolean) {
       commit('TRIGGER_ITEM_WINDOW', boolean);
       console.log("Item Window Set to: ", state.modalControl.showItemWindow);
+    },
+    triggerItemWindowFromMindSlot({ commit, state }, boolean) {
+      commit('TRIGGER_ITEM_WINDOW_FROM_MINDSLOT', boolean);
+      console.log("Item Window Set to: ", state.modalControl.triggerItemWindowFromMindSlot);
     },
     triggerSatWindow({ commit, state }, boolean) {
       commit('TRIGGER_SAT_WINDOW', boolean);

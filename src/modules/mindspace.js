@@ -84,7 +84,7 @@ export default {
       },
       SET_TOTAL_PAGES(state, total) {
         state.totalPages = total;
-        console.log("[SET_TOTAL_PAGES] totalPages:", state.totalPages);
+        //console.log("[SET_TOTAL_PAGES] totalPages:", state.totalPages);
       },
       ADD_NEW_PAGE(state) {
         // Add new page with empty items array
@@ -420,7 +420,7 @@ export default {
         }
       },
       async loadViewThemeId({ commit, state, dispatch }, uid) {
-        console.log("[loadViewThemeId] TRIGGERED");
+        //console.log("[loadViewThemeId] TRIGGERED");
         try {
           // Check if userId exists
           if (!state.userId) {
@@ -487,7 +487,7 @@ export default {
           const defaultMindSpaceId = await mindspaceService.getDefaultMindSpaceId(state.currentThemeId, state.userId);
 
           commit('SET_MINDSPACE_ID', defaultMindSpaceId);
-          //console.log("[setMindSpaceId]",state.currentMindSpaceId);
+          console.log("[setMindSpaceId] MindSpaceId: ",state.currentMindSpaceId);
           await updateViewMindspaceHistory( state.userId, state.currentMindSpaceId);
 
           // Now load the mindspace pages
@@ -542,7 +542,7 @@ export default {
           });
 
           commit('SET_MINDSPACE_LIST', result);
-          console.log("[setMindSpaceList] Successfully set mindspace list:", result);
+          console.log("[mindspace.js/setMindSpaceList] Mindspace list:", result);
 
 
         } catch (error) {
@@ -554,10 +554,10 @@ export default {
       // Modified original function to use getMindSpaceData
       async setMindSpacePages({ commit, state }) {
         try {
-          console.log("[setMindSpacePages] TRIGGERED");
+          //console.log("[setMindSpacePages] TRIGGERED");
           
           const result = await mindspaceService.getMindSpaceData(state.currentMindSpaceId);
-          console.log("[setMindSpacePages] Got result:", result);
+          console.log("[setMindSpacePages] Current MindSpaceData:", result);
           
           if (!result || !result.pages) {
             throw new Error('Invalid data returned from getMindSpaceData');
@@ -566,13 +566,13 @@ export default {
           const { name, pages, totalPages } = result;
 
           commit('SET_MINDSPACE_NAME', name);
-          console.log("[setMindSpacePages] Mindspace Name:", state.currentMindSpaceName);
+          //console.log("[setMindSpacePages] Mindspace Name:", state.currentMindSpaceName);
           
           commit('SET_MINDSPACE_PAGES', pages);
-          console.log("[setMindSpacePages] Mindspace Pages:", state.mindSpacePages);
+          //console.log("[setMindSpacePages] Mindspace Pages:", state.mindSpacePages);
           
           commit('SET_TOTAL_PAGES', totalPages);
-          console.log("[setMindSpacePages] totalPages:", state.totalPages);
+          //console.log("[setMindSpacePages] totalPages:", state.totalPages);
           
         } catch (error) {
           console.error('Error loading mindspace:', error);
@@ -1008,11 +1008,11 @@ export default {
       //Item Blocks Handling
       async getItemName({ commit, state }, itemName) {
         commit('SET_ITEM_NAME', itemName);
-        console.log("[getItemName/mindspace.js] itemName:", state.currentItemName);
+        console.log("[getItemName/mindspace.js] View itemName:", state.currentItemName);
       },
       async setItemName({ commit, state, dispatch }, itemName) {
         commit('SET_ITEM_NAME', itemName);
-        console.log("[setItemName/mindspace.js] itemName:", state.currentItemName);
+        console.log("[setItemName/mindspace.js] Set itemName:", state.currentItemName);
         await mindspaceService.updateItemData(state.currentItemId, state.currentItemName, state.itemBlocks );
         await dispatch('setMindSpacePages');
       },
@@ -1020,11 +1020,11 @@ export default {
         const itemData = await mindspaceService.getItemData(itemId);
 
         if(itemData.success){
-          console.log(itemData.data);
+          console.log("[mindspace.js/setBlocks] Blocks: ",itemData.data);
           const data = itemData.data;
           commit('SET_BLOCKS', data);
         }else{
-          console.log(itemData.message);
+          console.log("[mindspace.js/setBlocks]",itemData.message);
         }
       },
       async addBlock({ commit, state }, block) {
@@ -1083,7 +1083,21 @@ export default {
         await dispatch('setBlocks', state.currentItemId);
       },
       async deleteBlock({ commit, state }, id) {
-        commit('DELETE_BLOCK', id);
+        try {
+          const blockToDelete = state.itemBlocks.find(block => block.id === id);
+          if (!blockToDelete) {
+            console.error('Block not found:', id);
+            return;
+          }
+          if (blockToDelete.type === 'image-block') {
+            await mindspaceService.deleteImageFromStorage(blockToDelete.content);
+            commit('DELETE_BLOCK', id);
+          }else{
+            commit('DELETE_BLOCK', id);
+          }
+        } catch (error) {
+          console.error('Error in deleting block:', error);
+        }
         console.log("[mindspace.js/itemBlocks] Currently: ", state.itemBlocks);
         await mindspaceService.updateItemData(state.currentItemId, state.currentItemName, state.itemBlocks );
       },
@@ -1095,7 +1109,20 @@ export default {
       setEditingBlock({ commit }, id) {
         commit('SET_EDITING_BLOCK', id);
       },
-
+      // New action for handling image upload that returns the downloadURL
+      async handleImageUpload({ getters }, { file }) {
+        try {
+          const userId = getters.getUserId;
+          const downloadURL = await mindspaceService.handleImageUpload({
+            file,
+            userId
+          });
+          return downloadURL;
+        } catch (error) {
+          console.error('Error in handleImageUpload action:', error);
+          throw error;
+        }
+      },
     },
     
     getters: {

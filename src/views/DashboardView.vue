@@ -81,7 +81,7 @@
       </svg>
     </button>
     
-    <itemWindow class="itemWindow-view"
+    <ItemWindow class="itemWindow-view"
       :is-open="showItemWindow"
       @close="closeItemWindow"
       @click.self="closeItemWindow"
@@ -112,7 +112,7 @@ import HeaderNav from '@/components/Header/HeaderNav.vue';
 import Dashboard from '@/components/DashBoard/dashboard.vue';
 import mindSpace from '@/components/DashBoard/mindSpace.vue';
 import PageIndicator from '@/components/DashBoard/pageIndicator.vue';
-import itemWindow from '@/components/ItemWindow/itemWindow.vue';
+import ItemWindow from '@/components/ItemWindow/itemWindow.vue';
 import MoveItemModal from '@/components/ItemWindow/moveItemModal.vue';
 import LoadingScreen from '@/components/loadingScreen.vue';
 import satSlider from '@/components/DashBoard/satisfactionSlider.vue';
@@ -127,7 +127,7 @@ export default defineComponent({
     mindSpace,
     PageIndicator,
     HeaderNav,
-    itemWindow,
+    ItemWindow,
     MoveItemModal,
     satSlider,
     LoadingScreen,
@@ -170,14 +170,15 @@ export default defineComponent({
         console.log('[DashboardView.vue] showMindUniverseModal changed:', { new: newValue })
       }
     )
-
+    
+    /*
     watch(
       () => isEditMode.value,
       (newValue, oldValue) => {
         console.log('[DashboardView.vue] Edit mode changed:', { new: newValue, old: oldValue })
       },
       { immediate: true }
-    )
+    )*/
 
 
     // Update toggleView:

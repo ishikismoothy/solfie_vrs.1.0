@@ -6,7 +6,7 @@
         type="file"
         ref="fileInput"
         accept="image/*"
-        :style="{ display: isMobile ? 'block' : 'none' }"
+        :style="{ display: 'none' }"
         @change="onFileChange"
       />
         <button
@@ -65,83 +65,83 @@
     },
     emits: ['add', 'add-image'],
     setup(props, { emit }){
-        const showOptions = ref(false);
-        const fileInput = ref(null);
-        const onFileChange = (event) => {
-          const file = event.target.files[0];
-          if (file) {
-            emit('add-image', { file: file, index: props.index });
-            console.log('File selected:', file);
+      const showOptions = ref(false);
+      const fileInput = ref(null);
+      const onFileChange = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+          emit('add-image', { file: file, index: props.index });
+          console.log('File selected:', file);
+        }
+      };
+
+
+      const blockOptions = [
+          {
+              type: 'title-block',
+              label: 'Title',
+              icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>'
+          },
+          {
+              type: 'body-block',
+              label: 'Body',
+              icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="10" x2="3" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="21" y1="18" x2="3" y2="18"></line></svg>'
+          },
+          {
+              type: 'image-block',
+              label: 'Image',
+              icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>'
+          },
+          {
+              type: 'line-block',
+              label: 'Line',
+              icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>'
+          },
+          {
+              type: 'todo-block',
+              label: 'Todo',
+              icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>'
           }
-        };
+      ];
 
+      const toggleOptions = () => {
+          showOptions.value = !showOptions.value;
+      };
 
-        const blockOptions = [
-            {
-                type: 'title-block',
-                label: 'Title',
-                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>'
-            },
-            {
-                type: 'body-block',
-                label: 'Body',
-                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="10" x2="3" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="21" y1="18" x2="3" y2="18"></line></svg>'
-            },
-            {
-                type: 'image-block',
-                label: 'Image',
-                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>'
-            },
-            {
-                type: 'line-block',
-                label: 'Line',
-                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>'
-            },
-            {
-                type: 'todo-block',
-                label: 'Todo',
-                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>'
-            }
-        ];
+      const addBlock = (type) => {
+        if (type === 'image-block') {
+          fileInput.value?.click(); // trigger the hidden file input
+        } else {
+          emit('add', { type, index: props.index });
+        }
+        showOptions.value = false;
+      };
 
-        const toggleOptions = () => {
-            showOptions.value = !showOptions.value;
-        };
-
-        const addBlock = (type) => {
-          if (type === 'image-block') {
-            fileInput.value?.click(); // trigger the hidden file input
-          } else {
-            emit('add', { type, index: props.index });
+      // Close options menu when clicking outside
+      const handleClickOutside = (event) => {
+          if (event.target.closest('.modal-overlay') && !event.target.closest('.modal-content')) {
+              showOptions.value = false;
           }
-          showOptions.value = false;
-        };
-
-        // Close options menu when clicking outside
-        const handleClickOutside = (event) => {
-            if (event.target.closest('.modal-overlay') && !event.target.closest('.modal-content')) {
-                showOptions.value = false;
-            }
-        };
+      };
 
 
-        // Add and remove click outside listener
-        onMounted(() => {
-            document.addEventListener('click', handleClickOutside);
-        });
+      // Add and remove click outside listener
+      onMounted(() => {
+          document.addEventListener('click', handleClickOutside);
+      });
 
-        onUnmounted(() => {
-            document.removeEventListener('click', handleClickOutside);
-        });
+      onUnmounted(() => {
+          document.removeEventListener('click', handleClickOutside);
+      });
 
-        return{
-            showOptions,       // Add this
-            blockOptions,
-            toggleOptions,
-            addBlock,
-            fileInput,
-            onFileChange,
-        };
+      return{
+        showOptions,       // Add this
+        blockOptions,
+        toggleOptions,
+        addBlock,
+        fileInput,
+        onFileChange
+      };
     }
   }
 

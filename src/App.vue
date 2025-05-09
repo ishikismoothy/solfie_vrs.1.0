@@ -42,9 +42,10 @@ export default defineComponent({
     const currentMindSpaceId = computed(() => store.state.mindspace.currentMindSpaceId);
     
     onMounted(async () => {
+      await store.dispatch('user/setDeviceType',window.innerWidth);
       if (!userId.value) {
         await store.dispatch('user/setUserId');
-        console.log("[App.vue/onMounted -> store/user] Assigned uid: ",userId.value);
+        //console.log("[App.vue/onMounted -> store/user] Assigned uid: ",userId.value);
       }
     })
     watch(

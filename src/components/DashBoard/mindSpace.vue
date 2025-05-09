@@ -645,10 +645,7 @@ ADD STATUS HEADER
             if(!isEditMode.value){
               await store.dispatch('mindspace/setItemId', item.id);
               await store.dispatch('mindspace/getItemName', item.name);
-              await store.dispatch('user/triggerItemWindow', {
-                show: true,
-                imageUrl: item.imageUrl // Assuming item.imageUrl contains the image URL
-              });
+              await store.dispatch('user/triggerItemWindow', true);
             }
 
             // Here you can add any additional functionality for non-folder items
@@ -1281,7 +1278,7 @@ ADD STATUS HEADER
         // Initialize folder pages
         // Updated initialization function
         const initializeFolderPages = () => {
-          console.log('[initializeFolderPages] TRIGGERED');
+          //console.log('[initializeFolderPages] TRIGGERED');
 
           if (!currentFolder.value || !Array.isArray(currentFolder.value.items)) {
             console.log('[initializeFolderPages] Current folder is invalid or has no items. Initializing with an empty page.');
@@ -1889,7 +1886,7 @@ ADD STATUS HEADER
             updateTime();
             setInterval(updateTime, 60000); // Update time every minute
             initializeFolderPages();
-            console.log("[mindspace.vue] CurrentPage:",currentPage.value);
+            //console.log("[mindspace.vue] CurrentPage:",currentPage.value);
             //PageShiftForTouch
             window.addEventListener('resize', () => {
               pageWidth.value = window.innerWidth;

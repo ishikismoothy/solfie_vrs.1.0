@@ -97,6 +97,7 @@ export default {
     const store = useStore();
     const debug = ref(true); // Set to true for debugging
     const userId = computed(() => store.state.user.user.uid);
+    const isOpen = computed(() => store.state.user.modalControl.showMoveItemWindow);
     const selectedTheme = ref(null);
     const selectedMindSpace = ref(null);
     const themeSpaces = ref([]);
@@ -106,7 +107,7 @@ export default {
     let lastAction = null;
 
     const fetchThemeSpaces = async () => {
-      console.log("[moveItemModal.vue/fetchThemeSpace] TRIGGERED.")
+      //console.log("[moveItemModal.vue/fetchThemeSpace] TRIGGERED.")
       isLoading.value = true;
       error.value = null;
       try {
@@ -145,6 +146,7 @@ export default {
       return `${mindspace.name.slice(0)}`;
     };
 
+    /*
     // Debug watcher
     watch(() => ({
       props: { ...props },
@@ -152,9 +154,16 @@ export default {
       selectedMindspace: selectedMindSpace.value
     }), (newVal) => {
       console.log('State changed:', newVal);
-    }, { deep: true, immediate: true });
+    }, { deep: true, immediate: true });*/
 
-    const handleMoveItem = async () => {
+    // Watcher for isOpen (showMoveItemWindow)
+    watch(isOpen, async(newValue) => {
+      if (newValue === true) {
+        await fetchThemeSpaces();
+      }
+    }, { immediate: true }); // Optional: set immediate to true if you want to check the condition on component mount
+
+        const handleMoveItem = async () => {
       lastAction = 'move';
       isLoading.value = true;
       error.value = null;
@@ -251,7 +260,7 @@ export default {
       if(!userId.value){
          await store.dispatch('user/setUserId');
       }
-      await fetchThemeSpaces();
+      //await fetchThemeSpaces();
     });
 
     return {

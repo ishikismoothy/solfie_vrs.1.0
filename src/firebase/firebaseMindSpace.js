@@ -14,6 +14,7 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebaseInit';
 import { formatMindSpaceForFirestore } from '@/utility/mindSpaceDataFormatter.js'
+import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 //import { useStore } from 'vuex';
 //const store = useStore();
 
@@ -76,7 +77,7 @@ export const mindspaceService = {
   },
   
   async getListOfMindSpace (themeId) {
-    console.log("[getListOfMindSpace] 00 themeId: ",themeId);
+    //console.log("[getListOfMindSpace] 00 themeId: ",themeId);
     try {
       const mindspacesRef = collection(db, 'mindspace');
       //console.log("[getListOfMindSpace] 01 mindspaceRef: ",mindspacesRef);
@@ -95,7 +96,7 @@ export const mindspaceService = {
                 id: doc.id,
                 ...doc.data()
               }));
-      console.log("[getListOfMindSpace]03",mindSpaceList);
+      //console.log("[firebaseMindSpace.js/getListOfMindSpace] List of MindSpace: ",mindSpaceList);
     
       return mindSpaceList;
     } catch (error) {
@@ -453,7 +454,7 @@ export const mindspaceService = {
       
       const itemsData = await itemsDoc.data();
   
-      console.log("[getItemData] contents",itemsData.contents);
+      //console.log("[getItemData] contents",itemsData.contents);
       
       return {
         name: itemsData.name,
@@ -636,7 +637,7 @@ export const mindspaceService = {
       }
   },
   
-  // Firebase Update Function
+  // Add or Update item blocks
   async updateItemData (itemId, itemName, itemBlockData) {
     console.log('[updateItemInFirestore] Starting update...', itemBlockData);
     
@@ -675,6 +676,96 @@ export const mindspaceService = {
     });
   },
 
+  // Add the image upload function here that just returns the downloadURL
+  async handleImageUpload({ file, userId }) {
+    console.log("Image upload triggered");
+    
+    if (!file) return null;
+    console.log("File selected:", file);
+    
+    const uid = userId;
+    if (!uid) {
+      console.error("No user ID found!");
+      return null;
+    }
+
+    const storage = getStorage();
+    const storageReference = storageRef(storage, `images/${uid}/${file.name}`);
+    const uploadTask = uploadBytesResumable(storageReference, file);
+
+    return new Promise((resolve, reject) => {
+      uploadTask.on('state_changed',
+        (snapshot) => {
+          // Track progress
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          console.log(`Upload is ${progress}% done`);
+
+          switch (snapshot.state) {
+            case 'paused':
+              console.log('Upload is paused');
+              break;
+            case 'running':
+              console.log('Upload is running');
+              break;
+          }
+        },
+        (error) => {
+          console.error('Upload failed:', error);
+          reject(error);
+        },
+        () => {
+          console.log('Upload is DONE');
+          // Upload complete, get the file URL
+          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+            console.log('URL retrieved:', downloadURL);
+            resolve(downloadURL);
+          }).catch(error => reject(error));
+        }
+      );
+    });
+  },
+
+  // Add function to delete image from storage
+  // Improved function to delete image from storage using the content URL
+  async deleteImageFromStorage(imageUrl) {
+    if (!imageUrl || typeof imageUrl !== 'string') {
+      console.error('Invalid image URL:', imageUrl);
+      return false;
+    }
+
+    try {
+      // Extract the path from the Firebase Storage URL
+      // Example URL: https://firebasestorage.googleapis.com/v0/b/solfie-398005.firebasestorage.app/o/images%2F3gGpqzo2fnYfGidkJ1l8tJ3DR5Y2%2FNoiseArticle.jpg?alt=media&token=94273095-99b9-450b-ad84-a39accaa298a
+      
+      const storage = getStorage();
+      
+      // Parse the URL to get the path
+      const urlObj = new URL(imageUrl);
+      
+      // The path is between '/o/' and the '?' in the URL
+      // It's also URL encoded, so we need to decode it
+      const pathSegment = urlObj.pathname.split('/o/')[1];
+      
+      if (!pathSegment) {
+        console.error('Could not parse image path from URL:', imageUrl);
+        return false;
+      }
+      
+      const fullPath = decodeURIComponent(pathSegment);
+      console.log('Extracted path for deletion:', fullPath);
+      
+      // Create a reference to the file
+      const imageRef = storageRef(storage, fullPath);
+      
+      // Delete the file
+      await deleteObject(imageRef);
+      console.log('Image deleted successfully from storage:', fullPath);
+      return true;
+    } catch (error) {
+      console.error('Error deleting image from storage:', error);
+      return false;
+    }
+  },
   // Function to add item to Firestore and update mindspace
   async addNewItemToMindspace (userId, mindSpaceId, pageIndex, index, newItem) {
       

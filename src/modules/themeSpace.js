@@ -220,12 +220,11 @@ export default {
             commit('SET_TOPICSKEY', ['仕事や活動', '暮らし', '人間関係', '在り方', '環境']);
         },
         setThemeId({ commit }, id) {
-            console.log("themeSpace.js/setThemeId: TRIGGERED", id);
+            console.log("themeSpace.js/setThemeId: ThemeId: ", id);
             commit('SET_THEME_ID', id);
         },
         // Load user's theme data
-        async setFocusThemeId({ commit, state , /* dispatch*/ }, userId) {
-            //console.log("[themeSpace.js/setThemeId] TRIGGERED");
+        async setFocusThemeId({ commit, state }, userId) {
             try {
                 // 1. Get user document to find focusTheme
                 const focusedThemeId = await themeService.getUserThemeId(userId);

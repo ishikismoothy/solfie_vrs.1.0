@@ -95,7 +95,7 @@ import { computed, onMounted, watch, ref, nextTick } from 'vue';
 import { useStore } from 'vuex';
 import BlockWrapper from './blockWrapper.vue';
 import AddBlockButton from './addBlockButton.vue';
-import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+//import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import emitter from '@/eventBus';
 
 // Move helper functions outside of setup
@@ -272,59 +272,25 @@ export default {
             store.dispatch('user/setIsBlockEdit', newValue);
         }
 
-      // Handle image upload
-      const handleImageUpload = async ({ file, index }) => {
-        console.log("Image upload triggered");
-        // const file = event.target.files[0];
-        if (!file) return;
-        console.log("File selected:", file);
-        const uid = currentUid.value;
-        if (!uid) {
-          console.error("No user ID found!");
-          return;
-        }
-
-        const storage = getStorage();
-        const storageReference = storageRef(storage, `images/${uid}/${file.name}`);
-
-        const uploadTask = uploadBytesResumable(storageReference, file);
-
-        uploadTask.on('state_changed',
-
-          (snapshot) => {
-              // Track progress
-              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-              console.log(`Upload is ${progress}% done`);
-
-              switch (snapshot.state) {
-                  case 'paused':
-                      console.log('Upload is paused');
-                      break;
-                  case 'running':
-                      console.log('Upload is running');
-                      break;
-              }
-          },
-          (error) => {
-            console.error('Upload failed:', error);
-          },
-          () => {
-            console.log('Upload is DONE');
-            // Upload complete, get the file URL
-            getDownloadURL(uploadTask.snapshot.ref).then(async (downloadURL) => {
-                console.log('URL retrieved:',downloadURL);
-                //CREATE BLOCK
+        // Handle image upload
+        const handleImageUpload = async ({ file, index }) => {
+            try {
+                // Pass just the file parameter since userId is accessed via getter in the store
+                const downloadURL = await store.dispatch('mindspace/handleImageUpload', { file });
+                if (downloadURL) {
+                // Call handleAddBlock with the returned downloadURL
                 handleAddBlock({ type: 'image-block', index, content: downloadURL });
-            });
-          }
-        );
-      };
+                }
+            } catch (error) {
+                console.error('Error uploading image:', error);
+            }
+        };
 
-      // add mindslot
-      function triggerAddMindslot() {
-        console.log("[itemWindow.vue/triggerAddMindslot] TRIGGERED");
-        emitter.emit('addMindslot');
-      }
+        // add mindslot
+        function triggerAddMindslot() {
+            console.log("[itemWindow.vue/triggerAddMindslot] TRIGGERED");
+            emitter.emit('addMindslot');
+        }
 
         return {
             blocks,

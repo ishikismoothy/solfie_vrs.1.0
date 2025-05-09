@@ -458,7 +458,7 @@ export default {
     watch(userId, async (newUserId) => {
       try {
         if (newUserId) {
-          await fetchThemes();
+          await initializeThemes();
         } else {
           clearThemes();
         }
@@ -472,7 +472,7 @@ export default {
       enableBodyScroll(bodyElement);
       try {
         await store.dispatch('user/setLastViewLocationHistory', {lastLocation:"themespace"});
-        await initializeThemes();
+        //await initializeThemes();
        // console.log("[ThemeSapceView.vue]: sortableThemes", sortableThemes.value);
       } catch (error) {
         console.error('Error in onMounted:', error);

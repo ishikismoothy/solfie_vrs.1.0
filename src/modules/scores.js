@@ -37,7 +37,6 @@ export default {
   },
   actions: {
     async fetchSatisfactionData({ commit }, themeId) {
-      console.log("[scores.js/fetchSatisfactionData]",themeId)
       try {
         const themeData = await themeService.getThemeData(themeId);
         if (themeData && themeData.assessment) {

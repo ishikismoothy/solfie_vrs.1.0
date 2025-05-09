@@ -1,4 +1,4 @@
-<!-- ReturnToMyself.vue -->
+<!-- mindSlot.vue -->
 <template>
     <div class="return-to-myself">
       <h2 class="title">Return to myself</h2>
@@ -46,7 +46,10 @@
         Add a new slot ({{ 5 - mindspace.mindslot.length }} Remaining)
       </button>
       <!-- Listen for the event emitted by the ItemWindow component -->
-      <ItemWindow @addMindslot="addSlot" />
+      <!--
+      <ItemWindow
+        :is-open="showItemWindowFromMindSlot"
+        @addMindslot="addSlot" />-->
 
     </div>
   </template>
@@ -56,14 +59,19 @@
   import { useStore } from 'vuex';
   import { mindspaceService } from '@/firebase/firebaseMindSpace';
   import emitter from '@/eventBus';
+  //import ItemWindow from '@/components/ItemWindow/itemWindow.vue';
   //import { db } from '@/firebase/config' // Adjust path as needed
 
   export default {
-    name: 'ReturnToMyself',
+    name: 'mindSlot',
+    components: {
+      //ItemWindow,
+    },
     setup() {
         const store = useStore();
         const currentUser = computed(() => store.state.user.user.uid);
         const currentMindSpaceId = computed(() => store.state.mindspace.currentMindSpaceId);
+        const showItemWindowFromMindSlot = computed(() => store.state.user.modalControl.showItemWindow);
         const mindspace = ref({
             name: '',
             mindslot: []
@@ -75,7 +83,6 @@
 
         // Fetch mindspace slots with name preservation
         const fetchMindspaceSlots = async () => {
-          console.log("[mindSlot.vue/fetchMindspaceSlots] TRIGGERED ");
             try {
                 if (!currentMindSpaceId.value) {
                     console.warn('[fetchMindspaceSlots] No mindspace ID available');
@@ -87,6 +94,7 @@
                     ...data, // This preserves all existing data including name
                     mindslot: data.mindslot || []
                 };
+                console.log("[mindSlot.vue/fetchMindspaceSlots] Slots: ",[...mindspace.value.mindslot]);
             } catch (error) {
                 console.error('[fetchMindspaceSlots] Error fetching mindspace slots:', error);
                 // Preserve existing data on error
@@ -99,7 +107,7 @@
 
         // Fetch items
         const fetchItems = async () => {
-            console.log("[mindSlot.vue/fetchItem] TRIGGERED ");
+            //console.log("[mindSlot.vue/fetchItem] TRIGGERED ");
             try {
                 // Check if user ID exists
                 if (!currentUser.value) {
@@ -210,14 +218,14 @@
 
         // Add a watch for currentUser
         watch(currentUser, async (newUserId) => {
-            console.log("[mindSlot.vue] Found uid: ", currentUser.value);
+            //console.log("[mindSlot.vue] Found uid: ", currentUser.value);
             if (newUserId) {
                 await fetchItems();
             }
         });
 
         watch(currentMindSpaceId, async (newMindSpaceId) => {
-            console.log("[mindSlot.vue] Found uid: ", currentMindSpaceId.value);
+            //console.log("[mindSlot.vue] Found MindSpaceId: ", currentMindSpaceId.value);
             if (newMindSpaceId) {
                 await fetchMindspaceSlots();
                 await fetchItems();
@@ -226,7 +234,7 @@
 
         // Modify onMounted
         onMounted(async () => {
-            await fetchMindspaceSlots();
+            //await fetchMindspaceSlots();
             // Only fetch items if we have a user ID
             if (currentUser.value) {
                 await fetchItems();
@@ -239,6 +247,7 @@
             isEditing,
             editingSlotIndex,
             editingSlotName,
+            showItemWindowFromMindSlot,
             getItemImage,
             getItemName,
             addSlot,

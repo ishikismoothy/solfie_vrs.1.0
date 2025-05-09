@@ -107,7 +107,7 @@ export default defineComponent({
     watch(
       () => store.state.chat.chatMessages,
       (newMessages) => {
-        console.log('Chat messages updated:', newMessages);
+        //console.log('Chat messages updated:', newMessages);
         chatMessages.value = newMessages;
         nextTick(() => {
           scrollToBottom();
@@ -146,15 +146,15 @@ export default defineComponent({
 
     const scrollToBottom = () => {
       nextTick(() => {
-        console.log('Scrolling to bottom');
+        //console.log('Scrolling to bottom');
         if (chatMessagesContainer.value) {
           chatMessagesContainer.value.scrollTop = chatMessagesContainer.value.scrollHeight;
         }
       });
     };
 
-    watch(chatMessages, (newMessages) => {
-      console.log('Updated Chat Messages:', newMessages);
+    watch(chatMessages, (/*newMessages*/) => {
+      //console.log('Updated Chat Messages:', newMessages);
       scrollToBottom();
     }, { immediate: true });
 

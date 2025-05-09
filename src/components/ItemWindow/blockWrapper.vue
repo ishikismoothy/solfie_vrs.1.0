@@ -18,7 +18,7 @@
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
               </svg>
           </button>
-          <button @click="deleteBlock" class="control-btn text-red-500">×</button>
+          <button @click="deleteBlock(block.type)" class="control-btn text-red-500">×</button>
         </div>
         <component
             :is="getBlockComponent"
@@ -90,8 +90,8 @@ export default {
       });
     };
 
-    const deleteBlock = () => {
-      if (confirm('Are you sure you want to delete this block?')) {
+    const deleteBlock = (type) => {
+      if (confirm('Are you sure you want to delete this block?',type)) {
         store.dispatch('mindspace/deleteBlock', props.block.id);
       }
     };
