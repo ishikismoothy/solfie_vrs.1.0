@@ -1,7 +1,7 @@
 <template>
 
   <router-view/>
-
+  
   <!-- uncomment the following lines to use the FirestoreTest component -->
 
   <!-- <div id="app">
@@ -34,7 +34,6 @@ import {
 
 export default defineComponent({
   name: 'DashboardView',
-
   setup() {
     const store = useStore();
     const userId = computed(() => store.state.user.user.uid);

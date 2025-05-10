@@ -142,7 +142,7 @@ export const themeService = {
       
         const themeData = themeDoc.data();
       
-        console.log("[getThemeData]",themeData);
+        //console.log("[getThemeData]",themeData);
       
         return themeData;
     },

@@ -1,5 +1,5 @@
 <template>
-  <LoadingScreen v-model="themeInitialLoading" />
+  <LoadingScreen v-model="isLoading" />
   <div class="theme-space-container" v-if="isInitialized">
     <div class="theme-gallery">
       <!-- Header -->
@@ -52,7 +52,7 @@
       />
 
       <!-- Loading State -->
-      <div v-if="themeLoading" class="loading-state">
+      <div v-if="isLoading" class="loading-state">
         Loading themes...
       </div>
 
@@ -78,12 +78,12 @@
             class="theme-card"
             :class="{ 
               'is-dragging': isDragging,
-              'is-disabled': themeLoading 
+              'is-disabled': isLoading 
             }"
           >
-            <div class="theme-content" @click="!onEdit && !themeLoading && selectTheme(theme.id)">
+            <div class="theme-content" @click="!onEdit && !isLoading && selectTheme(theme.id)">
               <div class="theme-info-group">
-                <div class="drag-handle" :class="{ 'is-disabled': themeLoading }">
+                <div class="drag-handle" :class="{ 'is-disabled': isLoading }">
                   <svg viewBox="0 0 24 24" width="24" height="24" class="drag-icon">
                     <path fill="currentColor" d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/>
                   </svg>
@@ -99,10 +99,10 @@
                   class="icon-button star-button"
                   :class="{ 
                     'is-focused': focusedThemeId === theme.id,
-                    'is-disabled': isDragging || themeLoading 
+                    'is-disabled': isDragging || isLoading 
                   }"
-                  @click.stop="!isDragging && !themeLoading && changeFocusTheme(theme.id)"
-                  :disabled="isDragging || themeLoading"
+                  @click.stop="!isDragging && !isLoading && changeFocusTheme(theme.id)"
+                  :disabled="isDragging || isLoading"
                 >
                   <svg 
                     viewBox="0 0 24 24" 
@@ -126,16 +126,16 @@
                 <div class="dropdown-container">
                   <button 
                     class="icon-button more-button" 
-                    @click.stop="!isDragging && !themeLoading && toggleDropdown(theme.id)"
-                    :disabled="isDragging || themeLoading"
-                    :class="{ 'is-disabled': isDragging || themeLoading }"
+                    @click.stop="!isDragging && !isLoading && toggleDropdown(theme.id)"
+                    :disabled="isDragging || isLoading"
+                    :class="{ 'is-disabled': isDragging || isLoading }"
                   >
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
                     </svg>
                   </button>
                   <div 
-                    v-if="openDropdownId === theme.id && !isDragging && !themeLoading" 
+                    v-if="openDropdownId === theme.id && !isDragging && !isLoading" 
                     class="dropdown-menu"
                     @click.stop
                     @click.self="toggleDropdown(theme.id)"
@@ -209,11 +209,8 @@ export default {
     // Computed properties
     const userId = computed(() => store.state.user.user.uid);
     const themes = computed(() => store.getters['themeSpace/getThemes']);
-    const themeInitialLoading = computed(() => store.getters['themeSpace/isInitialLoading']);
-    const themeLoading = computed(() => store.getters['themeSpace/isLoading']);
-    const isLoading = computed(() => store.getters['mindspace/isLoading']);
+    const isLoading = computed(() => store.getters['themeSpace/isLoading']);
     const bodyElement = document.querySelector('body');
-
     const error = computed(() => store.getters['themeSpace/getError']);
     const onEdit = ref(false);
     const selectedThemeSpace = ref(null);
@@ -390,6 +387,7 @@ export default {
     };
 
     const selectTheme = async (id) => {
+      
       try {
         const selectedThemeData = {uid: userId.value, themeId: id}
         await store.dispatch('mindspace/setSelectedThemeId', selectedThemeData);
@@ -418,6 +416,7 @@ export default {
         console.log(error.message);
         onEdit.value = false;
       }
+      await initializeThemes();
     }
 
     const isDragging = ref(false);
@@ -443,13 +442,13 @@ export default {
     
     // Add drag handlers
     const themeDragStart = () => {
-      if (!themeLoading.value) {
+      if (!isLoading.value) {
         isDragging.value = true;
       }
     };
     
     const themeDragEnd = async () => {
-      if (!themeLoading.value) {
+      if (!isLoading.value) {
         isDragging.value = false;
       }
     };
@@ -486,8 +485,6 @@ export default {
       userId,
       focusedThemeId,
       themes,
-      themeLoading,
-      themeInitialLoading,
       isLoading,
       error,
       onEdit,

@@ -261,7 +261,7 @@ ADD STATUS HEADER
       },
       setup() {
         const store = useStore();
-        const currentUser = computed(() => store.state.user.user.userId);
+        //const currentUser = computed(() => store.state.user.user.userId);
         const currentTime = ref('');
 
         //[BACKGROUND]
@@ -1281,7 +1281,7 @@ ADD STATUS HEADER
           //console.log('[initializeFolderPages] TRIGGERED');
 
           if (!currentFolder.value || !Array.isArray(currentFolder.value.items)) {
-            console.log('[initializeFolderPages] Current folder is invalid or has no items. Initializing with an empty page.');
+            //console.log('[initializeFolderPages] Current folder is invalid or has no items. Initializing with an empty page.');
             folderPages.value = [{ items: [] }];
             return;
           }
@@ -1879,10 +1879,7 @@ ADD STATUS HEADER
         });
 
         onMounted(async () => {
-            if(!currentUser.value) {
-              await store.dispatch('user/setUserId');
-              //await store.dispatch('mindspace/setUserId');
-            }
+            
             updateTime();
             setInterval(updateTime, 60000); // Update time every minute
             initializeFolderPages();

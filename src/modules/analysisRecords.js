@@ -14,9 +14,9 @@ export default {
         state.isLoading = isLoading;
       },
       SET_SELECTED_DECISION_TAB(state, data) {
-        state.selectedTab.tab_A = data; // Fixed: Changed data_A to tab_A to match state structure
+        state.selectedTab.tab_A = data;
       },
-      SET_ABILITIES_DATA(state, data) { // Added missing mutation that was used in actions
+      SET_ABILITIES_DATA(state, data) {
         state.analysisData.analysisData_A = data;
       },
     },

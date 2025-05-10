@@ -415,8 +415,10 @@ export default {
         } catch (error) {
           console.error('Error initializing user ID:', error);
           commit('SET_ERROR', error.message);
+          commit('SET_LOADING', false);
         } finally {
           console.log("[mindspace.js/setUserId] Finish Process");
+          commit('SET_LOADING', false);
         }
       },
       async loadViewThemeId({ commit, state, dispatch }, uid) {
@@ -424,7 +426,7 @@ export default {
         try {
           // Check if userId exists
           if (!state.userId) {
-            console.log("[mindspace.js/loadViewThemeId] No userId available");
+            //console.log("[mindspace.js/loadViewThemeId] No userId available");
             commit('SET_USER_ID', uid);
           }
       
@@ -479,46 +481,55 @@ export default {
           console.error("[mindspace.js/setSelectedThemeId] Error:", error);
         }
       },
-      // Load theme's mindspace data
-      async setMindSpaceId({ commit, state, dispatch }) {
-        //console.log("[setMindSpaceId] TRIGGERED");
+      async setThemeData({ commit, state }) {
+        const currentThemeData = await mindspaceService.getThemeData(state.currentThemeId);
+        const currentThemeName = currentThemeData.name;
+        commit('SET_THEME_NAME', currentThemeName);
+        //console.log("[mindspace.js/setThemeData] Theme Name:", state.currentThemeName);
+      },    
+      // Load Mindspace data
+      async setMindSpace({ commit, dispatch, state }){
+        commit('SET_LOADING', true);
+        try {
+          // Load default MindspaceId.
+          await dispatch('setMindSpaceId');
+
+          // Load the mindspace pages
+          await dispatch('setMindSpacePages');
+
+          // Load the mindspace lists
+          await dispatch('setMindSpaceList');
+          
+        } catch (error) {
+          console.error('Error loading theme mindspace data:', error);
+          commit('SET_ERROR', error.message);
+        }finally{
+          commit('SET_LOADING', false);
+          console.log(
+            `[mindspace.js/setMindSpace] CURRENT USER'S VUEX STATE IS READY
+            UserId: ${state.userId}
+            Current ThemeId: ${state.currentThemeId}
+            Current ThemeName:  ${state.currentThemeId}
+            Current mindSpaceId: ${state.currentThemeName}
+            Current MindSpace Name: ${state.currentMindSpaceName}
+            Total Pages: ${state.totalPages}`
+          );
+          console.log("[mindspace.js/setMindSpace] List of MindSpace: ", state.mindSpaceList);
+        }
+      },
+      async setMindSpaceId({ commit, state }) {
         try {
           // Get theme document to find defaultMindSpace
           const defaultMindSpaceId = await mindspaceService.getDefaultMindSpaceId(state.currentThemeId, state.userId);
 
           commit('SET_MINDSPACE_ID', defaultMindSpaceId);
-          console.log("[setMindSpaceId] MindSpaceId: ",state.currentMindSpaceId);
+          //console.log("[setMindSpaceId] MindSpaceId: ",state.currentMindSpaceId);
           await updateViewMindspaceHistory( state.userId, state.currentMindSpaceId);
 
-          // Now load the mindspace pages
-          await dispatch('setMindSpacePages');
-
-          // Now load the mindspace lists
-          await dispatch('setMindSpaceList');
-
         } catch (error) {
           console.error('Error loading theme mindspace data:', error);
           commit('SET_ERROR', error.message);
         }
-      },
-      async setItemId ({ commit, state, dispatch }, itemId) {
-        try {
-          commit('SET_ITEM_ID', itemId);
-          console.log("[setItemId]",state.currentItemId);
-
-          await dispatch('setBlocks', itemId);
-        } catch (error) {
-          console.error('Error loading theme mindspace data:', error);
-          commit('SET_ERROR', error.message);
-        }
-      },
-      
-      async setThemeData({ commit, state }) {
-        //console.log("[setThemeData] TRIGGERED");
-        const currentThemeData = await mindspaceService.getThemeData(state.currentThemeId);
-        const currentThemeName = currentThemeData.name;
-        commit('SET_THEME_NAME', currentThemeName);
-        console.log("[mindspace.js/setThemeData] Theme Name:", state.currentThemeName);
       },
       async setMindSpaceList({ commit, state }) {
         try {
@@ -542,22 +553,20 @@ export default {
           });
 
           commit('SET_MINDSPACE_LIST', result);
-          console.log("[mindspace.js/setMindSpaceList] Mindspace list:", result);
+          //console.log("[mindspace.js/setMindSpaceList] Mindspace list:", result);
 
 
         } catch (error) {
           console.error('Error loading mindspace list:', error);
           commit('SET_ERROR', error.message);
         }
-
       },
-      // Modified original function to use getMindSpaceData
       async setMindSpacePages({ commit, state }) {
         try {
           //console.log("[setMindSpacePages] TRIGGERED");
           
           const result = await mindspaceService.getMindSpaceData(state.currentMindSpaceId);
-          console.log("[setMindSpacePages] Current MindSpaceData:", result);
+          //console.log("[setMindSpacePages] Current MindSpaceData:", result);
           
           if (!result || !result.pages) {
             throw new Error('Invalid data returned from getMindSpaceData');
@@ -579,49 +588,8 @@ export default {
           commit('SET_ERROR', error.message);
         } finally {
           await new Promise(resolve => setTimeout(resolve, 500));
-          commit('SET_LOADING', false);
         }
       },
-      
-      /*
-      setMindSpacePages({ commit, state }) {
-        console.log("[setMindSpacePages] TRIGGERED");
-        
-        //Load Users MindSpace from Firebase
-        const usersMindSpace = [
-          {
-            items: [
-              { id:'0000', name: '0', shape: circleSvg, badge: 'lightblue' },
-              { id:'0001', name: '1', shape: cloudSvg },
-              { 
-                id:'f0009',
-                name: 'フォルダー1', 
-                shape: folderSvg, 
-                items: [
-                  { id:'0009', name: 'Item 1', shape: circleSvg, badge: 'lightblue' },
-                  { id:'0010', name: 'Item 2', shape: squareSvg },
-                  { id:'0011', name: 'Item 3', shape: cloudSvg },
-                  { id:'0012', name: 'Item 4', shape: octagonSvg },
-                  { id:'0013', name: 'Item 5', shape: circleSvg },
-                  { id:'0014', name: 'Item 6', shape: squareSvg },
-                  { id:'0015', name: 'Item 7', shape: cloudSvg },
-                  { id:'0016', name: 'Item 8', shape: octagonSvg },
-                ]
-              },
-            ]
-          },
-          {
-            items: [
-              { id:'0009', name: '0', shape: circleSvg },
-              { id:'0010', name: '1', shape: cloudSvg },
-            ]
-          }
-        ];
-
-        commit('SET_MINDSPACE_PAGES', usersMindSpace);
-        commit('SET_TOTAL_PAGES', usersMindSpace);
-        console.log("[mindspace.js] totalPages:", state.totalPages);
-      },*/
       async updateMindSpace({ state, commit }) {
         try {
           commit('SET_LOADING', true);
@@ -672,12 +640,12 @@ export default {
         commit('CLEANUP_EMPTY_PAGES');
         commit('SET_TOTAL_PAGES', state.mindSpacePages.length);
       },
-      // New action for updating page items
       setIsEditMode({ commit, state }, value){
         console.log("[setIsEditMode] TRIGGERED");
         commit('SET_IS_EDIT_MODE', value);
         console.log("[mindspace.js/setIsEditMode] isEditMode: ", state.isEditMode);
       },
+      //Page Item Handling
       updatePageItems({ commit }, { pageIndex, items }) {
         commit('UPDATE_PAGE_ITEMS', { pageIndex, items });
       },
@@ -776,7 +744,7 @@ export default {
       removeItemFromPage({ commit }, { itemId }) {
         commit('REMOVE_ITEM_FROM_PAGE', { itemId });
       },
-      // New action for updating folder items
+      //Folder Item Handling
       updateFolderItems({ commit }, { folderId, items }) {
         commit('UPDATE_FOLDER_ITEMS', { folderId, items });
       },
@@ -892,26 +860,6 @@ export default {
           throw error;
         }
       },
-      /*
-      async moveItemFromFolderToPage({ commit, state }, payload) {
-        try {
-          const { pages, rawPages, rawFolders } = await moveItemFromFolderToMindspace(
-            state.currentMindSpaceId,
-            payload
-          );
-    
-          // Update the rendered state with rich data
-          commit('SET_MINDSPACE_PAGES', pages);
-          
-          // Store raw data for future operations (optional)
-          commit('SET_RAW_DATA', { pages: rawPages, folders: rawFolders });
-          
-          console.log('[moveItemFromFolderToPage] Successfully moved item');
-        } catch (error) {
-          console.error('[moveItemFromFolderToPage] Error:', error);
-          throw error;
-        }
-      },*/
       async moveItemToFolder({ commit, state }, { pageIndex, folderId, item }) {
         try {
           console.log('[moveItemToFolder] Starting move operation:', {
@@ -1005,7 +953,18 @@ export default {
           throw error;
         }
       },
-      //Item Blocks Handling
+      //Selected Item Blocks Handling
+      async setItemId ({ commit, state, dispatch }, itemId) {
+        try {
+          commit('SET_ITEM_ID', itemId);
+          console.log("[setItemId]",state.currentItemId);
+
+          await dispatch('setBlocks', itemId);
+        } catch (error) {
+          console.error('Error loading theme mindspace data:', error);
+          commit('SET_ERROR', error.message);
+        }
+      },
       async getItemName({ commit, state }, itemName) {
         commit('SET_ITEM_NAME', itemName);
         console.log("[getItemName/mindspace.js] View itemName:", state.currentItemName);

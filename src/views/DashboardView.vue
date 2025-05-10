@@ -349,13 +349,12 @@ export default defineComponent({
         }
       });
       
+      // IF USER ACCESS TO DASHBOARD STRAIGHT.
       try {
         // Make sure we have a userId first
         if (!userId.value) {
           await store.dispatch('user/setUserId');
           console.log("[DashboardView.vue]",userId.value);
-          //await store.dispatch('mindspace/setUserId');
-          //await store.dispatch('mindspace/setUserId', userId.value);
         }
 
         // If no theme is selected
@@ -368,7 +367,7 @@ export default defineComponent({
         }
 
         // Load pages if we have a theme
-        await store.dispatch('mindspace/setMindSpaceId');
+        await store.dispatch('mindspace/setMindSpace');
         //toggleView();
 
       } catch (error) {
@@ -445,6 +444,7 @@ export default defineComponent({
 @import '../assets/dashboardStyle.scss';
 @import '../assets/mindSpaceStyle.scss';
 @import '../assets/deleteButtonStyle.scss';
+@import '../assets/widgetStyle.scss';
 @import '../assets/satisfactionDataViewStyle.scss';
 @import '../assets/todosStyle.scss';
 @import '../assets/dockStyle.scss';

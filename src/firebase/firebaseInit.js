@@ -17,7 +17,7 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const firebaseApp = initializeApp(firebaseConfig);
-console.log('Firebase Initialized:', firebaseApp);
+//console.log('Firebase Initialized:', firebaseApp);
 
 
 // Initialize Firebase Authentication and get a reference to the service
@@ -42,7 +42,7 @@ if (window.location.hostname === 'localhost') {
   console.log('Storage Emulator Connected');
 } else {
   // Production setup
-  console.log('Using Production Firebase services');
+  //console.log('Using Production Firebase services');
 }
 
 

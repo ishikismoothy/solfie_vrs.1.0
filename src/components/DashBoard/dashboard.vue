@@ -23,7 +23,8 @@
       <SatisfactionDataView/>
 
       <!-- Widget Section -->
-      <WidgetDecisionPower/>
+      <WidgetA/>
+      
 
       <section class="stats-section">
         <div class="stat-item">
@@ -113,14 +114,14 @@
   import { useStore } from 'vuex';
   import SatisfactionDataView from './satisfactionDataView.vue';
   import MindSlotView from './mindSlot.vue'
-  import WidgetDecisionPower from './Widget/widgetDecisionPower.vue';
+  import WidgetA from './Widget/widgetA_DecisionPower.vue';
 
   export default defineComponent({
     name: 'DashboardView',
     components:{
       SatisfactionDataView,
       MindSlotView,
-      WidgetDecisionPower,
+      WidgetA,
     },
     setup() {
       const store = useStore();

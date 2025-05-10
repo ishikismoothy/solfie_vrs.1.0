@@ -308,7 +308,7 @@
 
             onMounted(async () => {
             try {
-                console.log("none");
+                //console.log("none");
             } finally {
                 isLoading.value = false;
             }

@@ -7,8 +7,7 @@ export default {
         focusedThemeId: null,
         currentThemeId: null,
         themes: [],
-        loading: false,
-        initialLoading: false,
+        isLoading: false,
         error: null,
         searchQuery: '',
         themesKey: [
@@ -34,11 +33,8 @@ export default {
         SET_THEME_ID(state, id){
             state.currentThemeId = id;
         },
-        SET_INITIAL_LOADING(state, status) {
-            state.initialLoading = status;
-        },
         SET_LOADING(state, status) {
-            state.loading = status;
+            state.isLoading = status;
         },
         SET_ERROR(state, error) {
             state.error = error;
@@ -94,9 +90,13 @@ export default {
 
     actions: {
         async fetchThemes({ commit }, uid ) {
-            //console.log("[fetchTheme/themeSpace.js] TRIGGERED")
+            // Set loading state
+            commit('SET_LOADING', true);
+            
             // Clear any existing errors
             commit('SET_ERROR', null);
+            // Clear any existing theme Data
+            commit('SET_THEMES', null);
 
             try {
             // Check for userId
@@ -107,8 +107,7 @@ export default {
                 throw new Error('User not authenticated');
             }
 
-            // Set loading state
-            commit('SET_INITIAL_LOADING', true);
+            
 
             // Fetch themes
             const themes = await themeService.getThemes(userId);
@@ -124,7 +123,7 @@ export default {
                 commit('SET_THEMES', []);
             } finally {
                 await new Promise(resolve => setTimeout(resolve, 3000));
-                commit('SET_INITIAL_LOADING', false);
+                commit('SET_LOADING', false);
             }
         },
 
@@ -300,8 +299,7 @@ export default {
     getters: {
         getFocusedThemeId: state => state.focusedThemeId,
         getThemes: state => state.themes,
-        isInitialLoading: state => state.initialLoading,
-        isLoading: state => state.loading,
+        isLoading: state => state.isLoading,
         getError: state => state.error,
         getSearchQuery: state => state.searchQuery,
         getThemeById: state => id => state.themes.find(theme => theme.id === id),

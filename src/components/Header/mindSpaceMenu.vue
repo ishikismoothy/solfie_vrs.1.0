@@ -346,7 +346,7 @@
 
         if (result.success) {
           console.log("[mindSpaceMenu.vue]",result.message)
-          await store.dispatch('mindspace/setMindSpaceId');
+          await store.dispatch('mindspace/setMindSpace');
         }else{
           console.log(result.error);
         } 
@@ -360,7 +360,7 @@
         const result = await mindspaceService.setPrivacyMindspace(mindspace.id);
         if (result.success) {
           console.log("[mindSpaceMenu.vue/togglePrivacy]",result.message)
-          await store.dispatch('mindspace/setMindSpaceId');
+          await store.dispatch('mindspace/setMindSpace');
         }else{
           console.log("[mindSpaceMenu.vue/togglePrivacy]",result.message);
           console.log("[mindSpaceMenu.vue/togglePrivacy]",result.error);
