@@ -423,6 +423,7 @@ export default {
       },
       async loadViewThemeId({ commit, state, dispatch }, uid) {
         //console.log("[loadViewThemeId] TRIGGERED");
+        commit('SET_LOADING', true);
         try {
           // Check if userId exists
           if (!state.userId) {
