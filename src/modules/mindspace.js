@@ -509,8 +509,8 @@ export default {
             `[mindspace.js/setMindSpace] CURRENT USER'S VUEX STATE IS READY
             UserId: ${state.userId}
             Current ThemeId: ${state.currentThemeId}
-            Current ThemeName:  ${state.currentThemeId}
-            Current mindSpaceId: ${state.currentThemeName}
+            Current ThemeName:  ${state.currentThemeName}
+            Current mindSpaceId: ${state.currentMindSpaceId}
             Current MindSpace Name: ${state.currentMindSpaceName}
             Total Pages: ${state.totalPages}`
           );

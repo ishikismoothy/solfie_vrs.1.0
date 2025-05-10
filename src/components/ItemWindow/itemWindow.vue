@@ -91,7 +91,7 @@
 </template>
 
 <script>
-import { computed, onMounted, watch, ref, nextTick } from 'vue';
+import { computed, ref, nextTick } from 'vue';
 import { useStore } from 'vuex';
 import BlockWrapper from './blockWrapper.vue';
 import AddBlockButton from './addBlockButton.vue';
@@ -157,24 +157,6 @@ export default {
             store.dispatch('user/setIsBlockEdit', false);
         };
 
-        const loadItemData = async () => {
-            if (selectedItemId.value) {
-                await store.dispatch('mindspace/setBlocks', selectedItemId.value);
-            }
-        };
-
-        // Watch for changes in itemId to reload data
-        watch(() => selectedItemId.value, async (newId) => {
-            if (newId) {
-                await loadItemData();
-            }
-
-        });
-        onMounted(async () => {
-            if (selectedItemId.value) {
-                await loadItemData();
-            }
-        });
 
         const addNewBlock = (type) => {
             const newBlock = {

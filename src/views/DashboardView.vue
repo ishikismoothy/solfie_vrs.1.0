@@ -169,17 +169,7 @@ export default defineComponent({
       () => showMindUniverseModal.value, (newValue) => {
         console.log('[DashboardView.vue] showMindUniverseModal changed:', { new: newValue })
       }
-    )
-    
-    /*
-    watch(
-      () => isEditMode.value,
-      (newValue, oldValue) => {
-        console.log('[DashboardView.vue] Edit mode changed:', { new: newValue, old: oldValue })
-      },
-      { immediate: true }
-    )*/
-
+    );
 
     // Update toggleView:
     const toggleView = () => {
