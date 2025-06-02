@@ -15,6 +15,8 @@
       <!-- Loading placeholder -->
     </section>
     <section v-if="!isDataLoading && currentDataValues.items" class="chart-content-section">
+      <h4 v-if="widgetData">{{ widgetData.name }}</h4>
+      <h4 v-else>Loading...</h4>  
       <div class="chart-circle">
         <svg width="0" height="0">
           <defs>
@@ -47,8 +49,12 @@
 </template>
 
 <script>
+//[WidgetA] 
+//ID: CC4ZpLD5Sz2DmwrTG84l
+
 import { defineComponent, ref, computed, watch, onMounted } from 'vue';
 import { useStore } from 'vuex';
+import { widgetService } from '@/firebase/firebaseWidget'
 
 export default defineComponent({
   name: 'ChartComponent',
@@ -66,12 +72,12 @@ export default defineComponent({
     // Getter name for data
     dataGetterName: {
       type: String,
-      default: 'currentAbilities'
+      default: 'getDataA'
     },
     // State path to chart data
     dataStatePath: {
       type: String,
-      default: 'analysisData.analysisData_A'
+      default: 'analysisData.data_A'
     },
     // State path to loading status
     loadingGetterName: {
@@ -86,6 +92,10 @@ export default defineComponent({
   },
   setup(props) {
     const store = useStore();
+    const id = 'GORz1h6ts9Vq2PKMD6un';
+
+    //Get Widget Data
+    const widgetData = ref(null);
 
     // Linear interpolation function for smooth animations
     const lerp = (start, end, t) => start * (1 - t) + end * t;
@@ -176,6 +186,23 @@ export default defineComponent({
       }
     }, { immediate: true });
 
+    async function getWidget(widgetId) {
+      try {
+        // Make sure to await the Promise
+        const data = await widgetService.getWidgetById(widgetId);
+        
+        return {
+          name: data.name, 
+          description: data.description, 
+          entries: data.entries
+        };
+      } catch (error) {
+        console.error("Error getting widget name:", error);
+        return null;
+      }
+    }
+
+
     // Initialize data when component is mounted
     onMounted(async () => {
       // Load data from Vuex store
@@ -183,15 +210,21 @@ export default defineComponent({
       
       // Initialize animated values with the correct structure
       initializeAnimatedValues();
+
+      // Get widget data
+      widgetData.value = await getWidget(id);
+      console.log(widgetData?.value);
     });
 
     return {
+      widgetData,
       // Return all required properties and methods
       selectedDataTab,
       currentDataValues,
       chartData,
       isDataLoading,
       animatedValues,
+      
     };
   }
 });

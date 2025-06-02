@@ -148,5 +148,39 @@ export const widgetService = {
             console.error("Error removing widget from user:", error);
             throw error;
         }
-    }
+    },
+    async getWidgetById(widgetId) {
+        try {
+          // Get reference to the specific document directly
+          const widgetDocRef = doc(db, "widgets", widgetId);
+          
+          // Get the document
+          const docSnap = await getDoc(widgetDocRef);
+          
+          // Check if document exists
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            
+            // Format the createdAt timestamp if it exists
+            let formattedData = { ...data };
+            
+            if (data.createdAt) {
+              formattedData.createdAt = formatTimestampToDateInString(data.createdAt);
+            }
+            
+            // Return the document data along with its ID
+            return {
+              id: docSnap.id,
+              ...formattedData
+            };
+          } else {
+            // Document doesn't exist
+            console.log("No widget found with ID:", widgetId);
+            return null;
+          }
+        } catch (error) {
+          console.error("Error getting widget by ID:", error);
+          throw error;
+        }
+      }
 }

@@ -247,6 +247,8 @@ export default {
       } catch (error) {
           console.error("Error getting user widgets:", error);
           return [];
+      }finally{
+        console.log("[user.js/getUserWidgets] User's widgets: ", state.userWidgets)
       }
     },
     async addUserWidget({ dispatch, state }, widgetId) {

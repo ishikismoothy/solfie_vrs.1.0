@@ -23,8 +23,18 @@
       <SatisfactionDataView/>
 
       <!-- Widget Section -->
-      <WidgetA/>
-      
+      <WidgetA
+        v-if="hasWidgetA"
+      />
+      <WidgetB
+        v-if="hasWidgetB"
+        storeModule="analysisRecords"
+        tabKey="bodyEmotionMindSpirit"
+        dataGetterName="getDataB"
+        dataStatePath="analysisData.data_B"
+        loadingGetterName="isLoading"
+        loadDataAction="loadData"
+      />
 
       <section class="stats-section">
         <div class="stat-item">
@@ -115,6 +125,7 @@
   import SatisfactionDataView from './satisfactionDataView.vue';
   import MindSlotView from './mindSlot.vue'
   import WidgetA from './Widget/widgetA_DecisionPower.vue';
+  import WidgetB from './Widget/widgetB_SubjectivityRatio.vue';
 
   export default defineComponent({
     name: 'DashboardView',
@@ -122,6 +133,7 @@
       SatisfactionDataView,
       MindSlotView,
       WidgetA,
+      WidgetB,
     },
     setup() {
       const store = useStore();
@@ -129,6 +141,21 @@
       const stats = computed(() => store.state.user.stats || {});
       const themeName = computed(() => store.state.mindspace.currentThemeName);
       const satisfactionValue = computed(() => store.state.themeSpace.satisfaction.currentSelfSatisfaction);
+      
+      //Activated Widget Check
+      const usersWidgets = computed(() => store.state.user.userWidgets);
+      const hasWidgetA = computed(() => 
+        usersWidgets.value.includes('CC4ZpLD5Sz2DmwrTG84l')
+      );
+      const hasWidgetB = computed(() => 
+        usersWidgets.value.includes('GORz1h6ts9Vq2PKMD6un')
+      );
+      const hasWidgetC = computed(() => 
+        usersWidgets.value.includes('n33Khwkw7gKSmo8ZNxhk')
+      );
+      const hasWidgetD = computed(() => 
+        usersWidgets.value.includes('rezpOM7Kk7R780BzhqvW')
+      );
 
       const result = () => {
         const satisfaction = ["😱", "😣", "😕", "😃", "😍"];
@@ -203,6 +230,7 @@
         await store.dispatch('chat/addRandomMessages');
         await store.dispatch('scores/loadScoresData');
         await store.dispatch('todos/loadTodosData');
+        await store.dispatch('user/getUserWidgets');
       });
 
       //console.log('Entire store state:', store.state);
@@ -231,6 +259,12 @@
         deleteTodo,
         handleFileUpload,
         isTodosLoading,
+
+        //Widgets
+        hasWidgetA,
+        hasWidgetB,
+        hasWidgetC,
+        hasWidgetD,
 
       };
     },
