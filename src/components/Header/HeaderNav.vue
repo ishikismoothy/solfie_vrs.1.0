@@ -116,7 +116,7 @@ export default {
     const closeDropdown = () => {
       if (!isButtonClicked.value) {
         isDropdownOpen.value = false;
-        console.log('Popup closed');
+        // console.log('Popup closed');
       }
       isButtonClicked.value = false;
     };

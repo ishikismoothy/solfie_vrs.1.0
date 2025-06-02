@@ -91,7 +91,7 @@
 </template>
 
 <script>
-import { computed, ref, nextTick } from 'vue';
+import { computed, ref, nextTick, watch } from 'vue';
 import { useStore } from 'vuex';
 import BlockWrapper from './blockWrapper.vue';
 import AddBlockButton from './addBlockButton.vue';
@@ -139,6 +139,10 @@ export default {
       isOpen: {
           type: Boolean,
           required: true
+      },
+      itemId: {
+        type: String,
+        required: true
       }
     },
     emits: ['close', 'addMindslot'],
@@ -271,8 +275,27 @@ export default {
         // add mindslot
         function triggerAddMindslot() {
             console.log("[itemWindow.vue/triggerAddMindslot] TRIGGERED");
-            emitter.emit('addMindslot');
+            emitter.emit('addMindslot', {itemId: selectedItemId.value, title: currentItemName.value});
         }
+
+        const loadItemData = (id) => {
+          if (!id) return;
+          // Dispatch Vuex action to set or fetch item by id
+          store.dispatch('mindspace/fetchItemById', id);
+        };
+
+        watch(() => props.itemId, (newId) => {
+          if (newId) {
+            loadItemData(newId)
+          }
+        })
+
+        // const currentItemId = computed(() => store.getters['mindspace/getItemId'])
+
+        // watch(currentItemId, (newId) => {
+        //   console.log('Current item ID changed:', newId)
+        //   // You can react to currentItemId changes here if needed
+        // })
 
         return {
             blocks,
