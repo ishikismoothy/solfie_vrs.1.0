@@ -1,71 +1,86 @@
 <!-- mindSlot.vue -->
 <template>
-    <div class="return-to-myself">
-      <h2 class="title">Return to myself</h2>
+  <Teleport to="body">
+    <div
+      v-if="expandedSlotIndex !== null"
+      class="card-window-overlay"
+      @click="expandedSlotIndex = null"
+    />
+  </Teleport>
 
-      <!-- Mind Slots Container -->
-      <div class="mind-slots">
-        <div v-for="(slot, index) in mindspace.mindslot" :key="index" class="mind-slot">
-          <!-- Slot Header with Edit Option -->
-          <div class="slot-header">
-            <input
-              v-if="isEditing && editingSlotIndex === index"
-              v-model="editingSlotName"
-              @blur="saveSlotName(index)"
-              @keyup.enter="saveSlotName(index)"
-              class="slot-name-input"
-            />
-            <h3 v-else class="slot-name" @click="startEditing(index, slot.name)">
-              {{ slot.name }}
-            </h3>
-            <button @click="deleteSlot(index)" class="delete-btn">×</button>
-          </div>
+    <!-- Expanded card also teleported to body -->
+  <Teleport to="body">
+    <mind-slot-card
+      v-if="expandedSlotIndex !== null"
+      :key="`expanded-${expandedSlotIndex}`"
+      :mindslot="mindspace.mindslot[expandedSlotIndex]"
+      :index="expandedSlotIndex"
+      :getItemImage="getItemImage"
+      :getItemName="getItemName"
+      :expanded="true"
+      @delete="deleteSlot"
+      @name-change="saveSlotName"
+      @click="handleSlotClick"
+      class="expanded-teleported"
+    />
+  </Teleport>
 
-          <!-- Slot Content -->
-          <div
-            class="slot-content"
-            @click="openItemSelection(index)"
-            :style="{ backgroundImage: getItemImage(slot.item) }"
-          >
-            <div v-if="getItemName(slot.item)" class="item-content">
-              {{ getItemName(slot.item) }}
-            </div>
-            <div v-else class="empty-slot">
-              Click to select item
-            </div>
-          </div>
-        </div>
-      </div>
+  <div class="return-to-myself">
+    <h2 class="title">Return to myself</h2>
 
-      <!-- Add Slot Button -->
-      <button
-        v-if="mindspace.mindslot.length < 5"
-        @click="addSlot"
-        class="add-slot-btn"
-      >
-        Add a new slot ({{ 5 - mindspace.mindslot.length }} Remaining)
-      </button>
-      <!-- Listen for the event emitted by the ItemWindow component -->
-      <!--
-      <ItemWindow
-        :is-open="showItemWindowFromMindSlot"
-        @addMindslot="addSlot" />-->
-
+    <!-- Mind Slots Container -->
+    <div class="mind-slots">
+      <mind-slot-card
+        v-for="(mindslot, index) in mindspace.mindslot"
+        :key="`normal-${index}`"
+        :mindslot="mindslot"
+        :index="index"
+        :getItemImage="getItemImage"
+        :getItemName="getItemName"
+        :expanded="false"
+        v-show="expandedSlotIndex !== index"
+        @delete="deleteSlot"
+        @name-change="saveSlotName"
+        @click="handleSlotClick"
+      />
     </div>
-  </template>
+
+  <!-- Add Slot Button -->
+  <button @click="addSlot('buttonChild')" class="add-slot-btn">
+    Add New Slot
+  </button>
+
+    <!-- <button
+      v-if="mindspace.mindslot.length < 5"
+      @click="addSlot"
+      class="add-slot-btn"
+    >
+      Add a new slot ({{ 5 - mindspace.mindslot.length }} Remaining)
+    </button> -->
+
+    <!-- Listen for the event emitted by the ItemWindow component -->
+    <!--
+    <ItemWindow
+      :is-open="showItemWindowFromMindSlot"
+      @addMindslot="addSlot" />-->
+
+  </div>
+</template>
 
   <script>
-  import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+  import { ref, computed, onMounted, onBeforeUnmount, watch, } from 'vue'
   import { useStore } from 'vuex';
   import { mindspaceService } from '@/firebase/firebaseMindSpace';
   import emitter from '@/eventBus';
+  import MindSlotCard from './mindSlotCard.vue'
+
   //import ItemWindow from '@/components/ItemWindow/itemWindow.vue';
   //import { db } from '@/firebase/config' // Adjust path as needed
 
   export default {
     name: 'mindSlot',
     components: {
-      //ItemWindow,
+      MindSlotCard,
     },
     setup() {
         const store = useStore();
@@ -133,33 +148,55 @@
             return await mindspaceService.getItemName(itemId, items);
         };
 
-        // Add new slot
-        const addSlot = async () => {
-            if (mindspace.value.mindslot.length >= 5) return;
+        // Old Add new slot Function
+        // const addSlot = async () => {
+        //     if (mindspace.value.mindslot.length >= 5) return;
 
-            const newSlot = {
-                name: 'New Slot',
-                item: null
-            };
+        //     const newSlot = {
+        //         name: 'New Slot',
+        //         item: null
+        //     };
 
-            // Create a new mindspace object that preserves all existing properties
-            const updatedMindspace = {
-                ...mindspace.value,                      // Spread existing properties (including name)
-                mindslot: [...mindspace.value.mindslot]  // Create new array with existing slots
-            };
+        //     // Create a new mindspace object that preserves all existing properties
+        //     const updatedMindspace = {
+        //         ...mindspace.value,                      // Spread existing properties (including name)
+        //         mindslot: [...mindspace.value.mindslot]  // Create new array with existing slots
+        //     };
 
-            // Add the new slot
-            updatedMindspace.mindslot.push(newSlot);
+        //     // Add the new slot
+        //     updatedMindspace.mindslot.push(newSlot);
 
-            // Update the ref
-            mindspace.value = updatedMindspace;
+        //     // Update the ref
+        //     mindspace.value = updatedMindspace;
 
-            // Save to Firebase
-            await updateMindspace();
-        };
+        //     // Save to Firebase
+        //     await updateMindspace();
+        // };
+
+        async function addSlot(title, itemId) {
+          if (mindspace.value.mindslot.length >= 5) return;
+          console.log('Adding new slot with title:', title);
+          mindspace.value.mindslot = [
+            ...mindspace.value.mindslot,
+            { name: title || 'New Slot', item: itemId }
+          ];
+          await updateMindspace();  // Save changes to backend
+        }
+
+        function handleAddMindslot({ title, itemId }) {
+          addSlot(title, itemId);
+        }
+
+        onMounted(() => {
+          emitter.on('addMindslot', handleAddMindslot);
+        });
+        onBeforeUnmount(() => {
+          emitter.off('addMindslot', handleAddMindslot);
+        });
 
         // Delete slot
         const deleteSlot = async (index) => {
+          console.log(`deleting slot ${index} from mindspace`)
             mindspace.value.mindslot.splice(index, 1);
             await updateMindspace();
         };
@@ -172,14 +209,14 @@
         };
 
         // Save slot name
-        const saveSlotName = async (index) => {
-            if (editingSlotName.value.trim()) {
-                mindspace.value.mindslot[index].name = editingSlotName.value;
-                await updateMindspace();
-            }
-            isEditing.value = false;
-            editingSlotIndex.value = null;
-            editingSlotName.value = '';
+        const saveSlotName = async ({ index, newName }) => {
+          if (newName.trim()) {
+            mindspace.value.mindslot[index].name = newName;
+            await updateMindspace();
+          }
+          isEditing.value = false;
+          editingSlotIndex.value = null;
+          editingSlotName.value = '';
         };
 
         // Update mindspace while preserving name
@@ -206,16 +243,6 @@
             //emit('open-item-selection', slotIndex);
         };
 
-            // Listen for the add-mindslot event
-        onMounted(() => {
-          emitter.on('addMindslot', addSlot);
-        });
-
-        // Cleanup listener on unmount
-        onUnmounted(() => {
-          emitter.off('addMindslot', addSlot);  // Cleanup to avoid memory leaks
-        });
-
         // Add a watch for currentUser
         watch(currentUser, async (newUserId) => {
             //console.log("[mindSlot.vue] Found uid: ", currentUser.value);
@@ -241,6 +268,34 @@
             }
         });
 
+        // Expand selected slot
+
+        const expandedSlotIndex = ref(null);
+
+        function handleSlotClick(index) {
+          console.log(`Slot ${index} clicked`);
+
+          // Safety check - ensure the mindslot exists
+          if (!mindspace.value.mindslot || !mindspace.value.mindslot[index]) {
+            console.warn(`Mindslot at index ${index} not found`);
+            return;
+          }
+
+          const mindslot = mindspace.value.mindslot[index];
+
+          if (expandedSlotIndex.value === index) {
+            // Slot already expanded, trigger item window flip
+            console.log(`Slot ${index} already expanded, opening item window`);
+            emitter.emit('openItemWindow', {
+              id: mindslot.item || null,
+              title: mindslot.name || 'Unnamed Slot',
+              image: mindslot.image || null
+            });
+          } else {
+            console.log(`Expanding slot ${index}`);
+            expandedSlotIndex.value = index;
+          }
+        }
 
         return {
             mindspace,
@@ -254,13 +309,18 @@
             deleteSlot,
             startEditing,
             saveSlotName,
-            openItemSelection
+            openItemSelection,
+            handleSlotClick,
+            expandedSlotIndex,
         }
+      }
     }
-  }
-  </script>
 
-  <style scoped>
+
+
+</script>
+
+<style scoped>
   .return-to-myself {
     padding: 20px;
     background: #fff;
@@ -279,13 +339,13 @@
     gap: 15px;
   }
 
-  .mind-slot {
+  /* .mind-slot {
     border-radius: 12px;
     overflow: hidden;
     background: #f5f5f5;
-  }
+  } */
 
-  .slot-header {
+  /* .slot-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -298,8 +358,8 @@
     border-radius: 4px;
     padding: 4px 8px;
     width: 80%;
-  }
-
+  } */
+/*
   .slot-content {
     height: 120px;
     background-size: cover;
@@ -309,9 +369,9 @@
     justify-content: center;
     cursor: pointer;
     position: relative;
-  }
+  } */
 
-  .item-content {
+  /* .item-content {
     background: rgba(0, 0, 0, 0.5);
     color: white;
     padding: 8px;
@@ -329,7 +389,7 @@
     cursor: pointer;
     font-size: 20px;
     padding: 0 8px;
-  }
+  } */
 
   .add-slot-btn {
     width: 100%;
@@ -345,4 +405,15 @@
   .add-slot-btn:hover {
     background: #e5e5e5;
   }
-  </style>
+
+  .card-window-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  }
+
+</style>

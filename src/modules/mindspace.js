@@ -5,7 +5,7 @@
 //import cloudSvg from '../assets/shapes/cloud.svg';
 //import folderSvg from '../assets/shapes/folder.svg';
 import { mindspaceService} from '@/firebase/firebaseMindSpace';
-import { 
+import {
   updateViewThemeHistory,
   updateViewMindspaceHistory,
   loadViewHistory,
@@ -14,7 +14,7 @@ import {
 
 export default {
     namespaced: true,
-    
+
     state: {
       userId: null,
       mindSpaceList: null,
@@ -38,7 +38,7 @@ export default {
       showItemWindow: false,
       isEditMode: false,
     },
-    
+
     mutations: {
       //[PREPARATION]
       SET_USER_ID(state, id) {
@@ -53,7 +53,7 @@ export default {
       SET_ITEM_ID(state, id) {
         state.currentItemId = id;
       },
-      
+
       //[LOADING DATA]
       SET_THEME_NAME(state, name) {
         state.currentThemeName = name;
@@ -95,20 +95,20 @@ export default {
       CLEANUP_EMPTY_PAGES(state) {
         // Don't remove the first page even if empty
         if (state.mindSpacePages.length <= 1) return;
-        
+
         // Filter out empty pages except the first one
         state.mindSpacePages = state.mindSpacePages.filter((page, index) => {
           if (index === 0) return true; // Always keep first page
           return page.items && page.items.length > 0;
         });
-    
+
         // Ensure at least one page exists
         if (state.mindSpacePages.length === 0) {
           state.mindSpacePages = [{
             items: []
           }];
         }
-    
+
         // Adjust currentPage if needed
         if (state.currentPage >= state.mindSpacePages.length) {
           state.currentPage = state.mindSpacePages.length - 1;
@@ -132,24 +132,24 @@ export default {
           console.error('Invalid page index:', pageIndex);
           return;
         }
-  
+
         // Remove item from old position
         const [movedItem] = page.items.splice(fromIndex, 1);
-        
+
         if (!movedItem) {
           console.error('Failed to remove item for reordering');
           return;
         }
-  
+
         // Insert at new position
         page.items.splice(toIndex, 0, movedItem);
-  
+
         console.log('After reorder:', {
           page: page.items.map(i => i.name)
         });
       },
       MOVE_ITEM_BETWEEN_PAGES(state, { fromPageIndex, toPageIndex, fromIndex, toIndex }) {
-        
+
         console.log('[MOVE_ITEM_BETWEEN_PAGES] fromIndex:', fromIndex,' / fromPageIndex:', fromPageIndex );
         console.log('[MOVE_ITEM_BETWEEN_PAGES] toIndex:', toIndex,' / toPageIndex:', toPageIndex );
         // Validation
@@ -157,18 +157,18 @@ export default {
           console.error('Invalid page indices:', { fromPageIndex, toPageIndex });
           return;
         }
-    
+
         // Create deep copies of the pages to avoid mutation issues
         const updatedPages = [...state.mindSpacePages];
 
         // Get the item to move
         const movedItem = {...updatedPages[fromPageIndex].items[fromIndex]};
-        
+
         // Remove from source
         updatedPages[fromPageIndex] = {
           items: updatedPages[fromPageIndex].items.filter((_, index) => index !== fromIndex)
         };
-    
+
         // Insert at new position
         const targetItems = [...updatedPages[toPageIndex].items];
         targetItems.splice(toIndex, 0, movedItem);
@@ -191,10 +191,10 @@ export default {
             items: page.items.filter(item => item.id !== itemId)
           };
         });
-    
+
         // Optional: Remove empty pages if needed
         state.mindSpacePages = state.mindSpacePages.filter(page => page.items.length > 0);
-        
+
         console.log('[REMOVE_ITEM_FROM_PAGE] Item removed:', itemId);
       },
 
@@ -204,12 +204,12 @@ export default {
         while (state.mindSpacePages.length <= pageIndex) {
           state.mindSpacePages.push({ items: [] });
         }
-  
+
         // Ensure the items array exists
         if (!state.mindSpacePages[pageIndex].items) {
           state.mindSpacePages[pageIndex].items = [];
         }
-  
+
         // Add the item
         state.mindSpacePages[pageIndex].items.splice(index, 0, item);
       },
@@ -218,18 +218,18 @@ export default {
           state.mindSpacePages[pageIndex] = { items: [] };
         }
         state.mindSpacePages[pageIndex].items.push(...items);
-      }, 
+      },
       ADD_FOLDER_TO_PAGE(state, { pageIndex, index, folder }) {
         // Ensure the page exists
         while (state.mindSpacePages.length <= pageIndex) {
           state.mindSpacePages.push({ items: [] });
         }
-  
+
         // Ensure the items array exists
         if (!state.mindSpacePages[pageIndex].items) {
           state.mindSpacePages[pageIndex].items = [];
         }
-  
+
         // Add the folder
         state.mindSpacePages[pageIndex].items.splice(index, 0, folder);
       },
@@ -257,7 +257,7 @@ export default {
             return item;
           })
         }));
-      }, 
+      },
       REORDER_FOLDER_ITEMS(state, { folderId, fromIndex, toIndex }) {
         state.mindSpacePages = state.mindSpacePages.map(page => ({
           items: page.items.map(item => {
@@ -265,14 +265,14 @@ export default {
               const updatedItems = [...item.items];
               const [movedItem] = updatedItems.splice(fromIndex, 1);
               updatedItems.splice(toIndex, 0, movedItem);
-              
+
               console.log("[REORDER_FOLDER_ITEMS] Reordered folder items:", {
                 folderId,
                 fromIndex,
                 toIndex,
                 updatedItems
               });
-  
+
               return { ...item, items: updatedItems };
             }
             return item;
@@ -281,7 +281,7 @@ export default {
       },
       MOVE_ITEM_BETWEEN_FOLDERS(state, { fromFolderId, toFolderId, fromIndex, toIndex }) {
         let movedItem = null;
-        
+
         // First pass: remove item from source folder
         state.mindSpacePages = state.mindSpacePages.map(page => ({
           items: page.items.map(item => {
@@ -293,7 +293,7 @@ export default {
             return item;
           })
         }));
-  
+
         // Second pass: add item to destination folder
         if (movedItem) {
           state.mindSpacePages = state.mindSpacePages.map(page => ({
@@ -301,7 +301,7 @@ export default {
               if (item.id === toFolderId && Array.isArray(item.items)) {
                 const updatedItems = [...item.items];
                 updatedItems.splice(toIndex, 0, movedItem);
-                
+
                 console.log("[MOVE_ITEM_BETWEEN_FOLDERS] Moved item between folders:", {
                   fromFolderId,
                   toFolderId,
@@ -310,7 +310,7 @@ export default {
                   movedItem,
                   updatedItems
                 });
-  
+
                 return { ...item, items: updatedItems };
               }
               return item;
@@ -364,7 +364,7 @@ export default {
       },
 
       //[ITEM PAGE HANDLING]
-      
+
       SET_ITEM_NAME (state, name) {
         state.currentItemName = name;
       },
@@ -386,10 +386,10 @@ export default {
       MOVE_BLOCK(state, { id, direction }) {
         const index = state.itemBlocks.findIndex(b => b.id === id);
         if (index === -1) return;
-  
+
         const newIndex = direction === 'up' ? index - 1 : index + 1;
         if (newIndex < 0 || newIndex >= state.itemBlocks.length) return;
-  
+
         const itemBlocks = [...state.itemBlocks];
         const temp = itemBlocks[index];
         itemBlocks[index] = itemBlocks[newIndex];
@@ -400,18 +400,18 @@ export default {
         state.editingBlockId = id;
       }
     },
-    
+
     actions: {
       async setUserId({ commit, state },userId) {
         console.log("[mindspace.js/setUserId] TRIGGERED");
         try {
           commit('SET_LOADING', true);
-          
+
           //const userId = await getCurrentUserId();
-          
+
           commit('SET_USER_ID', userId);
           console.log("[mindspace.js/setUserId]",state.userId);
-          
+
         } catch (error) {
           console.error('Error initializing user ID:', error);
           commit('SET_ERROR', error.message);
@@ -430,28 +430,28 @@ export default {
             //console.log("[mindspace.js/loadViewThemeId] No userId available");
             commit('SET_USER_ID', uid);
           }
-      
+
           // Add await here
           const viewHistory = await loadViewHistory(state.userId);
-      
+
           if (!viewHistory) {
             return null;
           }
-      
+
           // Add null check for theme
           if (viewHistory.theme) {
             commit('SET_THEME_ID', viewHistory.theme);
             console.log("[mindspace.js/loadViewThemeId] Current ThemeId", state.currentThemeId);
-      
+
             // 2. Load theme data to get theme name
             await dispatch('setThemeData');
-              
+
             /*
             // 3. Load theme data to get defaultMindSpace
-            await dispatch('setMindSpaceId'); 
+            await dispatch('setMindSpaceId');
             console.log("[mindspace.js/loadViewThemeId] reset mindspaceId: ",state.currentMindSpaceId);*/
           }
-      
+
           return viewHistory;
         } catch (error) {
           console.error("[mindspace.js/loadViewThemeId] Error:", error.message);
@@ -465,19 +465,19 @@ export default {
           if (!state.userId) {
             commit('SET_USER_ID', data.uid); // Assuming you have this mutation
           }
-          
+
           commit('SET_THEME_ID', data.themeId);
           console.log("[mindspace.js/setSelectedThemeId] Current ThemeId: ", state.currentThemeId);
-    
+
           // Now this should have a valid userId
           await updateViewThemeHistory(state.userId, state.currentThemeId);
-    
+
           // 2. Load theme data to get theme name
           await dispatch('setThemeData');
-            
+
           // 3. Load theme data to get defaultMindSpace
-          await dispatch('setMindSpaceId');  
-          
+          await dispatch('setMindSpaceId');
+
         } catch (error) {
           console.error("[mindspace.js/setSelectedThemeId] Error:", error);
         }
@@ -487,7 +487,7 @@ export default {
         const currentThemeName = currentThemeData.name;
         commit('SET_THEME_NAME', currentThemeName);
         //console.log("[mindspace.js/setThemeData] Theme Name:", state.currentThemeName);
-      },    
+      },
       // Load Mindspace data
       async setMindSpace({ commit, dispatch, state }){
         commit('SET_LOADING', true);
@@ -500,7 +500,7 @@ export default {
 
           // Load the mindspace lists
           await dispatch('setMindSpaceList');
-          
+
         } catch (error) {
           console.error('Error loading theme mindspace data:', error);
           commit('SET_ERROR', error.message);
@@ -565,25 +565,25 @@ export default {
       async setMindSpacePages({ commit, state }) {
         try {
           //console.log("[setMindSpacePages] TRIGGERED");
-          
+
           const result = await mindspaceService.getMindSpaceData(state.currentMindSpaceId);
           //console.log("[setMindSpacePages] Current MindSpaceData:", result);
-          
+
           if (!result || !result.pages) {
             throw new Error('Invalid data returned from getMindSpaceData');
           }
-          
+
           const { name, pages, totalPages } = result;
 
           commit('SET_MINDSPACE_NAME', name);
           //console.log("[setMindSpacePages] Mindspace Name:", state.currentMindSpaceName);
-          
+
           commit('SET_MINDSPACE_PAGES', pages);
           //console.log("[setMindSpacePages] Mindspace Pages:", state.mindSpacePages);
-          
+
           commit('SET_TOTAL_PAGES', totalPages);
           //console.log("[setMindSpacePages] totalPages:", state.totalPages);
-          
+
         } catch (error) {
           console.error('Error loading mindspace:', error);
           commit('SET_ERROR', error.message);
@@ -595,9 +595,9 @@ export default {
         try {
           commit('SET_LOADING', true);
           commit('SET_ERROR', null);
-  
+
           await mindspaceService.updateMindSpaceData(state.currentMindSpaceId, state.mindSpacePages);
-          
+
           console.log('[updateMindSpace] Successfully updated mindspace');
         } catch (error) {
           console.error('[updateMindSpace] Error:', error);
@@ -610,7 +610,7 @@ export default {
       //Save changes with retry capability
       async saveMindSpaceChanges({ dispatch }, { autoRetry = true, maxRetries = 3 } = {}) {
         let retries = 0;
-        
+
         const attemptSave = async () => {
           try {
             await dispatch('updateMindSpace');
@@ -625,7 +625,7 @@ export default {
             throw error;
           }
         };
-  
+
         return attemptSave();
       },
       setCurrentPage({ commit }, page) {
@@ -656,7 +656,7 @@ export default {
           console.error('Invalid page index in reorderPageItems:', payload);
           return;
         }
-  
+
         commit('REORDER_PAGE_ITEMS', payload);
       },
       moveItemBetweenPages({ commit, state }, payload) {
@@ -669,7 +669,7 @@ export default {
           console.error('Invalid page indices in moveItemBetweenPages:', payload);
           return;
         }
-  
+
         commit('MOVE_ITEM_BETWEEN_PAGES', payload);
       },
       async addItemToPage({ commit, state, dispatch }, { pageIndex, index, item }) {
@@ -683,13 +683,13 @@ export default {
             index,
             item
           );
-  
+
           commit('ADD_ITEM_TO_PAGE', {
             pageIndex,
             index,
             item: itemData
           });
-  
+
           console.log('[addItemToPage] Completed:', { itemId, itemData });
           await dispatch('setMindSpacePages');
           return itemId;
@@ -704,19 +704,19 @@ export default {
       async addNewFolder({ commit, state, dispatch }, { pageIndex, index }) {
         try {
           console.log('[addNewFolder] Starting with:', { pageIndex, index });
-          
+
           const { folderId, folderData } = await mindspaceService.addFolderToMindspace(
             state.currentMindSpaceId,
             pageIndex,
             index
           );
-  
+
           commit('ADD_FOLDER_TO_PAGE', {
             pageIndex,
             index,
             folder: folderData
           });
-  
+
           console.log('[addNewFolder] Completed:', { folderId, folderData });
           await dispatch('setMindSpacePages');
           return folderId;
@@ -733,7 +733,7 @@ export default {
             state.currentPage,
             state.currentItemId
           );
-    
+
           console.log('[duplicateItemToPage] Completed:', { itemId, itemData });
           await dispatch('setMindSpacePages');
           return itemId;
@@ -758,7 +758,7 @@ export default {
       addItemToFolder({ commit, getters }, { folderId, item }) {
         // Add the item
         commit('ADD_ITEM_TO_FOLDER', { folderId, item });
-        
+
         // Get the updated folder and update current folder state
         const updatedFolder = getters.getFolderById(folderId);
         if (updatedFolder) {
@@ -773,7 +773,7 @@ export default {
             folderId,
             item
           );
-  
+
           commit('ADD_ITEM_TO_FOLDER', {
             folderId,
             item: itemData
@@ -788,7 +788,7 @@ export default {
       },
       async duplicateItemToFolder({ state, dispatch }) {
         console.log('Duplicating to folder:', state.currentFolder.id);
-        
+
         try {
           const { itemId, itemData } = await mindspaceService.duplicateItemToFolder(
             state.userId,
@@ -796,7 +796,7 @@ export default {
             state.currentFolder.id,
             state.currentItemId
           );
-    
+
           console.log('[duplicateItemToFolder] Completed:', { itemId, itemData });
           await dispatch('setMindSpacePages');
           return itemId;
@@ -811,18 +811,18 @@ export default {
       async moveItemFromFolderToPage({ commit, state }, { folderId, itemId, targetPageIndex, targetIndex, item }) {
         try {
           console.log('[moveItemFromFolderToPage] Starting move operation');
-    
+
           // 1. Update Firestore and get raw data
           const { rawPages, rawFolders } = await mindspaceService.moveItemFromFolderToMindspace(
             state.currentMindSpaceId,
             { folderId, itemId, targetPageIndex, targetIndex }
           );
-    
+
           // 2. Update local state directly
           const updatedPages = state.mindSpacePages.map(page => ({
             items: [...page.items]
           }));
-    
+
           // Remove item from folder in local state
           updatedPages.forEach(page => {
             page.items = page.items.map(pageItem => {
@@ -835,12 +835,12 @@ export default {
               return pageItem;
             });
           });
-    
+
           // Add item to target page
           while (updatedPages.length <= targetPageIndex) {
             updatedPages.push({ items: [] });
           }
-    
+
           // Add the item with its full data structure
           updatedPages[targetPageIndex].items.splice(targetIndex, 0, {
             id: itemId,
@@ -848,13 +848,13 @@ export default {
             shape: item.shape,
             badge: item.badge || null
           });
-    
+
           // 3. Update state
           commit('SET_MINDSPACE_PAGES', updatedPages);
-          
+
           // 4. Store raw data
           commit('SET_RAW_DATA', { pages: rawPages, folders: rawFolders });
-          
+
           console.log('[moveItemFromFolderToPage] Successfully moved item');
         } catch (error) {
           console.error('[moveItemFromFolderToPage] Error:', error);
@@ -868,7 +868,7 @@ export default {
             folderId,
             item
           });
-      
+
           // 1. Update Firestore
           const { rawPages, rawFolders } = await mindspaceService.moveItemToFolder(
             state.currentMindSpaceId,
@@ -878,7 +878,7 @@ export default {
               itemId: item.id // Pass itemId explicitly
             }
           );
-      
+
           // 2. Update local state directly
           const updatedPages = [...state.mindSpacePages];
 
@@ -886,7 +886,7 @@ export default {
           updatedPages[pageIndex] = {
             items: updatedPages[pageIndex].items.filter(pageItem => pageItem.id !== item.id)
           };
-          
+
           // Add item to target folder
           updatedPages.forEach(page => {
             page.items = page.items.map(pageItem => {
@@ -904,13 +904,13 @@ export default {
               return pageItem;
             });
           });
-      
+
           // 3. Update state
           commit('SET_MINDSPACE_PAGES', updatedPages);
-          
+
           // 4. Store raw data
           commit('SET_RAW_DATA', { pages: rawPages, folders: rawFolders });
-          
+
           console.log('[moveItemToFolder] Successfully moved item to folder');
         } catch (error) {
           console.error('[moveItemToFolder] Error:', error);
@@ -920,7 +920,7 @@ export default {
       async deleteItem({ commit, state }, itemId) {
         try {
           console.log('[deleteItem] Starting deletion of item:', itemId);
-          
+
           // 1. First delete from Firestore and get raw data
           const { rawPages, rawFolders } = await mindspaceService.deleteItem(state.currentMindSpaceId, itemId);
 
@@ -944,10 +944,10 @@ export default {
 
           // 3. Update state with filtered pages
           commit('SET_MINDSPACE_PAGES', updatedPages);
-          
+
           // Store raw data for future operations
           commit('SET_RAW_DATA', { pages: rawPages, folders: rawFolders });
-          
+
           console.log('[deleteItem] Successfully deleted item');
         } catch (error) {
           console.error('[deleteItem] Error:', error);
@@ -1005,11 +1005,11 @@ export default {
         try {
           // Find the block to duplicate
           const blockToDuplicate = state.itemBlocks.find(block => block.id === id);
-          
+
           if (!blockToDuplicate) {
             throw new Error('Block not found');
           }
-    
+
           // Create a new block with duplicated content but new ID
           const duplicatedBlock = {
             ...blockToDuplicate,
@@ -1019,17 +1019,17 @@ export default {
             editedBy: [state.userId],
             createdBy: state.userId
           };
-    
+
           // Use the existing addBlockAtIndex action to insert the duplicated block
           const block = duplicatedBlock;
           const currentBlocks = state.itemBlocks || [];
           const newBlocks = [...currentBlocks];
           // Insert after the current block
           newBlocks.splice(index + 1, 0, block);
-          
+
           commit('SET_BLOCKS', newBlocks);
           await mindspaceService.updateItemData(state.currentItemId, state.currentItemName, newBlocks);
-          
+
           console.log('[duplicateBlock] Block duplicated:', { original: id, new: duplicatedBlock.id });
         } catch (error) {
           console.error('Error duplicating block:', error);
@@ -1084,7 +1084,7 @@ export default {
         }
       },
     },
-    
+
     getters: {
       getUserId: state => state.userId,
       getThemeId: state => state.currentThemeId,
@@ -1112,6 +1112,20 @@ export default {
         for (const page of state.mindSpacePages) {
           const folder = page.items.find(item => item.id === folderId && item.items);
           if (folder) return folder;
+        }
+        return null;
+      },
+      getItemById: (state) => (itemId) => {
+        for (const page of state.mindSpacePages) {
+          for (const item of page.items) {
+            if (item.id === itemId) {
+              return item;
+            }
+            if (item.items && Array.isArray(item.items)) {
+              const found = item.items.find(folderItem => folderItem.id === itemId);
+              if (found) return found;
+            }
+          }
         }
         return null;
       },
