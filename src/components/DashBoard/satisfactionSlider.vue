@@ -53,7 +53,7 @@
         setup(props, { emit }) {
             const store = useStore();
 
-            const value = ref(0);
+            const value = ref(3.0);
             const formattedValue = computed(() => Number(value.value).toFixed(1));
             const min = ref(0);
             const max = ref(5);

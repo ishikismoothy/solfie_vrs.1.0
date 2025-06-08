@@ -68,7 +68,6 @@
         setup() {
             const store = useStore();
             const isLoading = computed(() => store.getters['mindspace/isLoading']);
-            //const currentThemeId = computed(() => store.state.themeSpace.currentThemeId);
 
             // Tabs configuration
             const satTabs = [
@@ -109,14 +108,13 @@
                         display: false
                     },
                     ticks: {
-                    // Show only 1, 3, and 5
                     callback: function(value) {
-                        if (value % 2 === 1 || value === 5) {  // Show only odd numbers and 5
-                            return value.toFixed(0);  // Remove decimals
+                        if (value % 2 === 1 || value === 5) {
+                            return value.toFixed(0);
                         }
-                        return '';  // Return empty string for other values
+                        return '';
                     },
-                        stepSize: 1  // Ensure we get whole numbers
+                        stepSize: 1
                     }
                 },
                 x: {
@@ -137,6 +135,47 @@
             }
             };
 
+            // Helper function to interpolate missing values and track which points are interpolated
+            const interpolateValues = (data) => {
+                const result = [...data];
+                const isInterpolated = new Array(data.length).fill(false);
+                
+                // Find first and last non-null values
+                let firstIndex = -1, lastIndex = -1;
+                for (let i = 0; i < result.length; i++) {
+                    if (result[i] !== null) {
+                        if (firstIndex === -1) firstIndex = i;
+                        lastIndex = i;
+                    }
+                }
+                
+                if (firstIndex === -1) return { data: result, isInterpolated }; // No data points
+                
+                // Interpolate between known values
+                for (let i = firstIndex; i <= lastIndex; i++) {
+                    if (result[i] === null) {
+                        // Find previous and next non-null values
+                        let prevIndex = i - 1;
+                        let nextIndex = i + 1;
+                        
+                        while (prevIndex >= firstIndex && result[prevIndex] === null) prevIndex--;
+                        while (nextIndex <= lastIndex && result[nextIndex] === null) nextIndex++;
+                        
+                        if (prevIndex >= firstIndex && nextIndex <= lastIndex) {
+                            // Linear interpolation
+                            const prevValue = result[prevIndex];
+                            const nextValue = result[nextIndex];
+                            const steps = nextIndex - prevIndex;
+                            const stepValue = (nextValue - prevValue) / steps;
+                            result[i] = Number((prevValue + stepValue * (i - prevIndex)).toFixed(2));
+                            isInterpolated[i] = true; // Mark as interpolated
+                        }
+                    }
+                }
+                
+                return { data: result, isInterpolated };
+            };
+
             const processDataForChart = (data, tabType, scope) => {
                 if (!data || (!data.selfAssessment && !data.aiAssessment)) {
                     return {
@@ -153,53 +192,65 @@
                 const labels = getLabels(timeRange, scope);
 
                 const aggregateData = (assessmentData) => {
-                    if (!Array.isArray(assessmentData)) return [];
+                    if (!Array.isArray(assessmentData)) return { data: [], isInterpolated: [] };
                     
                     const filteredData = assessmentData.filter(item => 
                     new Date(item.timestamp) >= timeRange
                     );
 
+                    let rawData;
                     switch (scope) {
                     case 'year':
-                        // Group and average by month
-                        return aggregateByPeriod(filteredData, 'month', 12);
-                    
+                        rawData = aggregateByPeriod(filteredData, 'month', 12);
+                        break;
                     case 'month':
-                        // Group and average by week
-                        return aggregateByPeriod(filteredData, 'week', 4);
-                    
+                        rawData = aggregateByPeriod(filteredData, 'week', 4);
+                        break;
                     case 'week':
-                        // Group and average by day
-                        return aggregateByPeriod(filteredData, 'day', 7);
+                        rawData = aggregateByPeriod(filteredData, 'day', 7);
+                        break;
                     }
+                    
+                    // Apply interpolation to create continuous line
+                    return interpolateValues(rawData);
                 };
 
                 if (tabType === 'comparison') {
+                    const selfData = aggregateData(data.selfAssessment || []);
+                    const aiData = aggregateData(data.aiAssessment || []);
+                    
                     return {
                     labels,
                     datasets: [
                         {
                         label: 'Self Assessment',
-                        data: aggregateData(data.selfAssessment || []),
+                        data: selfData.data,
                         borderColor: '#FF6384',
-                        backgroundColor: '#FF6384'
+                        backgroundColor: '#FF6384',
+                        pointRadius: selfData.isInterpolated.map(interpolated => interpolated ? 0 : 4),
+                        pointHoverRadius: selfData.isInterpolated.map(interpolated => interpolated ? 0 : 6)
                         },
                         {
                         label: 'AI Assessment',
-                        data: aggregateData(data.aiAssessment || []),
+                        data: aiData.data,
                         borderColor: '#36A2EB',
-                        backgroundColor: '#36A2EB'
+                        backgroundColor: '#36A2EB',
+                        pointRadius: aiData.isInterpolated.map(interpolated => interpolated ? 0 : 4),
+                        pointHoverRadius: aiData.isInterpolated.map(interpolated => interpolated ? 0 : 6)
                         }
                     ]
                     };
                 }
 
+                const processedData = aggregateData(data[tabType] || []);
                 return {
                     labels,
                     datasets: [{
-                    data: aggregateData(data[tabType] || []),
+                    data: processedData.data,
                     borderColor: tabType === 'selfAssessment' ? '#FF6384' : '#36A2EB',
-                    backgroundColor: tabType === 'selfAssessment' ? '#FF6384' : '#36A2EB'
+                    backgroundColor: tabType === 'selfAssessment' ? '#FF6384' : '#36A2EB',
+                    pointRadius: processedData.isInterpolated.map(interpolated => interpolated ? 0 : 4),
+                    pointHoverRadius: processedData.isInterpolated.map(interpolated => interpolated ? 0 : 6)
                     }]
                 };
                 };
@@ -233,7 +284,7 @@
                         }
                     });
 
-                    // Calculate averages
+                    // Calculate averages (keep null for periods with no data)
                     return result.map((sum, i) => 
                         counts[i] > 0 ? Number((sum / counts[i]).toFixed(2)) : null
                     );
@@ -265,28 +316,20 @@
 
                 switch (scope) {
                     case 'year':
-                    // Generate month labels for the past year
                     for (let i = 11; i >= 0; i--) {
                         const date = new Date(now);
                         date.setMonth(now.getMonth() - i);
-
-                        //Show every month
-                        //labels.push(date.toLocaleString('default', { month: 'short' }));
-
-                        //Show every two months
                         labels.push(i % 2 === 0 ? date.toLocaleString('default', { month: 'short' }) : '');
                     }
                     break;
 
                     case 'month':
-                    // Generate weekly labels for the past month
                     for (let i = 0; i < 4; i++) {
                         labels.push(`Week ${i + 1}`);
                     }
                     break;
 
                     case 'week':
-                    // Generate daily labels for the past week
                     for (let i = 6; i >= 0; i--) {
                         const date = new Date(now);
                         date.setDate(now.getDate() - i);
