@@ -54,7 +54,7 @@
 
 import { defineComponent, ref, computed, watch, onMounted } from 'vue';
 import { useStore } from 'vuex';
-import { widgetService } from '@/firebase/firebaseWidget'
+//import { widgetService } from '@/firebase/firebaseWidget'
 
 export default defineComponent({
   name: 'ChartComponent',
@@ -92,7 +92,8 @@ export default defineComponent({
   },
   setup(props) {
     const store = useStore();
-    const id = 'GORz1h6ts9Vq2PKMD6un';
+    //const id = 'GORz1h6ts9Vq2PKMD6un';
+    const uid = store.state.user.user.uid;
 
     //Get Widget Data
     const widgetData = ref(null);
@@ -186,6 +187,7 @@ export default defineComponent({
       }
     }, { immediate: true });
 
+    /*
     async function getWidget(widgetId) {
       try {
         // Make sure to await the Promise
@@ -200,20 +202,20 @@ export default defineComponent({
         console.error("Error getting widget name:", error);
         return null;
       }
-    }
+    }*/
 
 
     // Initialize data when component is mounted
     onMounted(async () => {
       // Load data from Vuex store
-      await store.dispatch(`${props.storeModule}/${props.loadDataAction}`);
+      await store.dispatch(`${props.storeModule}/${props.loadDataAction}`,uid);
       
       // Initialize animated values with the correct structure
       initializeAnimatedValues();
 
       // Get widget data
-      widgetData.value = await getWidget(id);
-      console.log(widgetData?.value);
+      //widgetData.value = await getWidget(id);
+      //console.log(widgetData?.value);
     });
 
     return {

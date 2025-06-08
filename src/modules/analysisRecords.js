@@ -1,3 +1,7 @@
+// Updated analysisRecords.js (Vuex store)
+import { analysisService } from '@/utility/analysisProcessor';
+import { WIDGET_CONFIG } from '@/config/widgetConfig';
+
 export default {
     namespaced: true,
     state: {
@@ -7,7 +11,7 @@ export default {
         },
         analysisData:{
             data_A: {}, // DecisionMakingPower
-            data_B: {}, // DecisionMakingPower
+            data_B: {}, // bodyEmotionMindSpirit
         },
         isLoading: false,
     },
@@ -18,7 +22,7 @@ export default {
       SET_SELECTED_TAB_A(state, data) {
         state.selectedTab.tab_A = data;
       },
-      SET_SELECTED_TAB_B(state, data) {  // Added this
+      SET_SELECTED_TAB_B(state, data) {
         state.selectedTab.tab_B = data;
       },
       SET_DATA_A(state, data) {
@@ -27,6 +31,9 @@ export default {
       SET_DATA_B(state, data) {
         state.analysisData.data_B = data;
       },
+      SET_ANALYSIS_DATA(state, { key, data }) {
+        state.analysisData[key] = data;
+      },
     },
     actions: {
       selectTab({ commit }, { tab, key }) {
@@ -34,76 +41,46 @@ export default {
           commit('SET_SELECTED_TAB_A', tab);
         }
         if (key === 'bodyEmotionMindSpirit') {
-          commit('SET_SELECTED_TAB_B', tab);  // Changed to SET_SELECTED_TAB_B
+          commit('SET_SELECTED_TAB_B', tab);
         }
       },
-      loadData({ commit }) {
-        return new Promise((resolve) => {
+      async loadData({ commit }, uid) {
+        
+        try {
           commit('SET_LOADING', true);
-          // Simulating an API call
-          setTimeout(() => {
-            const fetchedDataA = {
-              '1年': {
-                percentage: 65,
-                items: {
-                  '主体性': 45,
-                  '方向性': 50,
-                  '安定性': 75,
-                }
-              },
-              '6ヶ月': {
-                percentage: 70,
-                items: {
-                  '主体性': 60,
-                  '方向性': 80,
-                  '安定性': 70
-                }
-              },
-              '今日': {
-                percentage: 55,
-                items: {
-                  '主体性': 50,
-                  '方向性': 60,
-                  '安定性': 55
-                }
-              }
-            };
-            const fetchedDataB = {
-              '1年': {
-                percentage: 65,
-                items: {
-                  'Body': 45,
-                  'Emotion': 50,
-                  'Mind': 75,
-                  'Spirit': 75,
-                  
-                }
-              },
-              '6ヶ月': {
-                percentage: 70,
-                items: {
-                  'Body': 60,
-                  'Emotion': 80,
-                  'Mind': 70,
-                  'Spirit': 75,
-                }
-              },
-              '今日': {
-                percentage: 55,
-                items: {
-                  'Body': 50,
-                  'Emotion': 60,
-                  'Mind': 55,
-                  'Spirit': 75,
-                }
-              }
-            };
-            commit('SET_DATA_A', fetchedDataA);
-            commit('SET_DATA_B', fetchedDataB);
-            commit('SET_LOADING', false);
-            resolve();
-          }, 1000);
-        });
+          
+          if (!uid) {
+            throw new Error('User not authenticated');
+          }
+
+          // Load analysis data using the service
+          const analysisData = await analysisService.getAnalysisData(uid, WIDGET_CONFIG);
+          
+          // Commit the data to store
+          commit('SET_DATA_A', analysisData.data_A || {});
+          commit('SET_DATA_B', analysisData.data_B || {});
+          
+          commit('SET_LOADING', false);
+        } catch (error) {
+          console.error('Error loading analysis data:', error);
+          commit('SET_LOADING', false);
+          throw error;
+        }
+      },
+      // Optional: Load specific widget data
+      async loadWidgetData({ commit, rootGetters }, { widgetKey, widgetId }) {
+        try {
+          const userId = rootGetters['auth/userId'];
+          if (!userId) {
+            throw new Error('User not authenticated');
+          }
+
+          const widgetData = await analysisService.processWidgetAnalysis(userId, widgetId);
+          commit('SET_ANALYSIS_DATA', { key: widgetKey, data: widgetData });
+        } catch (error) {
+          console.error(`Error loading ${widgetKey} data:`, error);
+          throw error;
+        }
       },
     },
     getters: {

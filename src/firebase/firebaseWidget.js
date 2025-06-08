@@ -2,13 +2,28 @@ import {
     collection,
     setDoc,doc,getDoc,getDocs,//For multiple docs
     updateDoc,
-    query, orderBy,
+    query, where, orderBy,
   
 } from 'firebase/firestore';
 import { db } from './firebaseInit';
 import { formatTimestampToDateInString } from '@/utility/dateUtils';
 
 export const widgetService = {
+    async getWidget(widgetId) {
+        try {
+            const widgetDoc = await getDoc(doc(db, 'widgets', widgetId));
+        if (!widgetDoc.exists()) {
+            throw new Error(`Widget ${widgetId} not found`);
+        }
+        return {
+            id: widgetDoc.id,
+            ...widgetDoc.data()
+        };
+        } catch (error) {
+            console.error('Error fetching widget:', error);
+        throw error;
+        }
+    },
     async getWidgets() {
         const widgetsArray = [];
   
@@ -16,8 +31,12 @@ export const widgetService = {
             // Get reference to the widgets collection
             const widgetsCollectionRef = collection(db, "widgets");
             
-            // Create a query with descending order (highest index first)
-            const q = query(widgetsCollectionRef, orderBy("index", "desc"));
+            // Create a query with isVisible filter and descending order (highest index first)
+            const q = query(
+                widgetsCollectionRef, 
+                where("isVisible", "==", true),
+                orderBy("index", "desc")
+            );
             
             // Get documents from the collection with the query
             const querySnapshot = await getDocs(q);
@@ -45,6 +64,15 @@ export const widgetService = {
         } catch (error) {
           console.error("Error getting widgets:", error);
           throw error;
+        }
+    },
+    async getMultipleWidgets(widgetIds) {
+        try {
+        const promises = widgetIds.map(id => this.getWidget(id));
+        return await Promise.all(promises);
+        } catch (error) {
+        console.error('Error fetching multiple widgets:', error);
+        throw error;
         }
     },
     async getUsersWidgets(uid) {
@@ -182,5 +210,5 @@ export const widgetService = {
           console.error("Error getting widget by ID:", error);
           throw error;
         }
-      }
+    },
 }
