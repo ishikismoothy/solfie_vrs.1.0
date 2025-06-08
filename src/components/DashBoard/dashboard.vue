@@ -30,6 +30,7 @@
         v-if="hasWidgetB"
         storeModule="analysisRecords"
         tabKey="bodyEmotionMindSpirit"
+        tabType="tab_B"
         dataGetterName="getDataB"
         dataStatePath="analysisData.data_B"
         loadingGetterName="isLoading"

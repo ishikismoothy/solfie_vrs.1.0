@@ -54,7 +54,7 @@
 
 import { defineComponent, ref, computed, watch, onMounted } from 'vue';
 import { useStore } from 'vuex';
-//import { widgetService } from '@/firebase/firebaseWidget'
+import { widgetService } from '@/firebase/firebaseWidget'
 
 export default defineComponent({
   name: 'ChartComponent',
@@ -68,6 +68,10 @@ export default defineComponent({
     tabKey: {
       type: String,
       default: 'decisionMakingPower'
+    },
+    tabType: {
+      type: String,
+      default: 'tab_A'
     },
     // Getter name for data
     dataGetterName: {
@@ -92,18 +96,15 @@ export default defineComponent({
   },
   setup(props) {
     const store = useStore();
-    //const id = 'CC4ZpLD5Sz2DmwrTG84l';
+    const id = 'CC4ZpLD5Sz2DmwrTG84l';
     const uid = store.state.user.user.uid;
-
-    //Get Widget Data
-    const widgetData = ref(null);
 
     // Linear interpolation function for smooth animations
     const lerp = (start, end, t) => start * (1 - t) + end * t;
 
     // Computed properties for data from Vuex store
     const selectedDataTab = computed({
-      get: () => store.state[props.storeModule].selectedTab.tab_A,
+      get: () => store.state[props.storeModule].selectedTab[props.tabType],
       set: (tab) => store.dispatch(`${props.storeModule}/selectTab`, { tab, key: props.tabKey })
     });
 
@@ -187,7 +188,8 @@ export default defineComponent({
       }
     }, { immediate: true });
 
-    /*
+    //Get Widget Data for widget Name
+    const widgetData = ref(null);
     async function getWidget(widgetId) {
       try {
         // Make sure to await the Promise
@@ -202,7 +204,7 @@ export default defineComponent({
         console.error("Error getting widget name:", error);
         return null;
       }
-    }*/
+    }
 
 
     // Initialize data when component is mounted
@@ -214,7 +216,7 @@ export default defineComponent({
       initializeAnimatedValues();
 
       // Get widget data
-      //widgetData.value = await getWidget(id);
+      widgetData.value = await getWidget(id);
       //console.log(widgetData?.value);
     });
 
