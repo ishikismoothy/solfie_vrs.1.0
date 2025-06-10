@@ -118,26 +118,45 @@ export const widgetService = {
             const userData = userDoc.data();
             
             // Initialize usersWidgets as an empty array if it doesn't exist
-            // This is the key fix - ensure we're using an array when it doesn't exist
             let currentWidgets = [];
             if (userData.usersWidgets) {
                 currentWidgets = [...userData.usersWidgets];
             }
             
-            // Check if the widget ID is already in the array to avoid duplicates
-            if (!currentWidgets.includes(widgetId)) {
-                // Add the new widget ID to the array
-                currentWidgets.push(widgetId);
-                
+            // Get the widget document to check for childWidget
+            const widgetRef = doc(db, 'widgets', widgetId);
+            const widgetDoc = await getDoc(widgetRef);
+            
+            let widgetsToAdd = [widgetId]; // Start with the parent widget
+            
+            // Check if widget has a childWidget field and add it to the list
+            if (widgetDoc.exists()) {
+                const widgetData = widgetDoc.data();
+                if (widgetData.childWidget) {
+                    widgetsToAdd.push(widgetData.childWidget);
+                }
+            }
+            
+            // Add widgets that aren't already in the array
+            let addedWidgets = [];
+            for (const widget of widgetsToAdd) {
+                if (!currentWidgets.includes(widget)) {
+                    currentWidgets.push(widget);
+                    addedWidgets.push(widget);
+                }
+            }
+            
+            // Only update if we actually added new widgets
+            if (addedWidgets.length > 0) {
                 // Use setDoc with merge option to create the field if it doesn't exist
                 await setDoc(userRef, {
                     usersWidgets: currentWidgets
                 }, { merge: true });
                 
-                console.log(`Widget ${widgetId} added to user ${uid}`);
+                console.log(`Widgets ${addedWidgets.join(', ')} added to user ${uid}`);
                 return currentWidgets;
             } else {
-                console.log(`Widget ${widgetId} already exists for user ${uid}`);
+                console.log(`All widgets already exist for user ${uid}`);
                 return currentWidgets;
             }
         } catch (error) {
@@ -145,6 +164,7 @@ export const widgetService = {
             throw error;
         }
     },
+
     async removeUsersWidgets(uid, widgetId) {
         try {
             // Get reference to the user document
@@ -160,18 +180,41 @@ export const widgetService = {
             const userData = userDoc.data();
             
             // Get current widgets array or initialize empty array
-            const currentWidgets = userData.usersWidgets || [];
+            let currentWidgets = userData.usersWidgets || [];
             
-            // Remove the widget ID from the array
-            const updatedWidgets = currentWidgets.filter(id => id !== widgetId);
+            // Get the widget document to check for childWidget
+            const widgetRef = doc(db, 'widgets', widgetId);
+            const widgetDoc = await getDoc(widgetRef);
             
-            // Update the user document with the new array
-            await updateDoc(userRef, {
-                usersWidgets: updatedWidgets
-            });
+            let widgetsToRemove = [widgetId]; // Start with the parent widget
             
-            console.log(`Widget ${widgetId} removed from user ${uid}`);
-            return updatedWidgets;
+            // Check if widget has a childWidget field and add it to the removal list
+            if (widgetDoc.exists()) {
+                const widgetData = widgetDoc.data();
+                if (widgetData.childWidget) {
+                    widgetsToRemove.push(widgetData.childWidget);
+                }
+            }
+            
+            // Remove all widgets in the removal list
+            const updatedWidgets = currentWidgets.filter(id => !widgetsToRemove.includes(id));
+            
+            // Check if any widgets were actually removed
+            const removedWidgets = widgetsToRemove.filter(widget => currentWidgets.includes(widget));
+            
+            // Only update if widgets were actually removed
+            if (removedWidgets.length > 0) {
+                // Update the user document with the new array
+                await updateDoc(userRef, {
+                    usersWidgets: updatedWidgets
+                });
+                
+                console.log(`Widgets ${removedWidgets.join(', ')} removed from user ${uid}`);
+                return updatedWidgets;
+            } else {
+                console.log(`No widgets were removed for user ${uid}`);
+                return currentWidgets;
+            }
         } catch (error) {
             console.error("Error removing widget from user:", error);
             throw error;

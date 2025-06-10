@@ -33,6 +33,7 @@
         tabType="tab_B"
         dataGetterName="getDataB"
         dataStatePath="analysisData.data_B"
+        adviceStatePath="analysisData.advice_B"
         loadingGetterName="isLoading"
         loadDataAction="loadData"
       />

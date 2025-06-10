@@ -1,8 +1,8 @@
 <template>
   <section class="chart-section">
-    <div class="data-tab-menu" v-if="Object.keys(chartData).length">
+    <div class="data-tab-menu" v-if="Object.keys(chartData).length || hasAdviceData">
       <button
-        v-for="tab in Object.keys(chartData)"
+        v-for="tab in availableTabs"
         :key="tab"
         @click="selectedDataTab = tab"
         :class="{ active: selectedDataTab === tab }"
@@ -14,7 +14,9 @@
     <section v-if="isDataLoading" class="chart-section-loading">
       <!-- Loading placeholder -->
     </section>
-    <section v-if="!isDataLoading && currentDataValues.items" class="chart-content-section">
+    
+    <!-- Regular chart view -->
+    <section v-if="!isDataLoading && selectedDataTab !== 'アドバイス' && currentDataValues.items" class="chart-content-section">
       <h4 v-if="widgetData">{{ widgetData.name }}</h4>
       <h4 v-else>Loading...</h4>  
       <div class="chart-circle">
@@ -43,8 +45,23 @@
         <span class="chart-value">{{ Math.round(animatedValues[selectedDataTab]?.items[key] || 0) }}%</span>
       </div>
     </section>
-    <!--
-    <div v-else class="no-data">No data available.</div>-->
+
+    <!-- Advice view -->
+    <section v-if="!isDataLoading && selectedDataTab === 'アドバイス'" class="chart-content-section advice-section">
+      <h4 v-if="widgetData">{{ widgetData.name }} - アドバイス</h4>
+      <h4 v-else>アドバイス</h4>
+      
+      <div v-if="adviceData && adviceData.length > 0" class="advice-content">
+        <div v-for="(advice, index) in adviceData" :key="index" class="advice-item">
+          <h5 class="advice-title">{{ advice.title }}</h5>
+          <p class="advice-text">{{ advice.content }}</p>
+        </div>
+      </div>
+      
+      <div v-else class="no-advice">
+        アドバイスデータがありません
+      </div>
+    </section>
   </section>
 </template>
 
@@ -82,6 +99,11 @@ export default defineComponent({
     dataStatePath: {
       type: String,
       default: 'analysisData.data_A'
+    },
+    // State path to advice data
+    adviceStatePath: {
+      type: String,
+      default: 'analysisData.advice_A'
     },
     // State path to loading status
     loadingGetterName: {
@@ -125,6 +147,34 @@ export default defineComponent({
       
       return data;
     });
+
+    // Get advice data from the store
+    const adviceData = computed(() => {
+      const pathParts = props.adviceStatePath.split('.');
+      let data = store.state[props.storeModule];
+      
+      for (const part of pathParts) {
+        if (data && data[part]) {
+          data = data[part];
+        } else {
+          return [];
+        }
+      }
+      
+      return Array.isArray(data) ? data : [];
+    });
+
+    // Check if advice data exists
+    const hasAdviceData = computed(() => adviceData.value && adviceData.value.length > 0);
+
+    // Available tabs including advice tab
+    const availableTabs = computed(() => {
+      const tabs = Object.keys(chartData.value);
+      if (hasAdviceData.value) {
+        tabs.push('アドバイス');
+      }
+      return tabs;
+    });
     
     const isDataLoading = computed(() => store.getters[`${props.storeModule}/${props.loadingGetterName}`]);
 
@@ -147,7 +197,7 @@ export default defineComponent({
 
     // Watch for changes in selected tab or loading state to animate transitions
     watch([selectedDataTab, isDataLoading], ([newTab, isLoading]) => {
-      if (!isLoading && chartData.value[newTab]?.items) {
+      if (!isLoading && newTab !== 'アドバイス' && chartData.value[newTab]?.items) {
         const targetValues = chartData.value[newTab];
         const duration = 500;
         const start = performance.now();
@@ -206,29 +256,28 @@ export default defineComponent({
       }
     }
 
-
     // Initialize data when component is mounted
     onMounted(async () => {
       // Load data from Vuex store
-      await store.dispatch(`${props.storeModule}/${props.loadDataAction}`,uid);
+      await store.dispatch(`${props.storeModule}/${props.loadDataAction}`, uid);
       
       // Initialize animated values with the correct structure
       initializeAnimatedValues();
 
       // Get widget data
       widgetData.value = await getWidget(id);
-      //console.log(widgetData?.value);
     });
 
     return {
       widgetData,
-      // Return all required properties and methods
       selectedDataTab,
       currentDataValues,
       chartData,
+      adviceData,
+      hasAdviceData,
+      availableTabs,
       isDataLoading,
       animatedValues,
-      
     };
   }
 });
