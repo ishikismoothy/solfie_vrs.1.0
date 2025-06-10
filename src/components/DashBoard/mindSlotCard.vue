@@ -37,97 +37,119 @@
 
     <div class="back" v-if="isFlipped">
       <div>Loading item with ID: {{ currentItemId }}</div>
-      <ItemWindow :itemId="currentItemId" :isOpen="true" :key="itemWindowKey"/>
+      <ItemWindow
+        :itemId="props.mindslot.item"
+        :isOpen="true"
+        :key="itemWindowKey"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, watch, defineEmits, defineProps, computed } from 'vue'
-import ItemWindow from '../ItemWindow/itemWindow.vue'
-import { useStore } from 'vuex'
+  import { ref, watch, defineEmits, defineProps, computed } from 'vue'
+  import ItemWindow from '../ItemWindow/itemWindow.vue'
+  import { useStore } from 'vuex'
 
-const store = useStore()
+  const store = useStore()
 
-// Props & emits
-const props = defineProps({
-  mindslot: {
-    type: Object,
-    default: () => ({ name: 'New Slot', item: null })
-  },
-  index: {
-    type: Number,
-    required: true
-  },
-  getItemImage: {
-    type: Function,
-    default: () => () => null
-  },
-  getItemName: {
-    type: Function,
-    default: () => () => null
-  },
-  expanded: {
-    type: Boolean,
-    default: false
-  },
-  flipped: {
-    type: Boolean,
-    default: false
+  // Props & emits
+  const props = defineProps({
+    mindslot: {
+      type: Object,
+      default: () => ({ name: 'New Slot', item: null })
+    },
+    index: {
+      type: Number,
+      required: true
+    },
+    getItemImage: {
+      type: Function,
+      default: () => () => null
+    },
+    getItemName: {
+      type: Function,
+      default: () => () => null
+    },
+    expanded: {
+      type: Boolean,
+      default: false
+    },
+    flipped: {
+      type: Boolean,
+      default: false
+    }
+  })
+
+  const emit = defineEmits(['delete', 'select', 'name-change', 'click'])
+
+  // Local state for editing name
+  const isEditing = ref(false)
+  const editingName = ref(props.mindslot.name || 'New Slot')
+
+  // Flip state
+  const isFlipped = ref(false)
+
+  const itemWindowKey = computed(() => {
+    // Use the actual item ID from props instead of store
+    const itemId = props.mindslot?.item || 'no-item';
+    return `${itemId}-${isFlipped.value ? 'flipped' : 'notflipped'}`;
+  });
+
+  // const itemWindowKey = computed(() => {
+  //   return `${currentItemId.value}-${isFlipped.value ? 'flipped' : 'notflipped'}`
+  // })
+
+  async function toggleFlip() {
+    const newItemId = props.mindslot.item;
+    console.log('Flipping card for item:', newItemId);
+
+    // If there's no item (empty slot), clear the store data
+    if (!newItemId || newItemId === null || newItemId === undefined) {
+      console.log('Empty slot detected, clearing store data');
+
+      // Clear the store data for empty slots
+      store.commit('mindspace/SET_ITEM_ID', null);
+      store.commit('mindspace/SET_ITEM_NAME', 'Empty Slot');
+      store.commit('mindspace/SET_BLOCKS', []);
+    } else {
+      // Use the action for items with data
+      await store.dispatch('mindspace/setItemId', newItemId);
+    }
+
+    isFlipped.value = true;
+    emit('click', props.index);
   }
-})
+  // Watch when editing starts
+  watch(isEditing, (newVal) => {
+    if (newVal) editingName.value = props.mindslot.name || 'New Slot'
+  })
 
-const emit = defineEmits(['delete', 'select', 'name-change', 'click'])
+  watch(() => props.mindslot?.name, (newName) => {
+    if (newName) {
+      editingName.value = newName;
+    }
+  })
 
-// Local state for editing name
-const isEditing = ref(false)
-const editingName = ref(props.mindslot.name || 'New Slot')
+  const currentItemId = computed(() => store.getters['mindspace/getItemId'])
 
-// Flip state
-const isFlipped = ref(false)
+  watch(currentItemId, (newId) => {
+    console.log('Current item ID changed:', newId)
+    // You can react to currentItemId changes here if needed
+  })
 
-const itemWindowKey = computed(() => {
-  return `${currentItemId.value}-${isFlipped.value ? 'flipped' : 'notflipped'}`
-})
-
-function toggleFlip() {
-  const newItemId = props.mindslot.item;
-  console.log('Flipping card for item:', newItemId);
-  store.commit('mindspace/SET_ITEM_ID', newItemId);
-  isFlipped.value = true
-  emit('click', props.index) // optional: keep emitting the click event if needed
-}
-
-// Watch when editing starts
-watch(isEditing, (newVal) => {
-  if (newVal) editingName.value = props.mindslot.name || 'New Slot'
-})
-
-watch(() => props.mindslot?.name, (newName) => {
-  if (newName) {
-    editingName.value = newName;
+  // Name edit handlers
+  function startEditing() {
+    isEditing.value = true
+    editingName.value = props.mindslot?.name || 'New Slot'
   }
-})
 
-const currentItemId = computed(() => store.getters['mindspace/getItemId'])
-
-watch(currentItemId, (newId) => {
-  console.log('Current item ID changed:', newId)
-  // You can react to currentItemId changes here if needed
-})
-
-// Name edit handlers
-function startEditing() {
-  isEditing.value = true
-  editingName.value = props.mindslot?.name || 'New Slot'
-}
-
-function saveSlotName(index) {
-  isEditing.value = false
-  if (editingName.value.trim() !== props.mindslot.name || '') {
-    emit('name-change', { index, newName: editingName.value });
+  function saveSlotName(index) {
+    isEditing.value = false
+    if (editingName.value.trim() !== props.mindslot.name || '') {
+      emit('name-change', { index, newName: editingName.value });
+    }
   }
-}
 
 
 </script>

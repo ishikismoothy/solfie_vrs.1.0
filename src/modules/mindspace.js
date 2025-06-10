@@ -957,12 +957,14 @@ export default {
       //Selected Item Blocks Handling
       async setItemId ({ commit, state, dispatch }, itemId) {
         try {
+          console.log('[setItemId] Setting item ID to:', itemId);
           commit('SET_ITEM_ID', itemId);
-          console.log("[setItemId]",state.currentItemId);
+          console.log('[setItemId] Item ID set in store:', state.currentItemId);
 
           await dispatch('setBlocks', itemId);
+          console.log('[setItemId] Blocks loaded for item:', itemId);
         } catch (error) {
-          console.error('Error loading theme mindspace data:', error);
+          console.error('Error loading item data:', error);
           commit('SET_ERROR', error.message);
         }
       },

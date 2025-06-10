@@ -6,22 +6,22 @@
 
   <div class="view-container">
     <!-- Page indicator - moved outside views-wrapper -->
-    <div 
+    <div
       class="page-indicator"
       :class="{ 'shifted': isNavVisible, 'hidden': isChatBoxExpanded }"
       :style="{ transform: `translateY(${indicatorPosition}px)` }"
       >
-      <PageIndicator 
+      <PageIndicator
         :is-app-view="isMindSpaceView"
         @view-switch="toggleView"
       />
     </div>
-   
+
     <!-- Container for sliding views -->
-    <div 
+    <div
       class="views-wrapper"
-      :style="{ 
-        transform: `translateX(${slidePosition}%)`, 
+      :style="{
+        transform: `translateX(${slidePosition}%)`,
         transition: isDragging ? 'none' : 'transform 0.5s ease'
         }"
       @touchstart="handleTouchStart($event)"
@@ -32,7 +32,7 @@
       <div class="view dashboard-view">
         <Dashboard />
       </div>
-      
+
       <!-- MindSpace view -->
       <div class="view mindspace-view">
         <mindSpace/>
@@ -48,39 +48,39 @@
     <div
       ref="navRef"
       class="sticky-nav"
-      :class="{ 
+      :class="{
         'visible': isNavVisible,
         'expanded': isChatBoxExpanded,
         'transitioning': isTransitioning
       }"
-      :style="{ 
+      :style="{
         transform: `translateY(${navPosition}px)`,
-        zIndex: navZindex 
+        zIndex: navZindex
 
       }"
     >
       <DockNav />
     </div>
-    
+
 
     <!-- Dock Button -->
-    <button 
+    <button
       class="dock-button"
       :class="{ 'shifted': isNavVisible, 'hidden': isChatBoxExpanded }"
       :style="{ transform: `translateY(${buttonPosition}px)` }"
       @click="toggleNav"
     >
       <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path 
-          d="M12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 13.9021 3.5901 15.6665 4.59721 17.1199C4.70168 17.2707 4.7226 17.4653 4.64529 17.6317L3.42747 20.2519C3.23699 20.5853 3.47768 21 3.86159 21H12Z" 
-          stroke="currentColor" 
-          stroke-width="2" 
-          stroke-linecap="round" 
+        <path
+          d="M12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 13.9021 3.5901 15.6665 4.59721 17.1199C4.70168 17.2707 4.7226 17.4653 4.64529 17.6317L3.42747 20.2519C3.23699 20.5853 3.47768 21 3.86159 21H12Z"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
           stroke-linejoin="round"
         />
       </svg>
     </button>
-    
+
     <ItemWindow class="itemWindow-view"
       :is-open="showItemWindow"
       @close="closeItemWindow"
@@ -99,7 +99,7 @@
       @close="closeMoveItemWindow"
       @click.self="closeMoveItemWindow"
       @item-moved="updateMindSpace"
-    /> 
+    />
   </div>
 </template>
 
@@ -131,7 +131,7 @@ export default defineComponent({
     MoveItemModal,
     satSlider,
     LoadingScreen,
-    MindUniverse 
+    MindUniverse
   },
   setup() {
     const store = useStore();
@@ -196,7 +196,7 @@ export default defineComponent({
 
     const handleTouchMove = (event) => {
       if (isEditMode.value) return;
-      
+
       const minDis = 30;
       if (currentPage.value < 1 && !isEditMode.value){
         currentX.value = event.touches[0].clientX;
@@ -252,7 +252,7 @@ export default defineComponent({
     const closeSatWindow = () => {
         store.dispatch('user/triggerSatWindow', false);
     };
-    
+
 
     // Nav visibility state
     const isNavVisible = computed(() => store.state.user.dock.isVisible);
@@ -276,7 +276,7 @@ export default defineComponent({
       updateZIndex();
     };
 
-    
+
 
     // Update positions based on nav visibility
     const updatePositions = () => {
@@ -332,13 +332,13 @@ export default defineComponent({
       //console.log("[DashboardView.vue]access store state: ",isNavVisible);
       const dashboardView = document.querySelector('.view.dashboard-view');
       const itemWindowView = document.querySelector('.itemWindow-view');
-      
+
       disableBodyScroll(bodyElement, {
         allowTouchMove: (el) => {
           return dashboardView.contains(el) || itemWindowView.contains(el);
         }
       });
-      
+
       // IF USER ACCESS TO DASHBOARD STRAIGHT.
       try {
         // Make sure we have a userId first
@@ -350,7 +350,7 @@ export default defineComponent({
         // If no theme is selected
         if (!currentThemeId.value) {
           const loadView = await store.dispatch('mindspace/loadViewThemeId',store.state.user.user.uid);
-          
+
           if (!loadView) {
             return router.push('/themespace');
           }
@@ -389,7 +389,7 @@ export default defineComponent({
 
       currentMindSpaceId,
       currentItemId,
-      
+
       showItemWindow,
       closeItemWindow,
       showMoveItemWindow,
@@ -420,10 +420,10 @@ export default defineComponent({
 @mixin responsive($breakpoint) {
   @if $breakpoint == iPhoneSE {
     @media (min-width: 200px) { @content; }
-  } 
+  }
   @if $breakpoint == iPhonePro {
     @media (min-width: 390px) { @content; }
-  } 
+  }
   @if $breakpoint == tablet {
     @media (min-width: 768px) { @content; }
   } @else if $breakpoint == desktop {
