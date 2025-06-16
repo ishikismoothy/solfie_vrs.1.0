@@ -130,24 +130,33 @@
   const fetchMindspaceSlots = async () => {
     try {
       if (!currentMindSpaceId.value) {
-        console.warn('[fetchMindspaceSlots] No mindspace ID available')
-        return
+        console.warn('[fetchMindspaceSlots] No mindspace ID available');
+        return;
       }
 
-      const data = await mindspaceService.fetchMindspaceSlots(currentMindSpaceId.value)
-      mindspace.value = {
+      const data = await mindspaceService.fetchMindspaceSlots(currentMindSpaceId.value);
+
+      // Clean the fetched data too
+      const cleanedData = {
         ...data,
-        mindslot: data.mindslot || []
-      }
-      console.log("[mindSlot.vue/fetchMindspaceSlots] Slots: ", [...mindspace.value.mindslot])
+        mindslot: (data.mindslot || []).map(slot => ({
+          name: slot.name || 'New Slot',
+          item: slot.item || null,
+          slotIcons: slot.slotIcons || [null, null, null]
+        }))
+      };
+
+      mindspace.value = cleanedData;
+
+      console.log("[mindSlot.vue/fetchMindspaceSlots] Slots: ", [...mindspace.value.mindslot]);
     } catch (error) {
-      console.error('[fetchMindspaceSlots] Error fetching mindspace slots:', error)
+      console.error('[fetchMindspaceSlots] Error fetching mindspace slots:', error);
       mindspace.value = {
         ...mindspace.value,
         mindslot: mindspace.value.mindslot || []
-      }
+      };
     }
-  }
+  };
 
   // Fetch items
   const fetchItems = async () => {
@@ -175,13 +184,23 @@
 
   // Slot management functions
   async function addSlot(title, itemId) {
-    if (mindspace.value.mindslot.length >= 5) return
-    console.log('Adding new slot with title:', title)
+    if (mindspace.value.mindslot.length >= 5) return;
+
+    console.log('Adding new slot with title:', title);
+
+    // Ensure no undefined values
+    const newSlot = {
+      name: title || 'New Slot',
+      item: itemId || null,  // Explicitly null, not undefined
+      slotIcons: [null, null, null]  // Add this if you're using icons
+    };
+
     mindspace.value.mindslot = [
       ...mindspace.value.mindslot,
-      { name: title || 'New Slot', item: itemId }
-    ]
-    await updateMindspace()
+      newSlot
+    ];
+
+    await updateMindspace();
   }
 
   // Handle slot click
@@ -228,30 +247,29 @@
   // Update mindspace
   const updateMindspace = async () => {
     try {
+      // Clean the mindslot array specifically
+      const cleanMindslots = (mindspace.value.mindslot || []).map(slot => ({
+        name: slot.name || 'New Slot',
+        item: slot.item || null,  // Convert undefined to null
+        // Include any other slot properties, ensuring no undefined values
+        slotIcons: slot.slotIcons || [null, null, null]
+      }));
+
       const updatedData = {
-        mindslot: mindspace.value.mindslot || [],
-        ...mindspace.value
-      }
+        ...mindspace.value,
+        mindslot: cleanMindslots
+      };
+
+      console.log('[DEBUG] Sending clean data:', updatedData);
 
       await mindspaceService.updateMindspaceSlots(
         currentMindSpaceId.value,
         updatedData
-      )
+      );
     } catch (error) {
-      console.error('Error updating mindspace:', error)
+      console.error('Error updating mindspace:', error);
     }
-  }
-
-  function handleRemoveMindslot({ itemId, slotIndex }) {
-    console.log('Removing item from mindslot:', { itemId, slotIndex })
-    // Remove the item from the slot but keep the slot
-    mindspace.value.mindslot[slotIndex] = {
-      ...mindspace.value.mindslot[slotIndex],
-      item: null
-    }
-
-    updateMindspace()
-  }
+  };
 
   async function handleSlotIconsChanged({ index, icons }) {
     console.log(`Updating icons for slot ${index}:`, icons)
@@ -345,6 +363,16 @@
     } else {
       console.warn('Item not found in any slot:', id)
     }
+  }
+
+  function handleRemoveMindslot({ itemId, slotIndex }) {
+    console.log('Removing item from mindslot:', { itemId, slotIndex })
+    // Remove the item from the slot but keep the slot
+    mindspace.value.mindslot[slotIndex] = {
+      ...mindspace.value.mindslot[slotIndex],
+      item: null
+    }
+    updateMindspace()
   }
 
   // Watchers

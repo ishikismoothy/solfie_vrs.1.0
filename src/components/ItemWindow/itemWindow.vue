@@ -24,8 +24,16 @@
         <h3 v-else class="slot-name" @click.stop="startEditingName">
           {{ mindslot.name || 'New Slot' }}
         </h3>
+        <!-- render a close button when expanded -->
         <button
-          v-if="!expanded"
+          v-if="expanded"
+          @click.stop="handleClose"
+          class="icon-button close-button"
+        >×</button>
+
+        <!-- render a delete button when not expanded -->
+        <button
+          v-else
           @click.stop="$emit('delete', index)"
           class="delete-btn"
         >×</button>
