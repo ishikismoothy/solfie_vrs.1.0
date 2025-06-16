@@ -955,19 +955,32 @@ export default {
         }
       },
       //Selected Item Blocks Handling
-      async setItemId ({ commit, state, dispatch }, itemId) {
-        try {
-          console.log('[setItemId] Setting item ID to:', itemId);
-          commit('SET_ITEM_ID', itemId);
-          console.log('[setItemId] Item ID set in store:', state.currentItemId);
+      async setItemId({ commit, dispatch, state }, itemId) {
+        console.log('[setItemId] Setting item ID to:', itemId);
+        commit('SET_ITEM_ID', itemId);
+        console.log('[setItemId] Item ID set in store:', itemId);
 
-          await dispatch('setBlocks', itemId);
-          console.log('[setItemId] Blocks loaded for item:', itemId);
+        try {
+          await dispatch('setBlocks', itemId); // Pass itemId to setBlocks
+
+          // Get the item name from the loaded blocks or find the item in pages
+          const item = state.mindSpacePages.flatMap(page => page.items).find(item => item.id === itemId);
+          if (item && item.name) {
+            commit('SET_ITEM_NAME', item.name);
+            console.log('[setItemId] Item name loaded from pages:', item.name);
+          } else {
+            // If not found in pages, check if setBlocks loaded any item data with name
+            console.log('[setItemId] No name found, using default');
+            commit('SET_ITEM_NAME', 'Unnamed Item');
+          }
+
         } catch (error) {
-          console.error('Error loading item data:', error);
-          commit('SET_ERROR', error.message);
+          console.error('[setItemId] Error loading item data:', error);
         }
+
+        console.log('[setItemId] Blocks loaded for item:', itemId);
       },
+
       async getItemName({ commit, state }, itemName) {
         commit('SET_ITEM_NAME', itemName);
         console.log("[getItemName/mindspace.js] View itemName:", state.currentItemName);

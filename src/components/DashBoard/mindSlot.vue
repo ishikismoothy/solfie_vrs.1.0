@@ -1,16 +1,16 @@
-<!-- mindSlot.vue -->
+<!-- Updated mindSlot.vue -->
 <template>
   <Teleport to="body">
     <div
       v-if="expandedSlotIndex !== null"
       class="card-window-overlay"
-      @click="expandedSlotIndex = null"
+      @click="handleOverlayClick"
     />
   </Teleport>
 
-    <!-- Expanded card also teleported to body -->
+  <!-- Expanded card teleported to body -->
   <Teleport to="body">
-    <mind-slot-card
+    <ItemWindow
       v-if="expandedSlotIndex !== null"
       :key="`expanded-${expandedSlotIndex}`"
       :mindslot="mindspace.mindslot[expandedSlotIndex]"
@@ -18,9 +18,12 @@
       :getItemImage="getItemImage"
       :getItemName="getItemName"
       :expanded="true"
+      :initialFlipped="openDirectlyToItem"
+      :openedFromMindslot="true"
       @delete="deleteSlot"
       @name-change="saveSlotName"
       @click="handleSlotClick"
+      @close="closeExpandedCard"
       class="expanded-teleported"
     />
   </Teleport>
@@ -30,7 +33,7 @@
 
     <!-- Mind Slots Container -->
     <div class="mind-slots">
-      <mind-slot-card
+      <ItemWindow
         v-for="(mindslot, index) in mindspace.mindslot"
         :key="`normal-${index}`"
         :mindslot="mindslot"
@@ -41,16 +44,17 @@
         v-show="expandedSlotIndex !== index"
         @delete="deleteSlot"
         @name-change="saveSlotName"
+        @slot-icons-changed="handleSlotIconsChanged"
         @click="handleSlotClick"
       />
     </div>
 
-  <!-- Add Slot Button -->
-  <button @click="addSlot('New Slot')" class="add-slot-btn">
-    Add New Slot
-  </button>
+    <!-- Add Slot Button -->
+    <button @click="addSlot('New Slot')" class="add-slot-btn">
+      Add New Slot
+    </button>
 
-    <!-- Slot Selection Modal - Teleported to body for proper layering -->
+    <!-- Slot Selection Modal -->
     <Teleport to="body">
       <div v-if="showSlotSelectionModal" class="slot-selection-overlay" @click="closeSlotSelection">
         <div class="slot-selection-modal" @click.stop>
@@ -92,309 +96,282 @@
         </div>
       </div>
     </Teleport>
-
   </div>
 </template>
 
-<script>
-import { ref, computed, onMounted, onBeforeUnmount, watch, } from 'vue'
-import { useStore } from 'vuex';
-import { mindspaceService } from '@/firebase/firebaseMindSpace';
-import emitter from '@/eventBus';
-import MindSlotCard from './mindSlotCard.vue'
+<script setup>
+  import { ref, computed, onMounted, watch } from 'vue'
+  import { useStore } from 'vuex'
+  import { mindspaceService } from '@/firebase/firebaseMindSpace'
+  import emitter from '@/eventBus'
+  import ItemWindow from '@/./components/ItemWindow/itemWindow.vue'
 
-export default {
-  name: 'mindSlot',
-  components: {
-    MindSlotCard,
-  },
-  setup() {
-      const store = useStore();
-      const currentUser = computed(() => store.state.user.user.uid);
-      const currentMindSpaceId = computed(() => store.state.mindspace.currentMindSpaceId);
-      const showItemWindowFromMindSlot = computed(() => store.state.user.modalControl.showItemWindow);
+  const store = useStore()
+  const currentUser = computed(() => store.state.user.user.uid)
+  const currentMindSpaceId = computed(() => store.state.mindspace.currentMindSpaceId)
 
-      // Reactive variables
-      const mindspace = ref({
-          name: '',
-          mindslot: []
-      })
-      const items = ref({})
-      const isEditing = ref(false)
-      const editingSlotIndex = ref(null)
-      const editingSlotName = ref('')
-      const expandedSlotIndex = ref(null)
-      const showSlotSelectionModal = ref(false)
-      const pendingItem = ref({
-          title: '',
-          itemId: null,
-          emptySlots: [],
-          totalSlots: 0
-      })
+  // Reactive variables
+  const mindspace = ref({
+    name: '',
+    mindslot: []
+  })
+  const items = ref({})
+  const expandedSlotIndex = ref(null)
+  const openDirectlyToItem = ref(false)
+  const showSlotSelectionModal = ref(false)
+  const pendingItem = ref({
+    title: '',
+    itemId: null,
+    emptySlots: [],
+    totalSlots: 0
+  })
 
-      // Fetch mindspace slots with name preservation
-      const fetchMindspaceSlots = async () => {
-          try {
-              if (!currentMindSpaceId.value) {
-                  console.warn('[fetchMindspaceSlots] No mindspace ID available');
-                  return;
-              }
-
-              const data = await mindspaceService.fetchMindspaceSlots(currentMindSpaceId.value);
-              mindspace.value = {
-                  ...data,
-                  mindslot: data.mindslot || []
-              };
-              console.log("[mindSlot.vue/fetchMindspaceSlots] Slots: ",[...mindspace.value.mindslot]);
-          } catch (error) {
-              console.error('[fetchMindspaceSlots] Error fetching mindspace slots:', error);
-              mindspace.value = {
-                  ...mindspace.value,
-                  mindslot: mindspace.value.mindslot || []
-              };
-          }
-      };
-
-      // Fetch items
-      const fetchItems = async () => {
-          try {
-              if (!currentUser.value) {
-                  console.log('Waiting for user ID...');
-                  await new Promise(resolve => setTimeout(resolve, 1000));
-                  return fetchItems();
-              }
-
-              items.value = await mindspaceService.fetchItemsForSlots(currentUser.value);
-          } catch (error) {
-              console.error('Error fetching items:', error);
-          }
-      };
-
-      // Get item image
-      const getItemImage = async(itemId) => {
-          return await mindspaceService.getItemImage(itemId, items);
-      };
-
-      // Get item name
-      const getItemName = async(itemId) => {
-          return await mindspaceService.getItemName(itemId, items);
-      };
-
-      // Add slot function
-      async function addSlot(title, itemId) {
-        if (mindspace.value.mindslot.length >= 5) return;
-        console.log('Adding new slot with title:', title);
-        mindspace.value.mindslot = [
-          ...mindspace.value.mindslot,
-          { name: title || 'New Slot', item: itemId }
-        ];
-        await updateMindspace();
+  // Fetch mindspace slots
+  const fetchMindspaceSlots = async () => {
+    try {
+      if (!currentMindSpaceId.value) {
+        console.warn('[fetchMindspaceSlots] No mindspace ID available')
+        return
       }
 
-      // Handle add mindslot from direct button
-      function handleAddMindslot({ title, itemId }) {
-        console.log('Direct add mindslot:', { title, itemId });
-        addSlot(title, itemId);
+      const data = await mindspaceService.fetchMindspaceSlots(currentMindSpaceId.value)
+      mindspace.value = {
+        ...data,
+        mindslot: data.mindslot || []
       }
-
-      // Handle modal trigger from +MIND button
-      function handleShowMindslotModal({ title, itemId }) {
-          console.log('Showing mindslot modal for:', { title, itemId });
-
-          const currentSlots = mindspace.value.mindslot || [];
-
-          if (currentSlots.length >= 5) {
-              alert('Maximum of 5 mind slots reached. Cannot add more slots.');
-              return;
-          }
-
-          const emptySlots = currentSlots
-              .map((slot, index) => ({ ...slot, slotIndex: index }))
-              .filter(slot => !slot.item || slot.item === null || slot.item === undefined);
-
-          console.log('Found empty slots:', emptySlots);
-          console.log('Total slots:', currentSlots.length);
-
-          pendingItem.value = {
-              title,
-              itemId,
-              emptySlots,
-              totalSlots: currentSlots.length
-          };
-
-          console.log('Showing slot selection modal');
-          showSlotSelectionModal.value = true;
-      }
-
-      // Modal functions
-      function closeSlotSelection() {
-        showSlotSelectionModal.value = false;
-        pendingItem.value = {
-            title: '',
-            itemId: null,
-            emptySlots: [],
-            totalSlots: 0
-        };
-      }
-
-      async function fillExistingSlot(slotIndex) {
-        console.log(`Filling existing slot ${slotIndex} with item:`, pendingItem.value);
-
-        mindspace.value.mindslot[slotIndex] = {
-            ...mindspace.value.mindslot[slotIndex],
-            name: pendingItem.value.title,
-            item: pendingItem.value.itemId
-        };
-
-        await updateMindspace();
-        closeSlotSelection();
-      }
-
-      async function createNewSlot() {
-        console.log('Creating new slot with item:', pendingItem.value);
-
-        if (mindspace.value.mindslot.length >= 5) {
-            alert('Maximum of 5 mind slots reached. Cannot add more slots.');
-            closeSlotSelection();
-            return;
-        }
-
-        mindspace.value.mindslot = [
-            ...mindspace.value.mindslot,
-            {
-                name: pendingItem.value.title || 'New Slot',
-                item: pendingItem.value.itemId
-            }
-        ];
-
-        await updateMindspace();
-        closeSlotSelection();
-      }
-
-      // Delete slot
-      const deleteSlot = async (index) => {
-        console.log(`deleting slot ${index} from mindspace`)
-          mindspace.value.mindslot.splice(index, 1);
-          await updateMindspace();
-      };
-
-      // Start editing slot name
-      const startEditing = (index, name) => {
-          isEditing.value = true;
-          editingSlotIndex.value = index;
-          editingSlotName.value = name;
-      };
-
-      // Save slot name
-      const saveSlotName = async ({ index, newName }) => {
-        if (newName.trim()) {
-          mindspace.value.mindslot[index].name = newName;
-          await updateMindspace();
-        }
-        isEditing.value = false;
-        editingSlotIndex.value = null;
-        editingSlotName.value = '';
-      };
-
-      // Update mindspace
-      const updateMindspace = async () => {
-          try {
-              const updatedData = {
-                  mindslot: mindspace.value.mindslot || [],
-                  ...mindspace.value
-              };
-
-              await mindspaceService.updateMindspaceSlots(
-                  currentMindSpaceId.value,
-                  updatedData
-              );
-          } catch (error) {
-              console.error('Error updating mindspace:', error);
-          }
-      };
-
-      // Open item selection
-      const openItemSelection = () => {
-          // Placeholder function
-      };
-
-      // Handle slot click
-      function handleSlotClick(index) {
-        console.log(`Slot ${index} clicked`);
-
-        if (!mindspace.value.mindslot || !mindspace.value.mindslot[index]) {
-          console.warn(`Mindslot at index ${index} not found`);
-          return;
-        }
-
-        const mindslot = mindspace.value.mindslot[index];
-
-        if (expandedSlotIndex.value === index) {
-          console.log(`Slot ${index} already expanded, opening item window`);
-          emitter.emit('openItemWindow', {
-            id: mindslot.item || null,
-            title: mindslot.name || 'Unnamed Slot',
-            image: mindslot.image || null
-          });
-        } else {
-          console.log(`Expanding slot ${index}`);
-          expandedSlotIndex.value = index;
-        }
-      }
-
-      // Watchers
-      watch(currentUser, async (newUserId) => {
-          if (newUserId) {
-              await fetchItems();
-          }
-      });
-
-      watch(currentMindSpaceId, async (newMindSpaceId) => {
-          if (newMindSpaceId) {
-              await fetchMindspaceSlots();
-              await fetchItems();
-          }
-      });
-
-      // Lifecycle hooks
-      onMounted(async () => {
-          emitter.on('addMindslot', handleAddMindslot);
-          emitter.on('showMindslotModal', handleShowMindslotModal);
-
-          if (currentUser.value) {
-              await fetchItems();
-          }
-      });
-
-      onBeforeUnmount(() => {
-          emitter.off('addMindslot', handleAddMindslot);
-          emitter.off('showMindslotModal', handleShowMindslotModal);
-      });
-
-      return {
-          mindspace,
-          isEditing,
-          editingSlotIndex,
-          editingSlotName,
-          showItemWindowFromMindSlot,
-          getItemImage,
-          getItemName,
-          addSlot,
-          deleteSlot,
-          startEditing,
-          saveSlotName,
-          openItemSelection,
-          handleSlotClick,
-          expandedSlotIndex,
-          showSlotSelectionModal,
-          pendingItem,
-          closeSlotSelection,
-          fillExistingSlot,
-          createNewSlot,
-          handleShowMindslotModal,
+      console.log("[mindSlot.vue/fetchMindspaceSlots] Slots: ", [...mindspace.value.mindslot])
+    } catch (error) {
+      console.error('[fetchMindspaceSlots] Error fetching mindspace slots:', error)
+      mindspace.value = {
+        ...mindspace.value,
+        mindslot: mindspace.value.mindslot || []
       }
     }
   }
+
+  // Fetch items
+  const fetchItems = async () => {
+    try {
+      if (!currentUser.value) {
+        console.log('Waiting for user ID...')
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        return fetchItems()
+      }
+
+      items.value = await mindspaceService.fetchItemsForSlots(currentUser.value)
+    } catch (error) {
+      console.error('Error fetching items:', error)
+    }
+  }
+
+  // Get item image/name functions
+  const getItemImage = async (itemId) => {
+    return await mindspaceService.getItemImage(itemId, items)
+  }
+
+  const getItemName = async (itemId) => {
+    return await mindspaceService.getItemName(itemId, items)
+  }
+
+  // Slot management functions
+  async function addSlot(title, itemId) {
+    if (mindspace.value.mindslot.length >= 5) return
+    console.log('Adding new slot with title:', title)
+    mindspace.value.mindslot = [
+      ...mindspace.value.mindslot,
+      { name: title || 'New Slot', item: itemId }
+    ]
+    await updateMindspace()
+  }
+
+  // Handle slot click
+  function handleSlotClick(index) {
+    console.log(`Slot ${index} clicked`)
+
+    if (expandedSlotIndex.value === index) {
+      // Already expanded, close it
+      expandedSlotIndex.value = null
+    } else {
+      // Expand this slot
+      expandedSlotIndex.value = index
+      openDirectlyToItem.value = false
+    }
+  }
+
+  // Handle overlay click
+  function handleOverlayClick() {
+    expandedSlotIndex.value = null
+    openDirectlyToItem.value = false
+  }
+
+  // Close expanded card
+  function closeExpandedCard() {
+    expandedSlotIndex.value = null
+    openDirectlyToItem.value = false
+  }
+
+  // Delete slot
+  const deleteSlot = async (index) => {
+    console.log(`deleting slot ${index} from mindspace`)
+    mindspace.value.mindslot.splice(index, 1)
+    await updateMindspace()
+  }
+
+  // Save slot name
+  const saveSlotName = async ({ index, newName }) => {
+    if (newName.trim()) {
+      mindspace.value.mindslot[index].name = newName
+      await updateMindspace()
+    }
+  }
+
+  // Update mindspace
+  const updateMindspace = async () => {
+    try {
+      const updatedData = {
+        mindslot: mindspace.value.mindslot || [],
+        ...mindspace.value
+      }
+
+      await mindspaceService.updateMindspaceSlots(
+        currentMindSpaceId.value,
+        updatedData
+      )
+    } catch (error) {
+      console.error('Error updating mindspace:', error)
+    }
+  }
+
+  function handleRemoveMindslot({ itemId, slotIndex }) {
+    console.log('Removing item from mindslot:', { itemId, slotIndex })
+    // Remove the item from the slot but keep the slot
+    mindspace.value.mindslot[slotIndex] = {
+      ...mindspace.value.mindslot[slotIndex],
+      item: null
+    }
+
+    updateMindspace()
+  }
+
+  async function handleSlotIconsChanged({ index, icons }) {
+    console.log(`Updating icons for slot ${index}:`, icons)
+
+    mindspace.value.mindslot[index] = {
+      ...mindspace.value.mindslot[index],
+      slotIcons: icons
+    }
+
+    await updateMindspace()
+  }
+
+  // Modal functions
+  function closeSlotSelection() {
+    showSlotSelectionModal.value = false
+    pendingItem.value = {
+      title: '',
+      itemId: null,
+      emptySlots: [],
+      totalSlots: 0
+    }
+  }
+
+  async function fillExistingSlot(slotIndex) {
+    console.log(`Filling existing slot ${slotIndex} with item:`, pendingItem.value)
+    mindspace.value.mindslot[slotIndex] = {
+      ...mindspace.value.mindslot[slotIndex],
+      item: pendingItem.value.itemId
+    }
+    await updateMindspace()
+    closeSlotSelection()
+  }
+
+  async function createNewSlot() {
+    console.log('Creating new slot with item:', pendingItem.value)
+    if (mindspace.value.mindslot.length >= 5) {
+      alert('Maximum of 5 mind slots reached. Cannot add more slots.')
+      closeSlotSelection()
+      return
+    }
+    mindspace.value.mindslot = [
+      ...mindspace.value.mindslot,
+      {
+        name: 'New Slot',
+        item: pendingItem.value.itemId
+      }
+    ]
+    await updateMindspace()
+    closeSlotSelection()
+  }
+
+  // Handle modal trigger from +MIND button
+  function handleShowMindslotModal({ title, itemId }) {
+    console.log('Showing mindslot modal for:', { title, itemId })
+
+    const currentSlots = mindspace.value.mindslot || []
+
+    if (currentSlots.length >= 5) {
+      alert('Maximum of 5 mind slots reached. Cannot add more slots.')
+      return
+    }
+
+    const emptySlots = currentSlots
+      .map((slot, index) => ({ ...slot, slotIndex: index }))
+      .filter(slot => !slot.item || slot.item === null || slot.item === undefined)
+
+    console.log('Found empty slots:', emptySlots)
+    console.log('Total slots:', currentSlots.length)
+
+    pendingItem.value = {
+      title,
+      itemId,
+      emptySlots,
+      totalSlots: currentSlots.length
+    }
+
+    console.log('Showing slot selection modal')
+    showSlotSelectionModal.value = true
+  }
+
+  // Handle opening item directly from event bus
+  function handleOpenItemWindow({ id, title }) {
+    console.log('Opening item window for:', { id, title })
+
+    // Find the slot with this item
+    const slotIndex = mindspace.value.mindslot.findIndex(slot => slot.item === id)
+
+    if (slotIndex !== -1) {
+      expandedSlotIndex.value = slotIndex
+      openDirectlyToItem.value = true
+    } else {
+      console.warn('Item not found in any slot:', id)
+    }
+  }
+
+  // Watchers
+  watch(currentUser, async (newUserId) => {
+    if (newUserId) {
+      await fetchItems()
+    }
+  })
+
+  watch(currentMindSpaceId, async (newMindSpaceId) => {
+    if (newMindSpaceId) {
+      await fetchMindspaceSlots()
+      await fetchItems()
+    }
+  })
+
+  // Lifecycle hooks
+  onMounted(async () => {
+    emitter.on('showMindslotModal', handleShowMindslotModal)
+    emitter.on('openItemWindow', handleOpenItemWindow)
+    emitter.on('removeMindslot', handleRemoveMindslot)
+
+    if (currentUser.value) {
+      await fetchItems()
+    }
+  })
+
 </script>
 
 <style scoped>
@@ -441,6 +418,10 @@ export default {
     z-index: 1000;
   }
 
+  .expanded-teleported {
+    z-index: 2001;
+  }
+
   /* Modal Styles */
   .slot-selection-overlay {
     position: fixed;
@@ -452,7 +433,7 @@ export default {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 9999; /* Much higher z-index to be above item window */
+    z-index: 9999;
   }
 
   .slot-selection-modal {

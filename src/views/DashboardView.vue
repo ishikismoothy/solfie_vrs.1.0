@@ -81,11 +81,28 @@
       </svg>
     </button>
 
-    <ItemWindow class="itemWindow-view"
-      :is-open="showItemWindow"
-      @close="closeItemWindow"
-      @click.self="closeItemWindow"
-    />
+    <Teleport to="body">
+      <div
+        v-if="showItemWindow"
+        class="item-window-overlay"
+        @click="closeItemWindow"
+      />
+    </Teleport>
+
+    <Teleport to="body">
+      <ItemWindow
+        v-if="showItemWindow && currentItemForWindow"
+        :mindslot="currentItemForWindow"
+        :index="0"
+        :getItemImage="getItemImage"
+        :getItemName="getItemName"
+        :expanded="true"
+        :initialFlipped="false"
+        @close="closeItemWindow"
+        class="mindspace-item-window"
+      />
+    </Teleport>
+
     <satSlider class="satWindow-view"
       :is-open="showSatWindow"
       @close="closeSatWindow"
@@ -162,6 +179,9 @@ export default defineComponent({
       return isMindSpaceView.value ? 0 : -50; // Changed from -100 to -50
     });
     const bodyElement = document.querySelector('body');
+    const selectedItemId = computed(() => store.getters['mindspace/getItemId']);
+    const getItemImage = () => {return null;}; // Placeholder for item image retrieval, can be replaced with actual logic
+    const getItemName = () => {return store.getters['mindspace/getItemName'] || 'Unnamed Item';}; // Placeholder for item name retrieval, can be replaced with actual logic
 
     //[MONITOR] MODAL AND EDIT TOGGLE
     const showMindUniverseModal = computed(() => store.state.user.modalControl.showMindUniverseWindow);
@@ -328,6 +348,15 @@ export default defineComponent({
       updatePositions();
     });
 
+    const currentItemForWindow = computed(() => {
+      if (!selectedItemId.value) return null;
+
+      return {
+        name: store.getters['mindspace/getItemName'] || 'Unnamed Item',
+        item: selectedItemId.value
+      };
+    });
+
     onMounted(async () => {
       //console.log("[DashboardView.vue]access store state: ",isNavVisible);
       const dashboardView = document.querySelector('.view.dashboard-view');
@@ -411,6 +440,12 @@ export default defineComponent({
 
       //Dock Menu visibility Handlings
       showMindUniverseModal,
+
+      // Item Window
+      selectedItemId,
+      currentItemForWindow,
+      getItemImage,
+      getItemName,
     };
   }
 });

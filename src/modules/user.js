@@ -235,7 +235,7 @@ export default {
     },
 
     async getUserWidgets({ commit, state }) {
-      
+
       if (!state.user.uid) {
           console.error("No user is signed in");
           return;
@@ -260,7 +260,7 @@ export default {
           console.error("Error adding user widget:", error);
       }
     },
-    
+
     async removeUserWidget({ dispatch, state }, widgetId) {
         try {
             // Add this function to your widgetService

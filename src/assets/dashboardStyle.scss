@@ -63,7 +63,7 @@
   overflow: hidden;
 
   text-align: center;
-  
+
   padding-bottom: 200px;// Adjust this value based on the height of your sticky nav
 }
 
@@ -302,21 +302,21 @@ main {
   display: flex;
   justify-content: center;
   align-items: center;
-  border-radius: 30px;  
+  border-radius: 30px;
 }
 
 .page-indicator-container {
   display: flex;
   align-items: center;
   gap: 6px;
-  
+
   span {
     width: 6px;
     height: 6px;
     border-radius: 50%;
     cursor: pointer;
     transition: all 0.2s ease;
-    
+
     &.active {
       transform: scale(1.1);
     }
@@ -325,7 +325,7 @@ main {
   // Regular page dots
   span:not(.view-switcher):not(.separator) {
     background-color: rgba(0, 0, 0, 0.2);
-    
+
     &.active {
       background-color: rgba(0, 0, 0, 0.6);
     }
@@ -335,7 +335,7 @@ main {
   .view-switcher {
     background-color: rgba(0, 0, 0, 0.2); // iOS blue
     //opacity: 0.8;
-    
+
     &.active {
       background-color: #007AFF
       //opacity: 1;
@@ -350,7 +350,7 @@ main {
     border-radius: 1px;
     cursor: default;
   }
- 
+
 }
 
 
@@ -436,4 +436,18 @@ main {
     width: 56px;
     height: 56px;
   }
+}
+
+.item-window-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+.mindspace-item-window {
+  z-index: 2001;
 }
