@@ -1,9 +1,16 @@
+// Variables
 $hover-bg: #f1f1f3;
-
 $gray-light: #cccccc;
 $gray-medium: #888888;
 $gray-dark: #4a5568;
 $white: #ffffff;
+
+// Layout Components
+.page-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+}
 
 .item-window-overlay {
   position: fixed;
@@ -27,7 +34,7 @@ $white: #ffffff;
   overflow-x: scroll;
   position: relative;
 
-  .block-option-container{
+  .block-option-container {
     position: absolute;
     top: 1rem;
     right: 1rem;
@@ -35,34 +42,42 @@ $white: #ffffff;
     align-items: center;
     justify-content: flex-end;
     gap: 5px;
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    flex-wrap: wrap;
   }
 }
 
-.page-container {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 2rem;
+.item-window-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
-// Include your existing styles here
+// Block Components
 .block-wrapper {
-    margin: 1rem 0;
-    padding: 1rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 0.5rem;
-}
-
-.edit-textarea {
-  width: 100%;
-  min-height: 100px;
-  padding: 0.5rem;
+  position: relative;
+  margin: 1rem 0;
+  padding: 1rem;
   border: 1px solid #e2e8f0;
-  border-radius: 0.25rem;
-  white-space: pre-wrap;
-  resize: vertical;
+  border-radius: 0.5rem;
 }
 
-/* Block-specific styles */
+.block-controls {
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  display: flex;
+  gap: 5px;
+}
+
+.blocks-container {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+// Block Types
 .title-block {
   font-size: 1.5rem;
   font-weight: bold;
@@ -72,17 +87,17 @@ $white: #ffffff;
   font-size: 1rem;
   line-height: 1.5;
 
-    .todo-item {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        padding: 0.5rem 0;
-    }
+  .todo-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.5rem 0;
+  }
 
-    p {
-      white-space: pre-line; /* This preserves line breaks in the rendered text */
-      word-wrap: break-word; /* This ensures long words don't overflow */
-    }
+  p {
+    white-space: pre-line;
+    word-wrap: break-word;
+  }
 }
 
 .section-line {
@@ -94,15 +109,13 @@ $white: #ffffff;
 .image-block {
   margin: 1rem 0;
 
-    .image-item {
-        max-width: 100%;
-        height: auto;
-    }
-
+  .image-item {
+    max-width: 100%;
+    height: auto;
+  }
 }
 
 .todo-block {
-  // Container styles
   background-color: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 0.75rem;
@@ -140,7 +153,6 @@ $white: #ffffff;
     }
   }
 
-  // Todo item styles
   .todo-item {
     padding: 0.75rem;
     border-bottom: 1px solid #f3f4f6;
@@ -148,19 +160,19 @@ $white: #ffffff;
     justify-items: stretch;
     gap: 5px;
     align-items: center;
-    transition: background-color 0.2s ease;
-    transition: transform 0.5s ease;
-
+    transition: background-color 0.2s ease, transform 0.5s ease;
 
     &:last-child {
       border-bottom: none;
     }
 
-    &-right-section{
+    &-right-section {
       flex-grow: 0;
     }
-    &-left-section{
+
+    &-left-section {
       flex-grow: 1;
+
       .text-nm {
         display: flex;
         align-items: center;
@@ -169,15 +181,18 @@ $white: #ffffff;
         border-radius: 0.5rem;
         transition: background-color 0.2s ease;
         padding: 0.5em;
+
         @media (hover: hover) {
           &:hover {
             background-color: #f3f4f6;
           }
         }
+
         &:active {
           background-color: #e5e7eb;
         }
       }
+
       .text-sm {
         cursor: pointer;
         font-size: 0.675rem;
@@ -196,19 +211,20 @@ $white: #ffffff;
         }
       }
     }
+
     @media (hover: hover) {
       &:hover {
         background-color: #f9fafb;
         transform: scale(1.01);
       }
     }
+
     &:active {
       background-color: #f9fafb;
       transform: scale(0.98);
     }
   }
 
-  // Checkbox styles
   input[type="checkbox"] {
     width: 1rem;
     height: 1rem;
@@ -235,23 +251,21 @@ $white: #ffffff;
     }
   }
 
-  // Text styles
   .line-through {
     color: #9ca3af;
     text-decoration-color: #d1d5db;
   }
 
-  // Button styles
- .add-block-btn {
-    width: 100%; // Full width on mobile
+  .add-block-btn {
+    width: 100%;
     margin-top: 1rem;
-    padding: 0.75rem 1rem; // Larger padding for touch
+    padding: 0.75rem 1rem;
     color: $gray-medium;
     font-weight: 500;
     border-radius: 0.5rem;
     transition: all 0.2s ease;
     border: 1px solid transparent;
-    min-height: 44px; // Minimum touch target size
+    min-height: 44px;
     -webkit-tap-highlight-color: transparent;
 
     @media (hover: hover) {
@@ -269,14 +283,25 @@ $white: #ffffff;
   }
 }
 
-.edit-input {
-width: 90%;
-padding: 0.5rem;
-border: none;
-border-bottom: 1px solid #e2e8f0;
-outline: none;
+// Form Elements
+.edit-textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.25rem;
+  white-space: pre-wrap;
+  resize: vertical;
+}
 
-  &-name{
+.edit-input {
+  width: 90%;
+  padding: 0.5rem;
+  border: none;
+  border-bottom: 1px solid #e2e8f0;
+  outline: none;
+
+  &-name {
     width: 100%;
     padding: 0.5rem;
     height: 30px;
@@ -286,42 +311,18 @@ outline: none;
     border-bottom: 1px solid #e2e8f0;
     outline: none;
   }
-  &-title{
+
+  &-title {
     width: 100%;
-    //padding: 0.5rem;
-    //height: 30px;
     font-size: 24px;
     margin: 20px 0;
     border: none;
     border-bottom: 1px solid #e2e8f0;
     outline: none;
   }
-
 }
 
-.timestamp-info {
-  font-size: 0.65rem;
-  margin-top: 0.5rem;
-  color: #718096;
-  font-weight: lighter;
-}
-
-//BLOCK WRAPPER
-.block-wrapper {
-  position: relative;
-  padding: 1rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.5rem;
-  margin: 1rem 0;
-}
-
-.block-controls{
-  position:absolute;
-  right: 5px;
-  bottom: 5px;
-  display:flex;
-  gap:5px
-}
+// Button Components
 .control-btn {
   height: 25px;
   width: 25px;
@@ -330,21 +331,184 @@ outline: none;
   border-radius: 0.25rem;
   cursor: pointer;
   transition: background-color 0.3s ease;
+
   @media (hover: hover) {
     &:hover {
       background: #f5f5f5;
     }
   }
-  &:active{
+
+  &:active {
     background-color: rgba(0, 0, 0, 0.5);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 }
 
-.control-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.icon-button {
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+
+  &:hover {
+    background: #f0f0f0;
+  }
 }
 
+.back-button {
+  background: #f0f0f0;
+  border: 1px solid #ccc;
+}
+
+.close-button {
+  color: #666;
+
+  &:hover {
+    color: #ff4444;
+    background: #fff0f0;
+  }
+}
+
+.delete-btn {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  font-size: 20px;
+  padding: 0 8px;
+
+  &:hover {
+    color: #ff4444;
+  }
+}
+
+// Mind Slot Card Component
+.mind-slot-card {
+  position: relative;
+  width: 100%;
+  min-height: 240px;
+  margin: 0.5rem;
+  cursor: pointer;
+  perspective: 1000px;
+  transition: all 0.3s ease;
+
+  &.expanded {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2000;
+    width: 90%;
+    max-width: 800px;
+    height: 90vh;
+    margin: 0;
+    cursor: default;
+  }
+
+  &.full-screen {
+    width: 95%;
+    max-width: 1000px;
+    height: 95vh;
+  }
+
+  &.flipped {
+    .front {
+      transform: rotateY(-180deg);
+    }
+    .back {
+      transform: rotateY(0deg);
+    }
+  }
+}
+
+.card-face {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  transition: transform 0.6s;
+  border-radius: 8px;
+  background: white;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+.front {
+  transform: rotateY(0deg);
+}
+
+.back {
+  transform: rotateY(180deg);
+  overflow-y: auto;
+}
+
+// Slot Components
+.slot-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid #eee;
+}
+
+.slot-name {
+  margin: 0;
+  font-size: 16px;
+  cursor: pointer;
+  flex: 1;
+}
+
+.slot-name-input {
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  width: 80%;
+  font-size: 16px;
+}
+
+.slot-content {
+  height: 120px;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.item-content {
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  padding: 8px;
+  border-radius: 4px;
+}
+
+.empty-slot {
+  color: #666;
+}
+
+.flip-indicator {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+// Empty Slot Views
 .empty-slot-view {
   display: flex;
   flex-direction: column;
@@ -358,6 +522,7 @@ outline: none;
   align-items: center;
   margin-bottom: 40px;
   border-bottom: 1px solid #eee;
+  padding: 15px;
   padding-bottom: 15px;
 }
 
@@ -381,10 +546,10 @@ outline: none;
 .empty-slot-icon {
   margin-bottom: 20px;
   opacity: 0.3;
-}
 
-.empty-slot-icon svg {
-  color: #ccc;
+  svg {
+    color: #ccc;
+  }
 }
 
 .empty-slot-content h4 {
@@ -402,6 +567,72 @@ outline: none;
   max-width: 300px;
 }
 
+.empty-slot-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 8px;
+}
+
+.empty-slot-text {
+  color: #666;
+  font-size: 12px;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+// Item Views
 .regular-item-view {
   height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.item-title-section {
+  flex: 1;
+
+  h3 {
+    margin: 0;
+    cursor: pointer;
+    font-size: 18px;
+  }
+}
+
+.header-controls {
+  display: flex;
+  gap: 10px;
+}
+
+// Utility Classes
+.timestamp-info {
+  font-size: 0.65rem;
+  margin-top: 0.5rem;
+  color: #718096;
+  font-weight: lighter;
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .mind-slot-card.expanded {
+    width: 95%;
+    height: 95vh;
+  }
+
+  .block-option-container {
+    flex-direction: column;
+
+    .icon-button {
+      justify-content: center;
+    }
+  }
 }
