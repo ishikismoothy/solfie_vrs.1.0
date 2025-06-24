@@ -1,4 +1,4 @@
-<!-- Updated mindSlot.vue -->
+<!-- Clean mindSlot.vue -->
 <template>
   <Teleport to="body">
     <div
@@ -20,6 +20,7 @@
       :expanded="true"
       :initialFlipped="openDirectlyToItem"
       :openedFromMindslot="true"
+      :directIconIndex="directIconIndex"
       @delete="deleteSlot"
       @name-change="saveSlotName"
       @click="handleSlotClick"
@@ -46,6 +47,7 @@
         @name-change="saveSlotName"
         @slot-icons-changed="handleSlotIconsChanged"
         @click="handleSlotClick"
+        @icon-direct-click="handleDirectIconClick"
       />
     </div>
 
@@ -60,17 +62,21 @@
         <div class="slot-selection-modal" @click.stop>
           <h3>Add "{{ pendingItem.title }}" to Mind Slots</h3>
 
-          <!-- Show empty slots if they exist -->
-          <div v-if="pendingItem.emptySlots && pendingItem.emptySlots.length > 0" class="empty-slots-section">
-            <h4>Fill an existing empty slot:</h4>
-            <div class="empty-slots-list">
+          <!-- Show available slots if they exist -->
+          <div v-if="pendingItem.availableSlots && pendingItem.availableSlots.length > 0" class="available-slots-section">
+            <h4>Add to existing slot:</h4>
+            <div class="available-slots-list">
               <button
-                v-for="slot in pendingItem.emptySlots"
-                :key="slot.slotIndex"
-                @click="fillExistingSlot(slot.slotIndex)"
-                class="empty-slot-option"
+                v-for="slot in pendingItem.availableSlots"
+                :key="`${slot.slotIndex}-${slot.type}`"
+                @click="addToExistingSlot(slot)"
+                class="available-slot-option"
+                :class="slot.type"
               >
-                Slot {{ slot.slotIndex + 1 }}: "{{ slot.name }}"
+                <div class="slot-info">
+                  <strong>Slot {{ slot.slotIndex + 1 }}: "{{ slot.name }}"</strong>
+                  <span class="slot-type">{{ slot.typeLabel }}</span>
+                </div>
               </button>
             </div>
             <div class="divider">OR</div>
@@ -78,18 +84,37 @@
 
           <!-- Option to create new slot -->
           <div class="new-slot-section">
-            <button
-              @click="createNewSlot"
-              class="new-slot-option"
-              :disabled="pendingItem.totalSlots >= 5"
-            >
-              <span v-if="pendingItem.totalSlots >= 5">
-                Maximum slots reached (5/5)
-              </span>
-              <span v-else>
-                Create New Slot ({{ 5 - pendingItem.totalSlots }} remaining)
-              </span>
-            </button>
+            <h4>Create new slot:</h4>
+            <div class="new-slot-options">
+              <button
+                @click="createNewSlot('single')"
+                class="new-slot-option single-item"
+                :disabled="pendingItem.totalSlots >= 5"
+              >
+                <div class="option-content">
+                  <strong>Single Item Slot</strong>
+                  <small>This item only</small>
+                </div>
+              </button>
+
+              <button
+                @click="createNewSlot('multi')"
+                class="new-slot-option multi-item"
+                :disabled="pendingItem.totalSlots >= 5"
+              >
+                <div class="option-content">
+                  <strong>Multi-Item Slot</strong>
+                  <small>Up to 3 items</small>
+                </div>
+              </button>
+            </div>
+
+            <div v-if="pendingItem.totalSlots >= 5" class="max-slots-warning">
+              Maximum slots reached (5/5)
+            </div>
+            <div v-else class="slots-remaining">
+              {{ 5 - pendingItem.totalSlots }} slot(s) remaining
+            </div>
           </div>
 
           <button @click="closeSlotSelection" class="cancel-btn">Cancel</button>
@@ -107,8 +132,8 @@
   import ItemWindow from '@/./components/ItemWindow/itemWindow.vue'
 
   const store = useStore()
-  const currentUser = computed(() => store.state.user.user.uid)
-  const currentMindSpaceId = computed(() => store.state.mindspace.currentMindSpaceId)
+  const currentUser = computed(() => store.state.user?.user?.uid)
+  const currentMindSpaceId = computed(() => store.state.mindspace?.currentMindSpaceId)
 
   // Reactive variables
   const mindspace = ref({
@@ -118,11 +143,12 @@
   const items = ref({})
   const expandedSlotIndex = ref(null)
   const openDirectlyToItem = ref(false)
+  const directIconIndex = ref(-1)
   const showSlotSelectionModal = ref(false)
   const pendingItem = ref({
     title: '',
     itemId: null,
-    emptySlots: [],
+    availableSlots: [],
     totalSlots: 0
   })
 
@@ -130,33 +156,32 @@
   const fetchMindspaceSlots = async () => {
     try {
       if (!currentMindSpaceId.value) {
-        console.warn('[fetchMindspaceSlots] No mindspace ID available');
-        return;
+        console.warn('[fetchMindspaceSlots] No mindspace ID available')
+        return
       }
 
-      const data = await mindspaceService.fetchMindspaceSlots(currentMindSpaceId.value);
+      const data = await mindspaceService.fetchMindspaceSlots(currentMindSpaceId.value)
 
-      // Clean the fetched data too
       const cleanedData = {
         ...data,
         mindslot: (data.mindslot || []).map(slot => ({
           name: slot.name || 'New Slot',
           item: slot.item || null,
+          iconItems: slot.iconItems || [null, null, null],
           slotIcons: slot.slotIcons || [null, null, null]
         }))
-      };
+      }
 
-      mindspace.value = cleanedData;
-
-      console.log("[mindSlot.vue/fetchMindspaceSlots] Slots: ", [...mindspace.value.mindslot]);
+      mindspace.value = cleanedData
+      console.log("[mindSlot.vue/fetchMindspaceSlots] Slots: ", [...mindspace.value.mindslot])
     } catch (error) {
-      console.error('[fetchMindspaceSlots] Error fetching mindspace slots:', error);
+      console.error('[fetchMindspaceSlots] Error fetching mindspace slots:', error)
       mindspace.value = {
         ...mindspace.value,
         mindslot: mindspace.value.mindslot || []
-      };
+      }
     }
-  };
+  }
 
   // Fetch items
   const fetchItems = async () => {
@@ -183,55 +208,62 @@
   }
 
   // Slot management functions
-  async function addSlot(title, itemId) {
-    if (mindspace.value.mindslot.length >= 5) return;
+  const addSlot = async (title, itemId, slotType = 'single') => {
+    if (mindspace.value.mindslot.length >= 5) return
 
-    console.log('Adding new slot with title:', title);
-
-    // Ensure no undefined values
     const newSlot = {
       name: title || 'New Slot',
-      item: itemId || null,  // Explicitly null, not undefined
-      slotIcons: [null, null, null]  // Add this if you're using icons
-    };
+      item: slotType === 'single' ? (itemId || null) : null,
+      iconItems: slotType === 'multi' ?
+        (itemId ? [itemId, null, null] : [null, null, null]) :
+        [null, null, null],
+      slotIcons: [null, null, null]
+    }
 
-    mindspace.value.mindslot = [
-      ...mindspace.value.mindslot,
-      newSlot
-    ];
-
-    await updateMindspace();
+    mindspace.value.mindslot = [...mindspace.value.mindslot, newSlot]
+    await updateMindspace()
   }
 
   // Handle slot click
-  function handleSlotClick(index) {
-    console.log(`Slot ${index} clicked`)
-
+  const handleSlotClick = (index) => {
     if (expandedSlotIndex.value === index) {
-      // Already expanded, close it
       expandedSlotIndex.value = null
     } else {
-      // Expand this slot
       expandedSlotIndex.value = index
       openDirectlyToItem.value = false
+      directIconIndex.value = -1
+    }
+  }
+
+  // Handle direct icon click
+  const handleDirectIconClick = (slotIndex, iconIndex) => {
+    const slot = mindspace.value.mindslot[slotIndex]
+    const iconItems = slot.iconItems || [null, null, null]
+    const itemId = iconItems[iconIndex]
+
+    if (itemId) {
+      expandedSlotIndex.value = slotIndex
+      openDirectlyToItem.value = true
+      directIconIndex.value = iconIndex
     }
   }
 
   // Handle overlay click
-  function handleOverlayClick() {
+  const handleOverlayClick = () => {
     expandedSlotIndex.value = null
     openDirectlyToItem.value = false
+    directIconIndex.value = -1
   }
 
   // Close expanded card
-  function closeExpandedCard() {
+  const closeExpandedCard = () => {
     expandedSlotIndex.value = null
     openDirectlyToItem.value = false
+    directIconIndex.value = -1
   }
 
   // Delete slot
   const deleteSlot = async (index) => {
-    console.log(`deleting slot ${index} from mindspace`)
     mindspace.value.mindslot.splice(index, 1)
     await updateMindspace()
   }
@@ -247,84 +279,113 @@
   // Update mindspace
   const updateMindspace = async () => {
     try {
-      // Clean the mindslot array specifically
       const cleanMindslots = (mindspace.value.mindslot || []).map(slot => ({
         name: slot.name || 'New Slot',
-        item: slot.item || null,  // Convert undefined to null
-        // Include any other slot properties, ensuring no undefined values
+        item: slot.item || null,
+        iconItems: slot.iconItems || [null, null, null],
         slotIcons: slot.slotIcons || [null, null, null]
-      }));
+      }))
 
       const updatedData = {
         ...mindspace.value,
         mindslot: cleanMindslots
-      };
+      }
 
-      console.log('[DEBUG] Sending clean data:', updatedData);
-
-      await mindspaceService.updateMindspaceSlots(
-        currentMindSpaceId.value,
-        updatedData
-      );
+      await mindspaceService.updateMindspaceSlots(currentMindSpaceId.value, updatedData)
     } catch (error) {
-      console.error('Error updating mindspace:', error);
+      console.error('Error updating mindspace:', error)
     }
-  };
+  }
 
-  async function handleSlotIconsChanged({ index, icons }) {
-    console.log(`Updating icons for slot ${index}:`, icons)
-
+  const handleSlotIconsChanged = async ({ index, icons }) => {
     mindspace.value.mindslot[index] = {
       ...mindspace.value.mindslot[index],
       slotIcons: icons
     }
-
     await updateMindspace()
   }
 
+  // Helper function to determine slot availability
+  const getSlotAvailability = (slot, slotIndex) => {
+    const availableSlots = []
+
+    // Check if it's a single-item slot that's empty
+    if (!slot.item && (!slot.iconItems || slot.iconItems.every(item => !item))) {
+      availableSlots.push({
+        slotIndex,
+        name: slot.name,
+        type: 'empty',
+        typeLabel: 'Empty slot'
+      })
+    }
+
+    // Check if it's a multi-item slot with available spaces
+    if (slot.iconItems && Array.isArray(slot.iconItems)) {
+      const emptyIconSlots = slot.iconItems.filter(item => !item).length
+      // Only add if there are empty spaces AND it's not also a single-item slot
+      if (emptyIconSlots > 0 && !slot.item) {
+        availableSlots.push({
+          slotIndex,
+          name: slot.name,
+          type: 'multi-item',
+          typeLabel: `Multi-item slot (${emptyIconSlots} space${emptyIconSlots > 1 ? 's' : ''} available)`
+        })
+      }
+    }
+
+    return availableSlots
+  }
+
   // Modal functions
-  function closeSlotSelection() {
+  const closeSlotSelection = () => {
     showSlotSelectionModal.value = false
     pendingItem.value = {
       title: '',
       itemId: null,
-      emptySlots: [],
+      availableSlots: [],
       totalSlots: 0
     }
   }
 
-  async function fillExistingSlot(slotIndex) {
-    console.log(`Filling existing slot ${slotIndex} with item:`, pendingItem.value)
-    mindspace.value.mindslot[slotIndex] = {
-      ...mindspace.value.mindslot[slotIndex],
-      item: pendingItem.value.itemId
+  const addToExistingSlot = async (slot) => {
+    const slotData = mindspace.value.mindslot[slot.slotIndex]
+
+    if (slot.type === 'empty') {
+      mindspace.value.mindslot[slot.slotIndex] = {
+        ...slotData,
+        item: pendingItem.value.itemId,
+        iconItems: [null, null, null]
+      }
+    } else if (slot.type === 'multi-item') {
+      const iconItems = [...slotData.iconItems]
+      const firstEmptyIndex = iconItems.findIndex(item => !item)
+      if (firstEmptyIndex !== -1) {
+        iconItems[firstEmptyIndex] = pendingItem.value.itemId
+        mindspace.value.mindslot[slot.slotIndex] = {
+          ...slotData,
+          item: null,
+          iconItems
+        }
+      }
     }
+
     await updateMindspace()
     closeSlotSelection()
   }
 
-  async function createNewSlot() {
-    console.log('Creating new slot with item:', pendingItem.value)
+  const createNewSlot = async (slotType) => {
     if (mindspace.value.mindslot.length >= 5) {
       alert('Maximum of 5 mind slots reached. Cannot add more slots.')
       closeSlotSelection()
       return
     }
-    mindspace.value.mindslot = [
-      ...mindspace.value.mindslot,
-      {
-        name: 'New Slot',
-        item: pendingItem.value.itemId
-      }
-    ]
-    await updateMindspace()
+
+    await addSlot('New Slot', pendingItem.value.itemId, slotType)
     closeSlotSelection()
   }
 
   // Handle modal trigger from +MIND button
-  function handleShowMindslotModal({ title, itemId }) {
-    console.log('Showing mindslot modal for:', { title, itemId })
-
+  const handleShowMindslotModal = ({ title, itemId }) => {
     const currentSlots = mindspace.value.mindslot || []
 
     if (currentSlots.length >= 5) {
@@ -332,30 +393,29 @@
       return
     }
 
-    const emptySlots = currentSlots
-      .map((slot, index) => ({ ...slot, slotIndex: index }))
-      .filter(slot => !slot.item || slot.item === null || slot.item === undefined)
-
-    console.log('Found empty slots:', emptySlots)
-    console.log('Total slots:', currentSlots.length)
+    const availableSlots = []
+    currentSlots.forEach((slot, index) => {
+      const slotAvailability = getSlotAvailability(slot, index)
+      availableSlots.push(...slotAvailability)
+    })
 
     pendingItem.value = {
       title,
       itemId,
-      emptySlots,
+      availableSlots,
       totalSlots: currentSlots.length
     }
 
-    console.log('Showing slot selection modal')
     showSlotSelectionModal.value = true
   }
 
   // Handle opening item directly from event bus
-  function handleOpenItemWindow({ id, title }) {
-    console.log('Opening item window for:', { id, title })
-
-    // Find the slot with this item
-    const slotIndex = mindspace.value.mindslot.findIndex(slot => slot.item === id)
+  const handleOpenItemWindow = ({ id }) => {
+    const slotIndex = mindspace.value.mindslot.findIndex(slot => {
+      if (slot.item === id) return true
+      if (slot.iconItems && slot.iconItems.includes(id)) return true
+      return false
+    })
 
     if (slotIndex !== -1) {
       expandedSlotIndex.value = slotIndex
@@ -365,13 +425,17 @@
     }
   }
 
-  function handleRemoveMindslot({ itemId, slotIndex }) {
-    console.log('Removing item from mindslot:', { itemId, slotIndex })
-    // Remove the item from the slot but keep the slot
-    mindspace.value.mindslot[slotIndex] = {
-      ...mindspace.value.mindslot[slotIndex],
-      item: null
+  const handleRemoveMindslot = ({ slotIndex, iconIndex }) => {
+    const slot = mindspace.value.mindslot[slotIndex]
+
+    if (iconIndex !== undefined) {
+      const iconItems = [...slot.iconItems]
+      iconItems[iconIndex] = null
+      mindspace.value.mindslot[slotIndex] = { ...slot, iconItems }
+    } else {
+      mindspace.value.mindslot[slotIndex] = { ...slot, item: null }
     }
+
     updateMindspace()
   }
 
@@ -403,181 +467,250 @@
 </script>
 
 <style scoped>
-  .return-to-myself {
-    padding: 20px;
-    background: #fff;
-    border-radius: 30px;
-    margin-bottom: 20px;
-  }
+.return-to-myself {
+  padding: 20px;
+  background: #fff;
+  border-radius: 30px;
+  margin-bottom: 20px;
+}
 
-  .title {
-    font-size: 24px;
-    margin-bottom: 20px;
-  }
+.title {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
 
-  .mind-slots {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-  }
+.mind-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
 
-  .add-slot-btn {
-    width: 100%;
-    padding: 12px;
-    margin-top: 15px;
-    background: #f0f0f0;
-    border: 2px dashed #ccc;
-    border-radius: 8px;
-    cursor: pointer;
-    color: #666;
-  }
+.add-slot-btn {
+  width: 100%;
+  padding: 12px;
+  margin-top: 15px;
+  background: #f0f0f0;
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #666;
+  transition: background 0.2s ease;
+}
 
-  .add-slot-btn:hover {
-    background: #e5e5e5;
-  }
+.add-slot-btn:hover {
+  background: #e5e5e5;
+}
 
-  .card-window-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 1000;
-  }
+.card-window-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
 
-  .expanded-teleported {
-    z-index: 2001;
-  }
+.expanded-teleported {
+  z-index: 2001;
+}
 
-  /* Modal Styles */
-  .slot-selection-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-  }
+/* Modal Styles */
+.slot-selection-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
 
-  .slot-selection-modal {
-    background: white;
-    border-radius: 15px;
-    padding: 25px;
-    max-width: 400px;
-    width: 90%;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  }
+.slot-selection-modal {
+  background: white;
+  border-radius: 15px;
+  padding: 25px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
 
-  .slot-selection-modal h3 {
-    margin: 0 0 20px 0;
-    font-size: 18px;
-    color: #333;
-    text-align: center;
-  }
+.slot-selection-modal h3 {
+  margin: 0 0 20px 0;
+  font-size: 18px;
+  color: #333;
+  text-align: center;
+}
 
-  .slot-selection-modal h4 {
-    margin: 0 0 15px 0;
-    font-size: 14px;
-    color: #666;
-  }
+.slot-selection-modal h4 {
+  margin: 0 0 15px 0;
+  font-size: 14px;
+  color: #666;
+}
 
-  .empty-slots-section {
-    margin-bottom: 20px;
-  }
+.available-slots-section {
+  margin-bottom: 20px;
+}
 
-  .empty-slots-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-bottom: 15px;
-  }
+.available-slots-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 15px;
+}
 
-  .empty-slot-option {
-    background: #f0f8ff;
-    border: 2px solid #4a90e2;
-    border-radius: 8px;
-    padding: 12px;
-    cursor: pointer;
-    transition: all 0.2s;
-    text-align: left;
-    font-size: 14px;
-  }
+.available-slot-option {
+  background: #f0f8ff;
+  border: 2px solid #4a90e2;
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
 
-  .empty-slot-option:hover {
-    background: #e6f3ff;
-    transform: translateY(-1px);
-  }
+.available-slot-option:hover {
+  background: #e6f3ff;
+  transform: translateY(-1px);
+}
 
-  .divider {
-    text-align: center;
-    color: #999;
-    font-weight: bold;
-    margin: 15px 0;
-    position: relative;
-  }
+.available-slot-option.multi-item {
+  border-color: #9c4ae2;
+  background: #f8f0ff;
+}
 
-  .divider::before,
-  .divider::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    width: 40%;
-    height: 1px;
-    background: #ddd;
-  }
+.available-slot-option.multi-item:hover {
+  background: #f0e6ff;
+}
 
-  .divider::before {
-    left: 0;
-  }
+.slot-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 
-  .divider::after {
-    right: 0;
-  }
+.slot-type {
+  font-size: 12px;
+  color: #666;
+  font-style: italic;
+}
 
-  .new-slot-section {
-    margin-bottom: 20px;
-  }
+.divider {
+  text-align: center;
+  color: #999;
+  font-weight: bold;
+  margin: 15px 0;
+  position: relative;
+}
 
-  .new-slot-option {
-    background: #f0fff0;
-    border: 2px solid #4caf50;
-    border-radius: 8px;
-    padding: 12px;
-    cursor: pointer;
-    transition: all 0.2s;
-    width: 100%;
-    font-size: 14px;
-  }
+.divider::before,
+.divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 40%;
+  height: 1px;
+  background: #ddd;
+}
 
-  .new-slot-option:hover:not(:disabled) {
-    background: #e8ffe8;
-    transform: translateY(-1px);
-  }
+.divider::before {
+  left: 0;
+}
 
-  .new-slot-option:disabled {
-    background: #f5f5f5;
-    border-color: #ccc;
-    color: #999;
-    cursor: not-allowed;
-  }
+.divider::after {
+  right: 0;
+}
 
-  .cancel-btn {
-    background: #f5f5f5;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 10px 20px;
-    cursor: pointer;
-    width: 100%;
-    margin-top: 10px;
-    transition: background 0.2s;
-  }
+.new-slot-section {
+  margin-bottom: 20px;
+}
 
-  .cancel-btn:hover {
-    background: #eee;
-  }
+.new-slot-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.new-slot-option {
+  border: 2px solid;
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.new-slot-option:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.new-slot-option:disabled {
+  background: #f5f5f5;
+  border-color: #ccc;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.single-item {
+  background: #f0fff0;
+  border-color: #4caf50;
+}
+
+.single-item:hover:not(:disabled) {
+  background: #e8ffe8;
+}
+
+.multi-item {
+  background: #fff0f8;
+  border-color: #e24a90;
+}
+
+.multi-item:hover:not(:disabled) {
+  background: #ffe6f3;
+}
+
+.option-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.option-content small {
+  color: #666;
+  font-size: 12px;
+}
+
+.max-slots-warning {
+  text-align: center;
+  color: #ff6b6b;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.slots-remaining {
+  text-align: center;
+  color: #666;
+  font-size: 14px;
+}
+
+.cancel-btn {
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px 20px;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 10px;
+  transition: background 0.2s;
+}
+
+.cancel-btn:hover {
+  background: #eee;
+}
 </style>
