@@ -17,7 +17,7 @@ $white: #ffffff;
   cursor: pointer;
   color: $gray-dark;
   padding: 0.5rem;
-  
+
   @media (hover: hover) {
     &:hover {
       background-color: $hover-bg;
@@ -34,7 +34,7 @@ $white: #ffffff;
   height: 20px;
   margin-right: 10px;
   .icon-button {
-    
+
     transition: opacity 0.2s;
     @media (hover: hover) {
       &:hover {
@@ -66,4 +66,3 @@ $white: #ffffff;
   color: inherit;
   cursor: pointer;
 }
-
