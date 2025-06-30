@@ -256,5 +256,111 @@ export const analysisService = {
       percentage,
       items
     };
-  }
+  },
+
+  async getTextData(userId, currentThemeId, usersWidgets) {
+    try {
+      console.log('📝 Getting text widget data for theme:', currentThemeId);
+      
+      if (!currentThemeId || !usersWidgets) {
+        console.warn('⚠️ Missing theme or widget configuration for text widgets');
+        return {};
+      }
+
+      // Get only text widgets that are available in current theme
+      const availableTextWidgets = getAvailableWidgets(currentThemeId, usersWidgets, false, true);
+      console.log('📝 Available text widgets for current theme:', availableTextWidgets);
+      
+      const results = {};
+      
+      for (const [key, widgetId] of Object.entries(availableTextWidgets)) {
+        console.log(`📝 Processing text widget ${key} with widget ${widgetId}`);
+        results[key] = await this.processTextData(userId, currentThemeId, widgetId);
+      }
+      
+      // Fill in empty results for unavailable text widgets
+      const allKeys = ['text_A', 'text_B', 'text_C'];
+      allKeys.forEach(key => {
+        if (!results[key]) {
+          results[key] = null;
+        }
+      });
+      
+      console.log('📝 Final text data results:', results);
+      return results;
+    } catch (error) {
+      console.error('❌ Error getting text data:', error);
+      throw error;
+    }
+  },
+
+  async processTextData(userId, currentThemeId, widgetId) {
+    try {
+      console.log('📝 Processing text data for:', { userId, currentThemeId, widgetId });
+      
+      // Get widget configuration and user records for specific theme-widget combination
+      const [widget, records] = await Promise.all([
+        widgetService.getWidgetById(widgetId), // Fixed: use getWidgetById
+        recordService.getThemeWidgetRecords(userId, currentThemeId, widgetId)
+      ]);
+
+      console.log('📝 Widget data:', widget);
+      console.log('📝 Records found:', records?.length || 0);
+
+      if (!records || records.length === 0) {
+        console.log('📭 No text records found for theme-widget combination');
+        return null;
+      }
+
+      // Get the most recent record
+      const latestRecord = records[0];
+      console.log('📝 Latest record:', JSON.stringify(latestRecord, null, 2));
+      
+      // Check if this record has widget data
+      if (!latestRecord || !latestRecord.values || !Array.isArray(latestRecord.values) || latestRecord.values.length === 0) {
+        console.log('📭 Latest record has no valid values');
+        return null;
+      }
+
+      console.log(`📝 Processing text from latest record with ${latestRecord.values.length} values`);
+      console.log('📝 First value:', JSON.stringify(latestRecord.values[0], null, 2));
+
+      // Process the text data - expecting object format: { contents: "...", description: "..." }
+      const valueObject = latestRecord.values[0]; // Text widgets typically have one entry
+      
+      if (valueObject && typeof valueObject === 'object') {
+        // Handle various possible property names
+        const textData = {
+          // For the quote text: check for 'contents', 'content', or 'value'
+          content: valueObject.contents || valueObject.content || valueObject.value || '',
+          // For the author/description: check for 'description', 'author', or 'name'
+          description: valueObject.description || valueObject.author || valueObject.name || ''
+        };
+        
+        console.log('✅ Text data processed:', textData);
+        return textData;
+      } else if (typeof valueObject === 'string') {
+        // Handle string format (backwards compatibility)
+        console.log('📝 Processing string value:', valueObject);
+        return {
+          content: valueObject,
+          description: ''
+        };
+      } else if (typeof valueObject === 'number') {
+        // Handle numeric values
+        console.log('📝 Processing numeric value:', valueObject);
+        return {
+          content: valueObject.toString(),
+          description: ''
+        };
+      }
+      
+      console.warn('⚠️ Unexpected text data format:', typeof valueObject, valueObject);
+      return null;
+    } catch (error) {
+      console.error('❌ Error processing text data:', error);
+      console.error('Error stack:', error.stack);
+      return null;
+    }
+  },
 };

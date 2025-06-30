@@ -33,7 +33,7 @@ import { widgetService } from '@/firebase/firebaseWidget';
 import { TEXT_WIDGET_CONFIG } from '@/config/widgetConfig';
 
 export default defineComponent({
-  name: 'QuoteWidget',
+  name: 'Widget_TextB',
   props: {
     // Store module name to fetch data from
     storeModule: {

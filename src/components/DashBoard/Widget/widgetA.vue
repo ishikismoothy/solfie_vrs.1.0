@@ -64,7 +64,7 @@
         <div 
           v-for="(advice, index) in adviceData" 
           :key="index" 
-          class="advice-item flip-card"
+          class="advice-item flip-advice-card"
           @click="toggleFlip(index)"
           @keydown.enter="toggleFlip(index)"
           @keydown.space.prevent="toggleFlip(index)"
@@ -72,26 +72,26 @@
           role="button"
           :aria-label="`アドバイス ${index + 1}: クリックして詳細を表示`"
         >
-          <div class="flip-card-inner" :class="{ 'flipped': flippedCards[index] }">
+          <div class="flip-advice-card-inner" :class="{ 'flipped': flippedCards[index] }">
             <!-- Front side -->
-            <div class="flip-card-front">
+            <div class="flip-advice-card-front">
               <h5 class="advice-title">{{ advice.title }}</h5>
               <p class="advice-text">{{ advice.content }}</p>
-              <div class="flip-indicator">
-                <span class="flip-text">タップして詳細を見る</span>
-                <svg class="flip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <div class="flip-advice-indicator">
+                <span class="flip-advice-text">タップして詳細を見る</span>
+                <svg class="flip-advice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M7 17L17 7M17 7H7M17 7V17"/>
                 </svg>
               </div>
             </div>
             
             <!-- Back side -->
-            <div class="flip-card-back">
+            <div class="flip-advice-card-back">
               <h5 class="advice-title">{{ advice.title }}</h5>
               <p class="advice-description">{{ advice.description }}</p>
-              <div class="flip-indicator">
-                <span class="flip-text">タップして戻る</span>
-                <svg class="flip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <div class="flip-advice-indicator">
+                <span class="flip-advice-text">タップして戻る</span>
+                <svg class="flip-advice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M17 7L7 17M7 17H17M7 17V7"/>
                 </svg>
               </div>
@@ -176,7 +176,10 @@ export default defineComponent({
 
     // Function to toggle flip state
     const toggleFlip = (index) => {
-      flippedCards.value[index] = !flippedCards.value[index];
+      flippedCards.value = {
+        ...flippedCards.value,
+        [index]: !flippedCards.value[index]
+      };
     };
 
     // Computed properties for data from Vuex store

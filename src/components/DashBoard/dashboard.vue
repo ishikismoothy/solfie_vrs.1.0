@@ -1,3 +1,4 @@
+<!-- dashboard.vue -->
 <template>
 <div class="dashboard">
     <main>
@@ -56,8 +57,8 @@
       <Widget_TextB 
         v-if="hasWidget_TextB"
         storeModule="analysisRecords"
-        dataStatePath="analysisData.text_B"
-        :widgetConfig="text_B"
+        textStatePath="analysisData.text_B"
+        widgetConfig="text_B"
       />
 
       <section class="stats-section">

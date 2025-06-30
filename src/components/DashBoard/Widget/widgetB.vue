@@ -61,9 +61,42 @@
       <h4 v-else>アドバイス</h4>
       
       <div v-if="adviceData && adviceData.length > 0" class="advice-content">
-        <div v-for="(advice, index) in adviceData" :key="index" class="advice-item">
-          <h5 class="advice-title">{{ advice.title }}</h5>
-          <p class="advice-text">{{ advice.content }}</p>
+        <div 
+          v-for="(advice, index) in adviceData" 
+          :key="index" 
+          class="advice-item flip-advice-card"
+          @click="toggleFlip(index)"
+          @keydown.enter="toggleFlip(index)"
+          @keydown.space.prevent="toggleFlip(index)"
+          tabindex="0"
+          role="button"
+          :aria-label="`アドバイス ${index + 1}: クリックして詳細を表示`"
+        >
+          <div class="flip-advice-card-inner" :class="{ 'flipped': flippedCards[index] }">
+            <!-- Front side -->
+            <div class="flip-advice-card-front">
+              <h5 class="advice-title">{{ advice.title }}</h5>
+              <p class="advice-text">{{ advice.content }}</p>
+              <div class="flip-advice-indicator">
+                <span class="flip-advice-text">タップして詳細を見る</span>
+                <svg class="flip-advice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M7 17L17 7M17 7H7M17 7V17"/>
+                </svg>
+              </div>
+            </div>
+            
+            <!-- Back side -->
+            <div class="flip-advice-card-back">
+              <h5 class="advice-title">{{ advice.title }}</h5>
+              <p class="advice-description">{{ advice.description }}</p>
+              <div class="flip-advice-indicator">
+                <span class="flip-advice-text">タップして戻る</span>
+                <svg class="flip-advice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 7L7 17M7 17H17M7 17V7"/>
+                </svg>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       
@@ -137,6 +170,17 @@ export default defineComponent({
 
     // Linear interpolation function for smooth animations
     const lerp = (start, end, t) => start * (1 - t) + end * t;
+
+    // State for flip cards
+    const flippedCards = ref({});
+
+    // Function to toggle flip state
+    const toggleFlip = (index) => {
+      flippedCards.value = {
+        ...flippedCards.value,
+        [index]: !flippedCards.value[index]
+      };
+    };
 
     // Computed properties for data from Vuex store
     const selectedDataTab = computed({
@@ -252,6 +296,13 @@ export default defineComponent({
       }
     }, { immediate: true });
 
+    // Reset flip states when switching to advice tab
+    watch(selectedDataTab, (newTab) => {
+      if (newTab === 'アドバイス') {
+        flippedCards.value = {};
+      }
+    });
+
     //Get Widget Data for widget Name
     const widgetData = ref(null);
     async function getWidget(widgetId) {
@@ -292,6 +343,8 @@ export default defineComponent({
       availableTabs,
       isDataLoading,
       animatedValues,
+      flippedCards,
+      toggleFlip,
     };
   }
 });

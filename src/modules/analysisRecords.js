@@ -142,13 +142,16 @@ export default {
 
           console.log('📊 Loading data with:', { currentThemeId, usersWidgets });
 
-          // Load regular analysis data for current theme
-          const analysisData = await analysisService.getAnalysisData(uid, currentThemeId, usersWidgets);
+          // Load all types of data in parallel
+          const [analysisData, adviceData, textData] = await Promise.all([
+            analysisService.getAnalysisData(uid, currentThemeId, usersWidgets),
+            analysisService.getAdviceData(uid, currentThemeId, usersWidgets),
+            analysisService.getTextData(uid, currentThemeId, usersWidgets)
+          ]);
+          
           console.log('📈 Analysis data loaded:', analysisData);
-
-          // Load advice data for current theme
-          const adviceData = await analysisService.getAdviceData(uid, currentThemeId, usersWidgets);
           console.log('💡 Advice data loaded:', adviceData);
+          console.log('📝 Text data loaded:', textData);
           
           // Commit the data to store
           commit('SET_DATA_A', analysisData.data_A || {});
@@ -161,13 +164,19 @@ export default {
           commit('SET_ADVICE_C', adviceData.advice_C || []);
           
           // Commit text data
-          commit('SET_TEXT_A', adviceData.text_A || null);
-          commit('SET_TEXT_A', adviceData.text_B || null);
+          commit('SET_TEXT_A', textData.text_A || null);
+          commit('SET_TEXT_B', textData.text_B || null);
 
           // Track the theme we loaded data for
           commit('SET_LAST_LOADED_THEME_ID', currentThemeId);
           
           console.log('✅ All data committed to store successfully');
+          console.log('📦 Final store state:', {
+            data: analysisData,
+            advice: adviceData,
+            text: textData
+          });
+          
           commit('SET_LOADING', false);
         } catch (error) {
           console.error('❌ Error loading analysis data:', error);
