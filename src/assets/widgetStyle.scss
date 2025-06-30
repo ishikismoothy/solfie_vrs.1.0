@@ -150,6 +150,15 @@
   margin-left: 10px;
 }
 
+/* NO-DATA SECTION Style */
+.no-data-message{
+  height: 300px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #555;
+}
+
 /* Advice section styles */
 .advice-section {
   min-height: 400px;
@@ -318,5 +327,112 @@
   
   .advice-section {
     padding: 12px;
+  }
+}
+
+.text-widget-section {
+  background-color: white;
+  border-radius: 30px;
+  padding: 15px;
+  margin-bottom: 20px;
+  min-height: 250px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.text-widget-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.loading-text {
+  color: #666;
+  font-size: 1rem;
+}
+
+.text-content-section {
+  background: #fff;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.text-widget-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.text-container {
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.text-text {
+  font-size: 1.125rem;
+  line-height: 1.8;
+  color: #444;
+  font-style: italic;
+  margin: 0 0 1rem 0;
+  position: relative;
+  padding: 0 2rem;
+}
+
+.text-mark {
+  font-size: 2.5rem;
+  color: #E190CB;
+  font-weight: 700;
+  position: absolute;
+  font-style: normal;
+}
+
+.text-mark-start {
+  left: 0;
+  top: -0.5rem;
+}
+
+.text-mark-end {
+  right: 0;
+  bottom: -1.5rem;
+}
+
+.text-author {
+  display: block;
+  font-size: 1rem;
+  color: #666;
+  font-style: normal;
+  margin-top: 1.5rem;
+  font-weight: 500;
+}
+
+.no-quote-data {
+  text-align: center;
+  color: #999;
+  font-size: 1rem;
+  padding: 2rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .text-content-section {
+    padding: 1.5rem;
+  }
+  
+  .text-text {
+    font-size: 1rem;
+    padding: 0 1.5rem;
+  }
+  
+  .text-mark {
+    font-size: 2rem;
+  }
+  
+  .text-widget-title {
+    font-size: 1.125rem;
   }
 }

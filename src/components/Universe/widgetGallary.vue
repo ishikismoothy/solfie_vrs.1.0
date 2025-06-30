@@ -73,24 +73,33 @@
         setup() {
             const store = useStore();
             const widgets = ref([]);
-            const usersWidgets = computed(() => store.state.user.userWidgets || []);
+            
+            const allUsersWidgets = computed(() => store.state.user.userWidgets || {});
+            // Get current theme ID
+            const currentThemeId = computed(() => store.state.mindspace.currentThemeId || "");
+            // Get widgets for current theme only
+            const currentThemeWidgets = computed(() => {
+                const themeId = currentThemeId.value;
+                return allUsersWidgets.value[themeId] || [];
+            });
+
             const isLoading = ref(true);
             const error = ref(null);
-
+            
             const closeMindUniverse = async () => {
                 store.dispatch('user/triggerMindUniverseWindow',false);
             };
 
             // Function 1: Check if widget is enabled (in user's widgets)
             const isWidgetEnabled = (widgetId) => {
-                return usersWidgets.value.includes(widgetId);
+                return currentThemeWidgets.value.includes(widgetId);
             };
 
             // Function 2: Add widget to user's widgets when toggled on
             const addUserWidget = async (widgetId) => {
                 try {
                     // Dispatch action to add widget to user's widgets
-                    await store.dispatch('user/addUserWidget', widgetId);
+                    await store.dispatch('user/addUserWidget', { widgetId: widgetId, themeId: currentThemeId.value} );
                     //console.log(`Widget ${widgetId} added to user's widgets`);
                 } catch (err) {
                     console.error("Error adding widget:", err);
@@ -102,7 +111,7 @@
                 try {
                     
                     // Dispatch action to remove widget from user's widgets
-                    await store.dispatch('user/removeUserWidget', widgetId);
+                    await store.dispatch('user/removeUserWidget',  { widgetId: widgetId, themeId: currentThemeId.value});
                     //console.log(`Widget ${widgetId} removed from user's widgets`);
                 } catch (err) {
                     console.error("Error removing widget:", err);
@@ -136,7 +145,6 @@
             return{
                 closeMindUniverse,
                 widgets,
-                usersWidgets,
                 isLoading,
                 error,
                 isWidgetEnabled,

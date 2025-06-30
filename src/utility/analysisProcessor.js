@@ -1,51 +1,96 @@
 // utility/analysisProcessor.js
 import { widgetService } from '@/firebase/firebaseWidget';
 import { recordService } from '@/firebase/firebaseRecrods';
+import { getAvailableWidgets } from '@/config/widgetConfig';
 
 export const analysisService = {
-  async getAnalysisData(userId, widgetIds) {
+  async getAnalysisData(userId, currentThemeId, usersWidgets) {
     try {
+      console.log('🎯 Getting analysis data for theme:', currentThemeId);
+      console.log('👥 Users widgets config:', usersWidgets);
+      
+      if (!currentThemeId || !usersWidgets) {
+        console.warn('⚠️ Missing theme or widget configuration');
+        return {};
+      }
+
+      // Get only widgets that are available in current theme
+      const availableWidgets = getAvailableWidgets(currentThemeId, usersWidgets, false);
+      console.log('📊 Available widgets for current theme:', availableWidgets);
+      
       const results = {};
       
-      for (const [key, widgetId] of Object.entries(widgetIds)) {
-        results[key] = await this.processWidgetAnalysis(userId, widgetId);
+      for (const [key, widgetId] of Object.entries(availableWidgets)) {
+        console.log(`🔍 Processing ${key} with widget ${widgetId}`);
+        results[key] = await this.processWidgetAnalysis(userId, currentThemeId, widgetId);
       }
+      
+      // Fill in empty results for unavailable widgets
+      const allKeys = ['data_A', 'data_B', 'data_C'];
+      allKeys.forEach(key => {
+        if (!results[key]) {
+          results[key] = { '今日': { percentage: 0, items: {} } };
+        }
+      });
       
       return results;
     } catch (error) {
-      console.error('Error getting analysis data:', error);
+      console.error('❌ Error getting analysis data:', error);
       throw error;
     }
   },
 
-  async getAdviceData(userId, adviceWidgetIds) {
+  async getAdviceData(userId, currentThemeId, usersWidgets) {
     try {
+      console.log('💡 Getting advice data for theme:', currentThemeId);
+      
+      if (!currentThemeId || !usersWidgets) {
+        console.warn('⚠️ Missing theme or widget configuration for advice');
+        return {};
+      }
+
+      // Get only advice widgets that are available in current theme
+      const availableAdviceWidgets = getAvailableWidgets(currentThemeId, usersWidgets, true);
+      console.log('💡 Available advice widgets for current theme:', availableAdviceWidgets);
+      
       const results = {};
       
-      for (const [key, widgetId] of Object.entries(adviceWidgetIds)) {
-        results[key] = await this.processAdviceData(userId, widgetId);
+      for (const [key, widgetId] of Object.entries(availableAdviceWidgets)) {
+        console.log(`💡 Processing advice ${key} with widget ${widgetId}`);
+        results[key] = await this.processAdviceData(userId, currentThemeId, widgetId);
       }
+      
+      // Fill in empty results for unavailable advice widgets
+      const allKeys = ['advice_A', 'advice_B', 'advice_C'];
+      allKeys.forEach(key => {
+        if (!results[key]) {
+          results[key] = [];
+        }
+      });
       
       return results;
     } catch (error) {
-      console.error('Error getting advice data:', error);
+      console.error('❌ Error getting advice data:', error);
       throw error;
     }
   },
 
-  async processWidgetAnalysis(userId, widgetId) {
+  async processWidgetAnalysis(userId, currentThemeId, widgetId) {
     try {
-      // Get widget configuration and user records
+      console.log('🔍 Processing widget analysis for:', { userId, currentThemeId, widgetId });
+      
+      // Get widget configuration and user records for specific theme-widget combination
       const [widget, records] = await Promise.all([
         widgetService.getWidget(widgetId),
-        recordService.getWidgetRecords(userId, widgetId)
+        recordService.getThemeWidgetRecords(userId, currentThemeId, widgetId)
       ]);
-      
-      //console.log("analysisProcessor.js/processWidgetAnalysis",records);
 
       if (records.length === 0) {
+        console.log('📭 No records found for theme-widget combination');
         return { '今日': { percentage: 0, items: {} } };
       }
+
+      console.log(`📈 Found ${records.length} records for ${widgetId} in theme ${currentThemeId}`);
 
       // Group records by time periods
       const timeGroups = this.groupRecordsByTime(records);
@@ -58,22 +103,26 @@ export const analysisService = {
         }
       }
 
+      console.log('✅ Widget analysis result:', result);
       return result;
     } catch (error) {
-      console.error('Error processing widget analysis:', error);
+      console.error('❌ Error processing widget analysis:', error);
       return { '今日': { percentage: 0, items: {} } };
     }
   },
 
-  async processAdviceData(userId, widgetId) {
+  async processAdviceData(userId, currentThemeId, widgetId) {
     try {
-      // Get widget configuration and user records
+      console.log('🎯 Processing advice data for:', { userId, currentThemeId, widgetId });
+      
+      // Get widget configuration and user records for specific theme-widget combination
       const [widget, records] = await Promise.all([
         widgetService.getWidget(widgetId),
-        recordService.getWidgetRecords(userId, widgetId)
+        recordService.getThemeWidgetRecords(userId, currentThemeId, widgetId)
       ]);
 
       if (!records || records.length === 0 || !widget.entries) {
+        console.log('📭 No advice records found for theme-widget combination');
         return [];
       }
 
@@ -81,125 +130,57 @@ export const analysisService = {
       const latestRecord = records[0];
       
       if (!latestRecord.values || !Array.isArray(latestRecord.values)) {
+        console.log('📭 Latest record has no valid values');
         return [];
       }
 
-      // Process the new object format data
+      console.log(`💡 Processing advice from latest record with ${latestRecord.values.length} values`);
+
+      // Process the advice data from the object format
       const adviceData = [];
       
       latestRecord.values.forEach((valueObject, index) => {
-        if (widget.entries[index] && valueObject && typeof valueObject === 'object') {
-          // Handle the new object format: { contents: "...", description: "..." }
+        if (widget.entries[index]) {
           const entry = widget.entries[index];
           
-          adviceData.push({
-            title: entry.name,
-            content: valueObject.contents || 'アドバイスデータがありません',
-            description: valueObject.description || ' 詳細情報がありません'
-          });
-        } else if (widget.entries[index] && typeof valueObject === 'number') {
-          // Fallback: Handle legacy numerical format if needed
-          const entry = widget.entries[index];
-          const translatedContent = this.translateNumericalToString(valueObject, index);
-          
-          adviceData.push({
-            title: entry.name,
-            content: translatedContent
-          });
+          if (valueObject && typeof valueObject === 'object' && valueObject.contents !== undefined) {
+            // Handle the object format: { contents: "...", description: "..." }
+            adviceData.push({
+              title: entry.name,
+              content: valueObject.contents || 'アドバイスデータがありません',
+              description: valueObject.description || '詳細情報がありません'
+            });
+          } else if (typeof valueObject === 'string') {
+            // Handle string content
+            adviceData.push({
+              title: entry.name,
+              content: valueObject,
+              description: '詳細情報がありません'
+            });
+          } else if (typeof valueObject === 'number') {
+            // Handle numeric values (convert to advice format)
+            adviceData.push({
+              title: entry.name,
+              content: `スコア: ${valueObject}`,
+              description: `${entry.description || entry.name}の評価値: ${valueObject}`
+            });
+          } else {
+            // Fallback for any other format
+            console.warn(`⚠️ Unexpected value format for advice ${index}:`, valueObject);
+            adviceData.push({
+              title: entry.name,
+              content: 'データ形式が予期されていません',
+              description: '詳細情報がありません'
+            });
+          }
         }
       });
 
+      console.log('✅ Advice data processed:', adviceData);
       return adviceData;
     } catch (error) {
-      console.error('Error processing advice data:', error);
+      console.error('❌ Error processing advice data:', error);
       return [];
-    }
-  },
-
-  // Keep these methods for backward compatibility or legacy data
-  translateNumericalToString(numericalValue, entryIndex) {
-    // The numerical value is a direct index to the advice string table
-    // Create your advice lookup tables here - one table per entry type
-    
-    const adviceTables = {
-      0: [ // Advice strings for first entry (主体性)
-        "目標を明確に設定し、小さなステップから始めてみましょう。",
-        "自分の意見を積極的に発言する練習をしてみてください。",
-        "責任を持って物事に取り組む姿勢を大切にしましょう。",
-        "新しいチャレンジを恐れずに積極的に挑戦してみてください。",
-        "リーダーシップの役割を積極的に引き受けてみましょう。",
-        "自分の価値観を明確にし、それに基づいて行動しましょう。",
-        "決断力を養うために、日々の小さな選択から意識してみてください。",
-        "自分の強みを活かせる場面を積極的に探してみましょう。",
-        "他者の意見に左右されすぎず、自分の判断を信じてください。",
-        "失敗を恐れずに、学びの機会として捉えてみましょう。"
-      ],
-      1: [ // Advice strings for second entry (方向性)
-        "長期的な視点で物事を考える習慣をつけてみましょう。",
-        "定期的に自分の進路を見直す時間を作ってください。",
-        "メンターや先輩からアドバイスを求めてみましょう。",
-        "自分の価値観と目標の整合性を確認してください。",
-        "キャリアプランを具体的に書き出してみましょう。",
-        "多様な経験を積むことで視野を広げてみてください。",
-        "定期的に自己分析を行い、方向性を調整しましょう。",
-        "業界の動向や将来性について情報収集してみてください。",
-        "自分の理想とする将来像を明確にイメージしてみましょう。",
-        "短期目標と長期目標のバランスを取ってみてください。"
-      ],
-      2: [ // Advice strings for third entry (実行力)
-        "タスクを細分化して、達成しやすい形にしてみましょう。",
-        "時間管理のスキルを向上させる方法を学んでみてください。",
-        "優先順位をつけて、重要なことから取り組みましょう。",
-        "継続的な習慣作りから始めてみてください。",
-        "完璧を求めすぎず、まずは行動を起こしてみましょう。",
-        "進捗を可視化して、モチベーションを維持しましょう。",
-        "周囲のサポートを積極的に活用してみてください。",
-        "定期的な振り返りで改善点を見つけてみましょう。",
-        "集中力を高める環境作りを心がけてみてください。",
-        "小さな成功体験を積み重ねて自信をつけましょう。"
-      ]
-      // Add more advice tables for additional entries as needed
-    };
-
-    // Get the advice table for this entry
-    const adviceTable = adviceTables[entryIndex];
-    
-    if (!adviceTable) {
-      return `エントリー${entryIndex}に対するアドバイスデータがありません。`;
-    }
-
-    // Use the numerical value as direct index
-    const adviceIndex = Math.floor(numericalValue);
-    
-    if (adviceIndex < 0 || adviceIndex >= adviceTable.length) {
-      return `インデックス${adviceIndex}に対応するアドバイスが見つかりません。`;
-    }
-
-    return adviceTable[adviceIndex];
-  },
-
-  // Alternative method if you have a separate advice translation service
-  async translateNumericalToStringAdvanced(numericalValue, entryIndex, /*widgetId*/) {
-    try {
-      // You could call an external translation service or use a more complex lookup
-      // For example, if you have a separate collection for translations:
-      
-      // const translationDoc = await db.collection('translations')
-      //   .doc(widgetId)
-      //   .collection('entries')
-      //   .doc(entryIndex.toString())
-      //   .get();
-      
-      // if (translationDoc.exists) {
-      //   const translations = translationDoc.data().translations;
-      //   const normalizedValue = Math.floor(numericalValue / 20); // Convert to appropriate scale
-      //   return translations[normalizedValue] || `Default advice for value ${numericalValue}`;
-      // }
-      
-      return this.translateNumericalToString(numericalValue, entryIndex);
-    } catch (error) {
-      console.error('Error in advanced translation:', error);
-      return this.translateNumericalToString(numericalValue, entryIndex);
     }
   },
 
@@ -211,15 +192,15 @@ export const analysisService = {
     return {
       '今日': records.slice(0, 1), // Most recent
       '6ヶ月': records.filter(record => {
-        const recordDate = record.analysisDate.toDate ? 
-          record.analysisDate.toDate() : 
-          new Date(record.analysisDate);
+        const recordDate = record.createdAt?.toDate ? 
+          record.createdAt.toDate() : 
+          new Date(record.createdAt);
         return recordDate >= sixMonthsAgo;
       }),
       '1年': records.filter(record => {
-        const recordDate = record.analysisDate.toDate ? 
-          record.analysisDate.toDate() : 
-          new Date(record.analysisDate);
+        const recordDate = record.createdAt?.toDate ? 
+          record.createdAt.toDate() : 
+          new Date(record.createdAt);
         return recordDate >= oneYearAgo;
       })
     };
@@ -240,8 +221,17 @@ export const analysisService = {
     records.forEach(record => {
       if (record.values && Array.isArray(record.values)) {
         record.values.forEach((value, index) => {
-          if (entries[index] && typeof value === 'number') {
-            totals[entries[index].name] += value;
+          if (entries[index]) {
+            // Handle both numeric values and object values
+            let numericValue = 0;
+            if (typeof value === 'number') {
+              numericValue = value;
+            } else if (typeof value === 'object' && typeof value.value === 'number') {
+              // If the object has a numeric 'value' property
+              numericValue = value.value;
+            }
+            
+            totals[entries[index].name] += numericValue;
           }
         });
       }
@@ -267,4 +257,4 @@ export const analysisService = {
       items
     };
   }
-}
+};

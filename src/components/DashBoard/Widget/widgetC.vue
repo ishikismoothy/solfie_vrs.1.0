@@ -1,3 +1,4 @@
+<!--widgetC.vue : 活動、環境、表現-->
 <template>
   <section class="chart-section">
     <div class="data-tab-menu" v-if="Object.keys(chartData).length || hasAdviceData">
@@ -15,10 +16,9 @@
       <!-- Loading placeholder -->
     </section>
     
-    <!-- Regular chart view -->
-    <section v-if="!isDataLoading && selectedDataTab !== 'アドバイス' && currentDataValues.items" class="chart-content-section">
+    <!-- Regular chart view - hidden when there's no data -->
+    <section v-if="!isDataLoading && selectedDataTab !== 'アドバイス' && currentDataValues.items && Object.keys(currentDataValues.items).length > 0" class="chart-content-section">
       <h4 v-if="widgetData">{{ widgetData.name }}</h4>
-      <h4 v-else>Loading...</h4>  
       <div class="chart-circle">
         <svg width="0" height="0">
           <defs>
@@ -46,6 +46,15 @@
       </div>
     </section>
 
+    <!-- No data message -->
+    <section v-if="!isDataLoading && selectedDataTab !== 'アドバイス' && (!currentDataValues.items || Object.keys(currentDataValues.items).length === 0)" class="chart-content-section no-data-section">
+      <h4 v-if="widgetData">{{ widgetData.name }}</h4>
+      <h4 v-else>Loading...</h4>
+      <div class="no-data-message">
+        There is no available data yet.
+      </div>
+    </section>
+
     <!-- Advice view -->
     <section v-if="!isDataLoading && selectedDataTab === 'アドバイス'" class="chart-content-section advice-section">
       <h4 v-if="widgetData">{{ widgetData.name }} - アドバイス</h4>
@@ -66,12 +75,11 @@
 </template>
 
 <script>
-//[WidgetA] 
-//ID: CC4ZpLD5Sz2DmwrTG84l
 
 import { defineComponent, ref, computed, watch, onMounted } from 'vue';
 import { useStore } from 'vuex';
 import { widgetService } from '@/firebase/firebaseWidget'
+import { WIDGET_CONFIG } from '@/config/widgetConfig'
 
 export default defineComponent({
   name: 'ChartComponent',
@@ -114,12 +122,18 @@ export default defineComponent({
     loadDataAction: {
       type: String,
       default: 'loadData'
+    },
+    // Widget ID
+    widgetConfig:{
+      type: String,
+      default: 'data_A'
     }
   },
   setup(props) {
     const store = useStore();
-    const id = 'GORz1h6ts9Vq2PKMD6un';
+    const id = WIDGET_CONFIG[props.widgetConfig];
     const uid = store.state.user.user.uid;
+    const currentThemeId = store.state.mindspace.currentThemeId;
 
     // Linear interpolation function for smooth animations
     const lerp = (start, end, t) => start * (1 - t) + end * t;
@@ -259,7 +273,7 @@ export default defineComponent({
     // Initialize data when component is mounted
     onMounted(async () => {
       // Load data from Vuex store
-      await store.dispatch(`${props.storeModule}/${props.loadDataAction}`, uid);
+      await store.dispatch(`${props.storeModule}/${props.loadDataAction}`, { uid:uid, themeId:currentThemeId});
       
       // Initialize animated values with the correct structure
       initializeAnimatedValues();

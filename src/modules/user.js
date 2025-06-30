@@ -54,7 +54,7 @@ export default {
       showMindUniverseWindow: false,
     },
     userImages: [],
-    userWidgets: [],
+    userWidgets: {},
     // userIcons: [] NOT YET IN USE
   },
   mutations: {
@@ -235,25 +235,26 @@ export default {
     },
 
     async getUserWidgets({ commit, state }) {
-
       if (!state.user.uid) {
           console.error("No user is signed in");
           return;
       }
       try {
           const userWidgets = await widgetService.getUsersWidgets(state.user.uid);
-          commit('SET_USER_WIDGETS', userWidgets || []);
+          // Fix: Change || [] to || {}
+          commit('SET_USER_WIDGETS', userWidgets || {});
           return userWidgets;
       } catch (error) {
           console.error("Error getting user widgets:", error);
-          return [];
-      }finally{
-        console.log("[user.js/getUserWidgets] User's widgets: ", state.userWidgets)
+          // Fix: Return {} instead of []
+          return {};
+      } finally {
+          console.log("[user.js/getUserWidgets] User's widgets: ", state.userWidgets)
       }
     },
-    async addUserWidget({ dispatch, state }, widgetId) {
+    async addUserWidget({ dispatch, state }, { widgetId, themeId }) {
       try {
-          await widgetService.addUsersWidgets(state.user.uid, widgetId);
+          await widgetService.addUsersWidgets(state.user.uid, widgetId, themeId);
           // Refresh user widgets after adding
           await dispatch('getUserWidgets');
       } catch (error) {
@@ -261,10 +262,10 @@ export default {
       }
     },
 
-    async removeUserWidget({ dispatch, state }, widgetId) {
+    async removeUserWidget({ dispatch, state }, { widgetId, themeId }) {
         try {
             // Add this function to your widgetService
-            await widgetService.removeUsersWidgets(state.user.uid, widgetId);
+            await widgetService.removeUsersWidgets(state.user.uid, widgetId, themeId);
             // Refresh user widgets after removing
             await dispatch('getUserWidgets');
         } catch (error) {

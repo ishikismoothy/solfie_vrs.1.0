@@ -103,7 +103,7 @@ export const widgetService = {
             return null;
         }
     },
-    async addUsersWidgets(uid, widgetId) {
+    async addUsersWidgets(uid, widgetId, themeId) {
         try {
             // Get reference to the user document
             const userRef = doc(db, 'users', uid);
@@ -117,10 +117,15 @@ export const widgetService = {
             
             const userData = userDoc.data();
             
-            // Initialize usersWidgets as an empty array if it doesn't exist
-            let currentWidgets = [];
+            // Initialize usersWidgets as an empty object if it doesn't exist
+            let currentWidgets = {};
             if (userData.usersWidgets) {
-                currentWidgets = [...userData.usersWidgets];
+                currentWidgets = { ...userData.usersWidgets };
+            }
+            
+            // Initialize the theme array if it doesn't exist
+            if (!currentWidgets[themeId]) {
+                currentWidgets[themeId] = [];
             }
             
             // Get the widget document to check for childWidget
@@ -137,26 +142,25 @@ export const widgetService = {
                 }
             }
             
-            // Add widgets that aren't already in the array
+            // Add widgets that aren't already in the theme's array
             let addedWidgets = [];
             for (const widget of widgetsToAdd) {
-                if (!currentWidgets.includes(widget)) {
-                    currentWidgets.push(widget);
+                if (!currentWidgets[themeId].includes(widget)) {
+                    currentWidgets[themeId].push(widget);
                     addedWidgets.push(widget);
                 }
             }
             
             // Only update if we actually added new widgets
             if (addedWidgets.length > 0) {
-                // Use setDoc with merge option to create the field if it doesn't exist
                 await setDoc(userRef, {
                     usersWidgets: currentWidgets
                 }, { merge: true });
                 
-                console.log(`Widgets ${addedWidgets.join(', ')} added to user ${uid}`);
+                console.log(`Widgets ${addedWidgets.join(', ')} added to theme ${themeId} for user ${uid}`);
                 return currentWidgets;
             } else {
-                console.log(`All widgets already exist for user ${uid}`);
+                console.log(`All widgets already exist in theme ${themeId} for user ${uid}`);
                 return currentWidgets;
             }
         } catch (error) {
@@ -165,7 +169,7 @@ export const widgetService = {
         }
     },
 
-    async removeUsersWidgets(uid, widgetId) {
+    async removeUsersWidgets(uid, widgetId, themeId) {
         try {
             // Get reference to the user document
             const userRef = doc(db, 'users', uid);
@@ -179,8 +183,14 @@ export const widgetService = {
             
             const userData = userDoc.data();
             
-            // Get current widgets array or initialize empty array
-            let currentWidgets = userData.usersWidgets || [];
+            // Get current widgets object or initialize empty object
+            let currentWidgets = userData.usersWidgets || {};
+            
+            // Check if theme exists
+            if (!currentWidgets[themeId] || !Array.isArray(currentWidgets[themeId])) {
+                console.log(`Theme ${themeId} not found for user ${uid}`);
+                return currentWidgets;
+            }
             
             // Get the widget document to check for childWidget
             const widgetRef = doc(db, 'widgets', widgetId);
@@ -196,23 +206,33 @@ export const widgetService = {
                 }
             }
             
-            // Remove all widgets in the removal list
-            const updatedWidgets = currentWidgets.filter(id => !widgetsToRemove.includes(id));
+            // Get original length for comparison
+            const originalLength = currentWidgets[themeId].length;
             
-            // Check if any widgets were actually removed
-            const removedWidgets = widgetsToRemove.filter(widget => currentWidgets.includes(widget));
+            // Remove widgets from the specific theme
+            currentWidgets[themeId] = currentWidgets[themeId].filter(id => !widgetsToRemove.includes(id));
+            
+            // Check which widgets were actually removed
+            const removedWidgets = widgetsToRemove.filter(widget => 
+                !currentWidgets[themeId].includes(widget)
+            );
             
             // Only update if widgets were actually removed
-            if (removedWidgets.length > 0) {
-                // Update the user document with the new array
+            if (currentWidgets[themeId].length !== originalLength) {
+                // Optional: Remove empty theme arrays
+                if (currentWidgets[themeId].length === 0) {
+                    delete currentWidgets[themeId];
+                }
+                
+                // Update the user document
                 await updateDoc(userRef, {
-                    usersWidgets: updatedWidgets
+                    usersWidgets: currentWidgets
                 });
                 
-                console.log(`Widgets ${removedWidgets.join(', ')} removed from user ${uid}`);
-                return updatedWidgets;
+                console.log(`Widgets ${removedWidgets.join(', ')} removed from theme ${themeId} for user ${uid}`);
+                return currentWidgets;
             } else {
-                console.log(`No widgets were removed for user ${uid}`);
+                console.log(`No widgets were removed from theme ${themeId} for user ${uid}`);
                 return currentWidgets;
             }
         } catch (error) {

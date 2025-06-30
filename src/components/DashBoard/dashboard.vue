@@ -36,6 +36,28 @@
         adviceStatePath="analysisData.advice_B"
         loadingGetterName="isLoading"
         loadDataAction="loadData"
+        widgetConfig="data_B"
+      />
+      <WidgetC
+        v-if="hasWidgetC"
+        storeModule="analysisRecords"
+        tabKey="activityEnvironmentExpression"
+        tabType="tab_C"
+        dataGetterName="getDataC"
+        dataStatePath="analysisData.data_C"
+        adviceStatePath="analysisData.advice_C"
+        loadingGetterName="isLoading"
+        loadDataAction="loadData"
+        widgetConfig="data_C"
+      />
+      <Widget_TextA
+        v-if="hasWidget_TextA"
+      />
+      <Widget_TextB 
+        v-if="hasWidget_TextB"
+        storeModule="analysisRecords"
+        dataStatePath="analysisData.text_B"
+        :widgetConfig="text_B"
       />
 
       <section class="stats-section">
@@ -126,8 +148,11 @@
   import { useStore } from 'vuex';
   import SatisfactionDataView from './satisfactionDataView.vue';
   import MindSlotView from './mindSlot.vue'
-  import WidgetA from './Widget/widgetA_DecisionPower.vue';
-  import WidgetB from './Widget/widgetB_SubjectivityRatio.vue';
+  import WidgetA from './Widget/widgetA.vue';
+  import WidgetB from './Widget/widgetB.vue';
+  import WidgetC from './Widget/widgetC.vue';
+  import Widget_TextA from './Widget/widget_TextA.vue';
+  import Widget_TextB from './Widget/widget_TextB.vue';
 
   export default defineComponent({
     name: 'DashboardView',
@@ -136,6 +161,9 @@
       MindSlotView,
       WidgetA,
       WidgetB,
+      WidgetC,
+      Widget_TextA,
+      Widget_TextB,
     },
     setup() {
       const store = useStore();
@@ -145,19 +173,23 @@
       const satisfactionValue = computed(() => store.state.themeSpace.satisfaction.currentSelfSatisfaction);
       
       //Activated Widget Check
-      const usersWidgets = computed(() => store.state.user.userWidgets);
-      const hasWidgetA = computed(() => 
-        usersWidgets.value.includes('CC4ZpLD5Sz2DmwrTG84l')
-      );
-      const hasWidgetB = computed(() => 
-        usersWidgets.value.includes('GORz1h6ts9Vq2PKMD6un')
-      );
-      const hasWidgetC = computed(() => 
-        usersWidgets.value.includes('n33Khwkw7gKSmo8ZNxhk')
-      );
-      const hasWidgetD = computed(() => 
-        usersWidgets.value.includes('rezpOM7Kk7R780BzhqvW')
-      );
+      const currentThemeId = computed(() => store.state.mindspace.currentThemeId || "");
+      const allUsersWidgets = computed(() => store.state.user.userWidgets || {});
+
+      // Helper function to check if a widget exists in current theme
+      const hasWidget = (widgetId) => {
+          const themeId = currentThemeId.value;
+          const themeWidgets = allUsersWidgets.value[themeId] || [];
+          return themeWidgets.includes(widgetId);
+      };
+
+      // Use the helper function
+      const hasWidgetA = computed(() => hasWidget('CC4ZpLD5Sz2DmwrTG84l'));
+      const hasWidgetB = computed(() => hasWidget('GORz1h6ts9Vq2PKMD6un'));
+      const hasWidgetC = computed(() => hasWidget('n33Khwkw7gKSmo8ZNxhk'));
+      const hasWidgetD = computed(() => hasWidget('rezpOM7Kk7R780BzhqvW'));
+      const hasWidget_TextA = computed(() => hasWidget('s4MoRxueN0CznLEXU6ei'));
+      const hasWidget_TextB = computed(() => hasWidget('rQ5VgqQIuxsYlmC3Y0PP'));
 
       const result = () => {
         const satisfaction = ["😱", "😣", "😕", "😃", "😍"];
@@ -267,6 +299,8 @@
         hasWidgetB,
         hasWidgetC,
         hasWidgetD,
+        hasWidget_TextA,
+        hasWidget_TextB
 
       };
     },
