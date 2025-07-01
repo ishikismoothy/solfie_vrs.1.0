@@ -27,26 +27,26 @@ export const mindspaceService = {
     }
     return result;
   },
-  
+
   async getDefaultMindSpaceId (themeId, uid) {
       try {
           // Get theme document to find defaultMindSpace
           const themeDoc = await getDoc(doc(db, 'themes', themeId));
-            
+
           if (!themeDoc.exists()) {
             throw new Error('Theme document not found');
           }
-          
+
           const themeData = themeDoc.data();
           const defaultMindSpaceId = themeData.defaultMindSpace;
-          
+
           if (!defaultMindSpaceId) {
             //throw new Error('No default mindspace set for theme');
             //create mindspace and set mindspace Id.
-            
+
             const result = await mindspaceService.createMindspace({
-              uid, 
-              themeId, 
+              uid,
+              themeId,
               name: 'welcome to solfie!',
               privacy: false
             });
@@ -54,80 +54,80 @@ export const mindspaceService = {
             return result.mindspaceId;
           }else{
             return defaultMindSpaceId;
-          }  
+          }
       } catch (error) {
           console.error('Error loading default mindspace ID:', error);
           return error.message;
       }
   },
-  
+
   async getThemeData (themeId) {
     const themeRef = doc(db, 'themes', themeId);
     const themeDoc = await getDoc(themeRef);
-  
+
     if (!themeDoc.exists()) {
       throw new Error ('Theme not found');
     }
-  
+
     const themeData = themeDoc.data();
-  
+
     //console.log("[getThemeData]",themeData);
-  
+
     return themeData;
   },
-  
+
   async getListOfMindSpace (themeId) {
     //console.log("[getListOfMindSpace] 00 themeId: ",themeId);
     try {
       const mindspacesRef = collection(db, 'mindspace');
       //console.log("[getListOfMindSpace] 01 mindspaceRef: ",mindspacesRef);
-      
+
       const q = query(mindspacesRef, where('themeId', '==', themeId));
-      
+
       const querySnapshot = await getDocs(q);
       //console.log("[getListOfMindSpace] querySnapshot size:", querySnapshot.size);
-      
+
       /*
       querySnapshot.docs.forEach(doc => {
         //console.log("[getListOfMindSpace] doc data:", doc.data());
       });*/
-    
+
       const mindSpaceList = querySnapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
               }));
       //console.log("[firebaseMindSpace.js/getListOfMindSpace] List of MindSpace: ",mindSpaceList);
-    
+
       return mindSpaceList;
     } catch (error) {
       return [];
     }
-    
+
   },
   async getMindSpaceData (mindSpaceId) {
       const mindspaceRef = doc(db, 'mindspace', mindSpaceId);
       const mindspaceDoc = await getDoc(mindspaceRef);
-      
+
       if (!mindspaceDoc.exists()) {
         throw new Error('Mindspace not found');
       }
-    
+
       const mindspaceData = mindspaceDoc.data();
-      
+
       // Check if pages exist, if not create and save it
       if (!mindspaceData.pages || !Array.isArray(mindspaceData.pages)) {
         // Create default pages structure with explicit empty items array
         const defaultPages = [{items: []}];
-        
+
         // Update the document with default pages
         await updateDoc(mindspaceRef, {
           pages: defaultPages
         });
-        
+
         // Update local mindspaceData
         mindspaceData.pages = defaultPages;
       }
-      
+
       // 2. Transform the pages data
       const transformedPages = await Promise.all(
         mindspaceData.pages.map(async (page) => {
@@ -136,14 +136,14 @@ export const mindspaceService = {
             (page.items || []).map(async (itemId) => {
               // Check if this is a folder ID
               const folderData = mindspaceData.folders?.find(f => f.id === itemId);
-              
+
               if (folderData) {
                 // This is a folder
                 const folderItems = await Promise.all(
                   (folderData.items || []).map(async (fItemId) => {
                     const itemDoc = await getDoc(doc(db, 'items', fItemId));
                     const itemData = itemDoc.data();
-                    
+
                     return {
                       id: fItemId,
                       name: itemData.name,
@@ -152,7 +152,7 @@ export const mindspaceService = {
                     };
                   })
                 );
-                
+
                 return {
                   id: folderData.id,
                   name: folderData.name,
@@ -163,7 +163,7 @@ export const mindspaceService = {
                 // This is a regular item
                 const itemDoc = await getDoc(doc(db, 'items', itemId));
                 const itemData = itemDoc.data();
-                
+
                 return {
                   id: itemId,
                   name: itemData.name,
@@ -173,18 +173,18 @@ export const mindspaceService = {
               }
             })
           );
-          
+
           return { items: pageItems };
         })
       );
-    
+
       return {
         name: mindspaceData.name,
         pages: transformedPages,
         totalPages: transformedPages.length
       };
   },
-  
+
   async createMindspace ({
     uid,
     themeId,
@@ -193,7 +193,7 @@ export const mindspaceService = {
   }) {
     try {
       const mindspaceRef = collection(db, 'mindspace');
-      
+
       const mindspaceData = {
         uid,
         themeId,
@@ -205,15 +205,15 @@ export const mindspaceService = {
         pages: [{ items: [] }],
         folders: []
       };
-  
+
       const docRef = await addDoc(mindspaceRef, mindspaceData);
-      
+
       return {
         success: true,
         mindspaceId: docRef.id,
         data: mindspaceData
       };
-  
+
     } catch (error) {
       console.error('Error creating mindspace:', error);
       return {
@@ -222,35 +222,35 @@ export const mindspaceService = {
       };
     }
   },
-  
+
   async duplicateMindspace (mindSpaceId) {
     try {
       if (!mindSpaceId) {
         throw new Error('MindSpace ID is required');
       }
-  
+
       // Get reference to the original document
       const mindspaceRef = doc(db, 'mindspace', mindSpaceId);
       const mindspaceDoc = await getDoc(mindspaceRef);
-  
+
       if (!mindspaceDoc.exists()) {
         throw new Error('Original mindspace document not found');
       }
-  
+
       const originalData = mindspaceDoc.data();
-      
+
       // Function to duplicate an item and return new ID
       const duplicateItem = async (itemId) => {
         const itemRef = doc(db, 'items', itemId);
         const itemDoc = await getDoc(itemRef);
-        
+
         if (!itemDoc.exists()) {
           throw new Error(`Item ${itemId} not found`);
         }
-  
+
         const itemData = itemDoc.data();
         const now = new Date();
-        
+
         // Create new item with same data but new timestamps
         const newItemData = {
           ...itemData,
@@ -260,16 +260,16 @@ export const mindspaceService = {
             editedAt: null
           }))
         };
-  
+
         // Add new item document
         const itemsCollection = collection(db, 'items');
         const newItemRef = await addDoc(itemsCollection, newItemData);
         return newItemRef.id;
       };
-  
+
       // Duplicate all items and create mapping of old to new IDs
       const itemMapping = new Map();
-      
+
       // Process folders
       const duplicatedFolders = await Promise.all(originalData.folders.map(async folder => {
         const newItems = await Promise.all(folder.items.map(async itemId => {
@@ -279,13 +279,13 @@ export const mindspaceService = {
           }
           return itemMapping.get(itemId);
         }));
-  
+
         return {
           ...folder,
           items: newItems
         };
       }));
-  
+
       // Process pages
       const duplicatedPages = await Promise.all(originalData.pages.map(async page => {
         const newItems = await Promise.all(page.items.map(async itemId => {
@@ -295,13 +295,13 @@ export const mindspaceService = {
           }
           return itemMapping.get(itemId);
         }));
-  
+
         return {
           ...page,
           items: newItems
         };
       }));
-  
+
       // Create new mindspace data
       const duplicateData = {
         ...originalData,
@@ -311,18 +311,18 @@ export const mindspaceService = {
         folders: duplicatedFolders,
         pages: duplicatedPages
       };
-  
+
       // Add the new mindspace document
       const mindspaceCollection = collection(db, 'mindspace');
       const newDocRef = await addDoc(mindspaceCollection, duplicateData);
-  
-      return { 
-        success: true, 
+
+      return {
+        success: true,
         data: duplicateData,
         newId: newDocRef.id,
         message: 'Mindspace duplicated successfully'
       };
-  
+
     } catch (error) {
       console.error("[duplicateMindspace] Error:", error);
       return {
@@ -332,7 +332,7 @@ export const mindspaceService = {
       };
     }
   },
-  
+
   async deleteMindspace (mindSpaceId) {
     try {
       const mindspaceRef = doc(db, 'mindspace', mindSpaceId);
@@ -342,38 +342,38 @@ export const mindspaceService = {
       return {success: false, error: error.message};
     }
   },
-  
+
   async setPrivacyMindspace (mindspaceId) {
     try {
       const mindspaceRef = doc(db, 'mindspace', mindspaceId);
       const mindspaceData = (await getDoc(mindspaceRef)).data();
-  
+
       if (!mindspaceData.privacy){
         console.log("privacy is currently OFF, let's set to ON");
         await updateDoc(mindspaceRef, {
           updatedAt: serverTimestamp(),
           privacy: true,
         });
-  
-        return { 
-          success: true, 
+
+        return {
+          success: true,
           message: 'Mindspace set to public successfully'
         };
-  
+
       }else{
         console.log("privacy is currently ON, let's set to off");
         await updateDoc(mindspaceRef, {
           updatedAt: serverTimestamp(),
           privacy: false,
         });
-        return { 
-          success: true, 
+        return {
+          success: true,
           message: 'Mindspace set to private successfully'
         };
       }
-      
-      
-  
+
+
+
     } catch (error) {
       console.log(error.message);
       return {
@@ -383,21 +383,21 @@ export const mindspaceService = {
       };
     }
   },
-  
+
   async updateMindSpaceName (mindspaceId, newName) {
     try {
       const mindspaceRef = doc(db, 'mindspace', mindspaceId);
-      
+
       await updateDoc(mindspaceRef, {
         updatedAt: serverTimestamp(),
         name: newName,
       });
-  
-      return { 
-        success: true, 
+
+      return {
+        success: true,
         message: 'Mindspace Name is updated successfully'
       };
-      
+
     } catch (error) {
       console.log(error.message);
       return {
@@ -407,34 +407,34 @@ export const mindspaceService = {
       };
     }
   },
-  
+
   async setDefaultMindspace (themeId, mindSpaceId) {
     try {
       // Input validation
       if (!themeId) throw new Error('Theme ID is required');
       if (!mindSpaceId) throw new Error('Default setting is required');
-  
+
       const themeRef = doc(db, 'themes', themeId);
-  
+
       if (!themeRef) {
         console.log("no themeRef Found.");
         return;
       }else{
         console.log("ThemeRef Found.",themeRef);
       }
-  
+
       await updateDoc(themeRef, {
         defaultMindSpace: mindSpaceId,
         //updatedAt: new Date().toISOString() // Optional: add timestamp
       });
-  
+
       return {
         success: true,
         themeId,
         updatedSetting: themeId,
         message: 'Default MindSpace updated successfully'
       };
-  
+
     } catch (error) {
       return {
         success: false,
@@ -447,28 +447,28 @@ export const mindspaceService = {
     try {
       const itemsRef = doc(db, 'items', itemId);
       const itemsDoc = await getDoc(itemsRef);
-        
+
       if (!itemsDoc.exists()) {
         throw new Error('Mindspace not found');
       }
-      
+
       const itemsData = await itemsDoc.data();
-  
+
       //console.log("[getItemData] contents",itemsData.contents);
-      
+
       return {
         name: itemsData.name,
         data: itemsData.contents,
         success: true,
       }
-  
+
     } catch (error) {
       return {
         message: error.message,
         success: false,
       }
     }
-    
+
   },
 
   // Fetch mindspace slots by ID
@@ -517,7 +517,7 @@ export const mindspaceService = {
         }
 
         const docRef = doc(db, 'mindspace', mindspaceId);
-        
+
         // Get existing data first
         const docSnap = await getDoc(docRef);
         const existingData = docSnap.exists() ? docSnap.data() : {};
@@ -565,29 +565,17 @@ export const mindspaceService = {
   },
 
   // Get item image URL
-  async getItemImage(itemId, items) {
-    try {
-      // Check if items is defined and has the correct structure
-      if (!items || !items.value) {
-        throw new Error('Invalid items object structure');
-      }
+  getItemImage(itemId, items) {
+    console.log('🔍 getItemImage called:', { itemId, hasItems: !!items });
 
-      // If itemId doesn't exist or no matching item, return empty string
-      if (!itemId || !items.value[itemId]) {
-        return '';
-      }
-
-      // Check if img property exists
-      if (!items.value[itemId].img) {
-        console.warn(`No image found for item ${itemId}`);
-        return '';
-      }
-
-      return `url(${items.value[itemId].img})`;
-    } catch (error) {
-      console.error('Error getting item image:', error);
-      return ''; // Return empty string on error
+    if (!items || !itemId || !items[itemId] || !items[itemId].img) {
+      console.log('🔍 getItemImage returning empty - missing data');
+      return '';
     }
+
+    const result = `url(${items[itemId].img})`;
+    console.log('🔍 getItemImage returning:', result);
+    return result;
   },
 
   // Get item name
@@ -621,7 +609,7 @@ export const mindspaceService = {
       try {
           const itemDoc = doc(db, 'items', itemId);
           const itemSnapshot = await getDoc(itemDoc);
-          
+
           if (!itemSnapshot.exists()) {
               console.warn(`No item found with ID: ${itemId}`);
               return null;
@@ -636,39 +624,39 @@ export const mindspaceService = {
           throw error;
       }
   },
-  
+
   // Add or Update item blocks
   async updateItemData (itemId, itemName, itemBlockData) {
     console.log('[updateItemInFirestore] Starting update...', itemBlockData);
-    
+
     if (!itemId) {
       throw new Error('Item ID is not set');
     }
-  
+
     // Modified filter to handle different content types
     const cleanedContents = itemBlockData.filter(item => {
       if (!item) return false;
-      
+
       // Handle different content types
       if (item.type === 'todo-block') {
         return Array.isArray(item.content) && item.content.length > 0;
       }
-      
+
       if (item.type === 'line-block') {
         // Assuming line-block doesn't need content, or has its own format
         return true;
       }
-      
+
       // For other types (title, body, image), keep original string check
       return typeof item.content === 'string' && item.content.trim() !== '';
     });
-  
+
     console.log('Original length:', itemBlockData.length);
     console.log('Cleaned length:', cleanedContents.length);
     console.log('Cleaned contents:', cleanedContents);
-  
+
     const itemRef = doc(db, 'items', itemId);
-    
+
     await updateDoc(itemRef, {
       updatedAt: serverTimestamp(),
       name: itemName,
@@ -679,10 +667,10 @@ export const mindspaceService = {
   // Add the image upload function here that just returns the downloadURL
   async handleImageUpload({ file, userId }) {
     console.log("Image upload triggered");
-    
+
     if (!file) return null;
     console.log("File selected:", file);
-    
+
     const uid = userId;
     if (!uid) {
       console.error("No user ID found!");
@@ -736,27 +724,27 @@ export const mindspaceService = {
     try {
       // Extract the path from the Firebase Storage URL
       // Example URL: https://firebasestorage.googleapis.com/v0/b/solfie-398005.firebasestorage.app/o/images%2F3gGpqzo2fnYfGidkJ1l8tJ3DR5Y2%2FNoiseArticle.jpg?alt=media&token=94273095-99b9-450b-ad84-a39accaa298a
-      
+
       const storage = getStorage();
-      
+
       // Parse the URL to get the path
       const urlObj = new URL(imageUrl);
-      
+
       // The path is between '/o/' and the '?' in the URL
       // It's also URL encoded, so we need to decode it
       const pathSegment = urlObj.pathname.split('/o/')[1];
-      
+
       if (!pathSegment) {
         console.error('Could not parse image path from URL:', imageUrl);
         return false;
       }
-      
+
       const fullPath = decodeURIComponent(pathSegment);
       console.log('Extracted path for deletion:', fullPath);
-      
+
       // Create a reference to the file
       const imageRef = storageRef(storage, fullPath);
-      
+
       // Delete the file
       await deleteObject(imageRef);
       console.log('Image deleted successfully from storage:', fullPath);
@@ -768,12 +756,12 @@ export const mindspaceService = {
   },
   // Function to add item to Firestore and update mindspace
   async addNewItemToMindspace (userId, mindSpaceId, pageIndex, index, newItem) {
-      
+
     try {
       // 1. Create new item in items collection
       const itemRef = doc(collection(db, 'items'));
       const itemId = itemRef.id;
-  
+
       const itemData = {
         id: itemId,
         uid: userId,
@@ -792,44 +780,44 @@ export const mindspaceService = {
           editedAt: null,
         }]
       };
-  
+
       // Save item to items collection
       await setDoc(itemRef, itemData);
-  
+
       // 2. Update mindspace pages
       const mindspaceRef = doc(db, 'mindspace', mindSpaceId);
       const mindspaceDoc = await getDoc(mindspaceRef);
-      
+
       if (!mindspaceDoc.exists()) {
         throw new Error('Mindspace not found');
       }
-  
+
       const mindspaceData = mindspaceDoc.data();
-  
+
       // Initialize or get pages array
       let pages = mindspaceData.pages || [];
-      
+
       // Ensure pages is an array
       if (!Array.isArray(pages)) {
         pages = [];
       }
-  
+
       // Ensure the target page exists and has an items array
       while (pages.length <= pageIndex) {
         pages.push({ items: [] });
       }
-  
+
       // Ensure the page has an items array
       if (!pages[pageIndex].items) {
         pages[pageIndex].items = [];
       }
-  
+
       // Insert the item ID at the specified index
       pages[pageIndex].items.splice(index, 0, itemId);
-  
+
       // Update mindspace document
       await updateDoc(mindspaceRef, { pages });
-  
+
       console.log('[addItemToMindspace] Updated mindspace with new item:', {
         itemId,
         itemData,
@@ -837,21 +825,21 @@ export const mindspaceService = {
         index,
         updatedPages: pages
       });
-  
+
       return { itemId, itemData };
     } catch (error) {
       console.error('Error in addItemToMindspace:', error);
       throw error;
     }
   },
-  
+
   // 1. Add new folder function
   async addFolderToMindspace (mindSpaceId, pageIndex, index) {
       try {
           // Generate folder ID with 'f-' prefix
           const folderRef = doc(collection(db, 'folders'));
           const folderId = `f-${folderRef.id}`;
-  
+
           // Create folder data
           const folderData = {
           id: folderId,
@@ -860,48 +848,48 @@ export const mindspaceService = {
           icon: folderSvg,
           items: []
           };
-  
+
           // Get mindspace document
           const mindspaceRef = doc(db, 'mindspace', mindSpaceId);
           const mindspaceDoc = await getDoc(mindspaceRef);
-          
+
           if (!mindspaceDoc.exists()) {
           throw new Error('Mindspace not found');
           }
-  
+
           const mindspaceData = mindspaceDoc.data();
-  
+
           // Initialize or get folders array
           const folders = mindspaceData.folders || [];
           folders.push(folderData);
-  
+
           // Initialize or get pages array
           let pages = mindspaceData.pages || [];
-          
+
           // Ensure pages is an array of objects with items arrays
           if (!Array.isArray(pages)) {
           pages = [];
           }
-  
+
           // Ensure the target page exists and has an items array
           while (pages.length <= pageIndex) {
           pages.push({ items: [] });
           }
-  
+
           // Ensure the page has an items array
           if (!pages[pageIndex].items) {
           pages[pageIndex].items = [];
           }
-  
+
           // Insert the folder ID at the specified index
           pages[pageIndex].items.splice(index, 0, folderId);
-  
+
           // Update mindspace document
           await updateDoc(mindspaceRef, {
           folders,
           pages
           });
-  
+
           console.log('[addFolderToMindspace] Updated mindspace with new folder:', {
           folderId,
           folderData,
@@ -909,21 +897,21 @@ export const mindspaceService = {
           index,
           updatedPages: pages
           });
-  
+
           return { folderId, folderData };
       } catch (error) {
           console.error('Error in addFolderToMindspace:', error);
           throw error;
       }
   },
-    
+
   // 2. Add new item to folder function
   async addItemToFolder (userId, mindSpaceId, folderId, item) {
       try {
         // Create new item in items collection
         const itemRef = doc(collection(db, 'items'));
         const itemId = itemRef.id;
-    
+
         const itemData = {
           id: itemId,
           uid: userId,
@@ -942,15 +930,15 @@ export const mindspaceService = {
             editedAt: null,
           }]
         };
-    
+
         // Save item to items collection
         await setDoc(itemRef, itemData);
-    
+
         // Update folder in mindspace
         const mindspaceRef = doc(db, 'mindspace', mindSpaceId);
         const mindspaceDoc = await getDoc(mindspaceRef);
         const mindspaceData = mindspaceDoc.data();
-    
+
         // Update folder items
         const folders = mindspaceData.folders.map(folder => {
           if (folder.id === folderId) {
@@ -961,38 +949,38 @@ export const mindspaceService = {
           }
           return folder;
         });
-    
+
         await updateDoc(mindspaceRef, { folders });
-    
+
         return { itemId, itemData };
       } catch (error) {
         console.error('Error adding item to folder:', error);
         throw error;
       }
   },
-  
+
   async duplicateItemInMindspace (userId, mindSpaceId, pageIndex, existingItemId) {
     try {
       // 1. Fetch existing item data
       const existingItemRef = doc(db, 'items', existingItemId);
       const existingItemDoc = await getDoc(existingItemRef);
-      
+
       if (!existingItemDoc.exists()) {
         throw new Error('Source item not found');
       }
-  
+
       // 2. Create new item with existing data
       const itemRef = doc(collection(db, 'items'));
       const itemId = itemRef.id;
-      
+
       // Get existing data
       const existingData = existingItemDoc.data();
-      
+
       // Generate new IDs for contents first
       const newContentIds = await Promise.all(
         existingData.contents.map(() => mindspaceService.generateRandomId())
       );
-      
+
       // Then create the contents array with the pre-generated IDs
       const newContents = existingData.contents.map((content, index) => ({
         ...content,
@@ -1002,7 +990,7 @@ export const mindspaceService = {
         createdBy: userId,
         editedBy: [userId]
       }));
-  
+
       const itemData = {
         ...existingData,
         id: itemId,
@@ -1012,44 +1000,44 @@ export const mindspaceService = {
         contents: newContents,
         name: `${existingData.name} (Copy)`
       };
-  
+
       // Save duplicated item to items collection
       await setDoc(itemRef, itemData);
-  
+
       // 3. Update mindspace pages
       const mindspaceRef = doc(db, 'mindspace', mindSpaceId);
       const mindspaceDoc = await getDoc(mindspaceRef);
-      
+
       if (!mindspaceDoc.exists()) {
         throw new Error('Mindspace not found');
       }
-  
+
       const mindspaceData = mindspaceDoc.data();
-  
+
       // Initialize or get pages array
       let pages = mindspaceData.pages || [];
-      
+
       // Ensure pages is an array
       if (!Array.isArray(pages)) {
         pages = [];
       }
-  
+
       // Ensure the target page exists and has an items array
       while (pages.length <= pageIndex) {
         pages.push({ items: [] });
       }
-  
+
       // Ensure the page has an items array
       if (!pages[pageIndex].items) {
         pages[pageIndex].items = [];
       }
-  
+
       // Simply push the new item to the end of the array
       pages[pageIndex].items.push(itemId);
-  
+
       // Update mindspace document
       await updateDoc(mindspaceRef, { pages });
-  
+
       console.log('[duplicateItemInMindspace] Updated mindspace with duplicated item:', {
         itemId,
         itemData,
@@ -1057,36 +1045,36 @@ export const mindspaceService = {
         position: pages[pageIndex].items.length - 1,
         updatedPages: pages
       });
-  
+
       return { itemId, itemData };
     } catch (error) {
       console.error('Error in duplicateItemInMindspace:', error);
       throw error;
     }
   },
-  
+
   async duplicateItemToFolder (userId, mindSpaceId, folderId, existingItemId) {
     try {
       // 1. Fetch existing item data
       const existingItemRef = doc(db, 'items', existingItemId);
       const existingItemDoc = await getDoc(existingItemRef);
-      
+
       if (!existingItemDoc.exists()) {
         throw new Error('Source item not found');
       }
-  
+
       // 2. Create new item with existing data
       const itemRef = doc(collection(db, 'items'));
       const itemId = itemRef.id;
-      
+
       // Get existing data
       const existingData = existingItemDoc.data();
-      
+
       // Generate new IDs for contents first
       const newContentIds = await Promise.all(
         existingData.contents.map(() => mindspaceService.generateRandomId())
       );
-      
+
       // Then create the contents array with the pre-generated IDs
       const newContents = existingData.contents.map((content, index) => ({
         ...content,
@@ -1096,7 +1084,7 @@ export const mindspaceService = {
         createdBy: userId,
         editedBy: [userId]
       }));
-  
+
       const itemData = {
         ...existingData,
         id: itemId,
@@ -1106,15 +1094,15 @@ export const mindspaceService = {
         contents: newContents,
         name: `${existingData.name} (Copy)`
       };
-  
+
       // Save duplicated item to items collection
       await setDoc(itemRef, itemData);
-  
+
       // Update folder in mindspace
       const mindspaceRef = doc(db, 'mindspace', mindSpaceId);
       const mindspaceDoc = await getDoc(mindspaceRef);
       const mindspaceData = mindspaceDoc.data();
-  
+
       // Update folder items
       const folders = mindspaceData.folders.map(folder => {
         if (folder.id === folderId) {
@@ -1125,36 +1113,36 @@ export const mindspaceService = {
         }
         return folder;
       });
-  
+
       await updateDoc(mindspaceRef, { folders });
-  
+
       console.log('[duplicateItemToFolder] Updated folder with duplicated item:', {
         itemId,
         itemData,
         folderId
       });
-  
+
       return { itemId, itemData };
     } catch (error) {
       console.error('Error duplicating item to folder:', error);
       throw error;
     }
   },
-  
+
   // update MindSpaceData
   async updateMindSpaceData (mindSpaceId, mindSpacePages) {
     try {
       console.log('[updateMindSpaceInFirestore] Starting update...');
-      
+
       if (!mindSpaceId) {
         throw new Error('MindSpace ID is not set');
       }
-  
+
       const mindspaceRef = doc(db, 'mindspace', mindSpaceId);
       const formattedData = formatMindSpaceForFirestore(mindSpacePages);
-      
+
       await updateDoc(mindspaceRef, formattedData);
-      
+
       console.log('[updateMindSpaceInFirestore] Successfully updated mindspace');
       return formattedData;
     } catch (error) {
@@ -1162,7 +1150,7 @@ export const mindspaceService = {
       throw error;
     }
   },
-  
+
   async moveItemFromFolderToMindspace (mindSpaceId, {
     folderId,
     itemId,
@@ -1172,44 +1160,44 @@ export const mindspaceService = {
     try {
       const mindspaceRef = doc(db, 'mindspace', mindSpaceId);
       const mindspaceDoc = await getDoc(mindspaceRef);
-      
+
       if (!mindspaceDoc.exists()) {
         throw new Error('Mindspace not found');
       }
-  
+
       const mindspaceData = mindspaceDoc.data();
       let pages = [...(mindspaceData.pages || [])];
       let folders = [...(mindspaceData.folders || [])];
-  
+
       // 1. Update raw data structure
       // Remove item from folder
       const folderIndex = folders.findIndex(f => f.id === folderId);
       if (folderIndex === -1) {
         throw new Error('Folder not found');
       }
-  
+
       folders[folderIndex] = {
         ...folders[folderIndex],
         items: folders[folderIndex].items.filter(id => id !== itemId)
       };
-  
+
       // 2. Add item to target page
       while (pages.length <= targetPageIndex) {
         pages.push({ items: [] });
       }
-      
+
       if (!pages[targetPageIndex].items) {
         pages[targetPageIndex].items = [];
       }
-      
+
       pages[targetPageIndex].items.splice(targetIndex, 0, itemId);
-  
+
       // 3. Update Firestore
       await updateDoc(mindspaceRef, {
         pages,
         folders
       });
-  
+
       /*
       //THEN WE DON'T NEED THE THIRD POINT.
       // 3. Transform data into rich format for rendering
@@ -1219,14 +1207,14 @@ export const mindspaceService = {
             (page.items || []).map(async (id) => {
               // Check if this is a folder ID
               const folderData = folders.find(f => f.id === id);
-              
+
               if (folderData) {
                 // This is a folder
                 const folderItems = await Promise.all(
                   (folderData.items || []).map(async (fItemId) => {
                     const itemDoc = await getDoc(doc(db, 'items', fItemId));
                     const itemData = itemDoc.data();
-                    
+
                     return {
                       id: fItemId,
                       name: itemData.name,
@@ -1235,7 +1223,7 @@ export const mindspaceService = {
                     };
                   })
                 );
-                
+
                 return {
                   id: folderData.id,
                   name: folderData.name,
@@ -1246,7 +1234,7 @@ export const mindspaceService = {
                 // This is a regular item
                 const itemDoc = await getDoc(doc(db, 'items', id));
                 const itemData = itemDoc.data();
-                
+
                 return {
                   id: id,
                   name: itemData.name,
@@ -1256,11 +1244,11 @@ export const mindspaceService = {
               }
             })
           );
-          
+
           return { items: pageItems };
         })
       );*/
-  
+
       return {
         //pages: transformedPages,
         rawPages: pages,        // Keep raw data for future operations
@@ -1271,7 +1259,7 @@ export const mindspaceService = {
       throw error;
     }
   },
-  
+
   async moveItemToFolder (mindSpaceId, {
     pageIndex,
     folderId,
@@ -1280,38 +1268,38 @@ export const mindspaceService = {
     try {
       const mindspaceRef = doc(db, 'mindspace', mindSpaceId);
       const mindspaceDoc = await getDoc(mindspaceRef);
-      
+
       if (!mindspaceDoc.exists()) {
         throw new Error('Mindspace not found');
       }
-  
+
       const mindspaceData = mindspaceDoc.data();
       let pages = [...(mindspaceData.pages || [])];
       let folders = [...(mindspaceData.folders || [])];
-  
+
       // 1. Remove item from pages
       if (!pages[pageIndex] || !pages[pageIndex].items) {
         throw new Error('Invalid page or items array');
       }
       pages[pageIndex].items = pages[pageIndex].items.filter(id => id !== itemId);
-  
+
       // 2. Add item to folder
       const folderIndex = folders.findIndex(f => f.id === folderId);
       if (folderIndex === -1) {
         throw new Error('Folder not found');
       }
-  
+
       folders[folderIndex] = {
         ...folders[folderIndex],
         items: [...(folders[folderIndex].items || []), itemId]
       };
-  
+
       // 3. Update Firestore
       await updateDoc(mindspaceRef, {
         pages,
         folders
       });
-  
+
       return {
         rawPages: pages,
         rawFolders: folders
@@ -1321,41 +1309,41 @@ export const mindspaceService = {
       throw error;
     }
   },
-  
+
   async deleteItem (mindSpaceId, itemId) {
     try {
       const mindspaceRef = doc(db, 'mindspace', mindSpaceId);
       const mindspaceDoc = await getDoc(mindspaceRef);
-      
+
       if (!mindspaceDoc.exists()) {
         throw new Error('Mindspace not found');
       }
-  
+
       const mindspaceData = mindspaceDoc.data();
       let pages = [...(mindspaceData.pages || [])];
       let folders = [...(mindspaceData.folders || [])];
-  
+
       // 1. Remove item from pages
       pages = pages.map(page => ({
         items: page.items.filter(id => id !== itemId)
       }));
-  
+
       // 2. Remove item from any folders that might contain it
       folders = folders.map(folder => ({
         ...folder,
         items: (folder.items || []).filter(id => id !== itemId)
       }));
-  
+
       // 3. Update mindspace document
       await updateDoc(mindspaceRef, {
         pages,
         folders
       });
-  
+
       // 4. Delete the item document from items collection
       const itemRef = doc(db, 'items', itemId);
       await deleteDoc(itemRef);
-  
+
       return {
         rawPages: pages,
         rawFolders: folders
@@ -1365,7 +1353,7 @@ export const mindspaceService = {
       throw error;
     }
   },
-  
+
   // Fetch theme spaces for a user
   async fetchThemeSpaces(userId) {
     if (!userId) {
@@ -1373,7 +1361,7 @@ export const mindspaceService = {
     }
     const themesRef = collection(db, 'themes');
     const q = query(themesRef, where('uid', '==', userId));
-    
+
     try {
       const querySnapshot = await getDocs(q);
       return querySnapshot.docs.map(doc => ({
@@ -1390,7 +1378,7 @@ export const mindspaceService = {
   async fetchMindSpaces(themeId) {
     const mindspacesRef = collection(db, 'mindspace');
     const q = query(mindspacesRef, where('themeId', '==', themeId));
-    
+
     try {
       const querySnapshot = await getDocs(q);
       return querySnapshot.docs.map(doc => ({
@@ -1406,7 +1394,7 @@ export const mindspaceService = {
   // Remove item from a mindspace structure
   removeItemFromMindspace(mindspace, itemId) {
     const updatedMindspace = { ...mindspace };
-    
+
     // Remove from folders
     if (updatedMindspace.folders) {
       updatedMindspace.folders = updatedMindspace.folders.map(folder => ({
@@ -1414,7 +1402,7 @@ export const mindspaceService = {
         items: folder.items.filter(id => id !== itemId)
       }));
     }
-    
+
     // Remove from pages
     if (updatedMindspace.pages) {
       updatedMindspace.pages = updatedMindspace.pages.map(page => ({
@@ -1422,7 +1410,7 @@ export const mindspaceService = {
         items: page.items.filter(id => id !== itemId)
       }));
     }
-    
+
     return updatedMindspace;
   },
 
@@ -1430,7 +1418,7 @@ export const mindspaceService = {
   async moveItem(currentMindspaceId, newMindspaceId, itemId) {
     try {
       console.log('Moving item with params:', { currentMindspaceId, newMindspaceId, itemId });
-      
+
       if (!currentMindspaceId || !newMindspaceId || !itemId) {
         throw new Error('Missing required parameters for moving item');
       }
@@ -1438,14 +1426,14 @@ export const mindspaceService = {
       // Remove from current mindspace
       const currentMindspaceRef = doc(db, 'mindspace', currentMindspaceId);
       const currentMindspaceSnap = await getDoc(currentMindspaceRef);
-      
+
       if (!currentMindspaceSnap.exists()) {
         throw new Error('Current mindspace not found');
       }
-      
+
       const currentMindspace = currentMindspaceSnap.data();
       console.log('Current mindspace data:', currentMindspace);
-      
+
       // Update the current mindspace
       const updatedData = this.removeItemFromMindspace(currentMindspace, itemId);
       await updateDoc(currentMindspaceRef, {
@@ -1456,32 +1444,32 @@ export const mindspaceService = {
       // Add to new mindspace
       const newMindspaceRef = doc(db, 'mindspace', newMindspaceId);
       const newMindspaceSnap = await getDoc(newMindspaceRef);
-      
+
       if (!newMindspaceSnap.exists()) {
         throw new Error('New mindspace not found');
       }
-      
+
       const newMindspace = newMindspaceSnap.data();
       console.log('New mindspace data:', newMindspace);
-      
+
       // Ensure pages array exists
       if (!newMindspace.pages) {
         newMindspace.pages = [];
       }
-      
+
       // Add item to first page or create new page
       if (newMindspace.pages.length === 0) {
         newMindspace.pages.push({ items: [] });
       }
-      
+
       newMindspace.pages[0].items = newMindspace.pages[0].items || [];
       newMindspace.pages[0].items.push(itemId);
-      
+
       await updateDoc(newMindspaceRef, {
         pages: newMindspace.pages,
         updatedAt: new Date()
       });
-      
+
       console.log('Item successfully moved');
     } catch (error) {
       console.error('Error moving item:', error);
@@ -1498,7 +1486,7 @@ export const mindspaceService = {
     try {
       const mindspaceRef = doc(db, 'mindspace', mindspaceId);
       const mindspaceSnap = await getDoc(mindspaceRef);
-      
+
       if (!mindspaceSnap.exists()) {
         throw new Error('Mindspace not found');
       }
@@ -1537,18 +1525,18 @@ export const mindspaceService = {
     if (!newMindspaceId || !itemId) {
       throw new Error('Both newMindspaceId and itemId are required');
     }
-  
+
     try {
       // 1. Get the original item data
       const originalItemRef = doc(db, 'items', itemId);
       const originalItemSnap = await getDoc(originalItemRef);
-      
+
       if (!originalItemSnap.exists()) {
         throw new Error('Original item not found');
       }
-  
+
       const originalItemData = originalItemSnap.data();
-      
+
       // 2. Create new item document with copied data
       const itemsCollection = collection(db, 'items');
       const newItemData = {
@@ -1557,27 +1545,42 @@ export const mindspaceService = {
         createdAt: new Date(),
         updatedAt: new Date()
       };
-      
+
       // 3. Add new document to items collection
       const newItemRef = await addDoc(itemsCollection, newItemData);
       const newItemId = newItemRef.id;
-      
+
       // 4. Update the new item's id field to match its document id
       await updateDoc(newItemRef, {
         id: newItemId
       });
-      
+
       console.log('New item created with ID:', newItemId);
-  
+
       // 5. Add the new item to the target mindspace
       await this.addItemToMindspace(newMindspaceId, newItemId);
-      
+
       console.log('Item successfully duplicated to new mindspace');
-      
+
       // Return the new item ID for reference
       return newItemId;
     } catch (error) {
       console.error('Error duplicating and moving item:', error);
+      throw error;
+    }
+  },
+  async updateItemImage(itemId, imageUrl) {
+    try {
+      console.log('[updateItemImage] Updating item:', itemId, 'with image:', imageUrl);
+
+      const itemRef = doc(db, 'items', itemId);
+      await updateDoc(itemRef, {
+        img: imageUrl,
+        editedAt: new Date().toISOString()
+      });
+      console.log('[updateItemImage] Successfully updated item image in Firebase');
+    } catch (error) {
+      console.error('[updateItemImage] Error updating item image:', error);
       throw error;
     }
   }

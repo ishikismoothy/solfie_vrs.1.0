@@ -38,17 +38,31 @@
         >×</button>
       </div>
 
-      <div class="slot-content">
+      <div class="slot-content"
+        :style="expanded && isSingleItemSlot && items && items[mindslot.item] && items[mindslot.item].img ?
+                { backgroundImage: `url(${items[mindslot.item].img})` } : {}"
+        @contextmenu.prevent="handleSlotRightClick"
+        @touchstart="handleSlotTouchStart"
+        @touchend="handleSlotTouchEnd">
+
         <!-- Single Item Display -->
         <div v-if="isSingleItemSlot && getItemName(mindslot.item)" class="single-item-content">
-          <div class="icon-slot has-item clickable single-item-icon">
-            <div class="icon-item-name">
-              {{ getItemName(mindslot.item) }}
-            </div>
-          </div>
-          <div class="single-item-name">
+          <!-- For expanded slots, just show the name in top-left -->
+          <div v-if="expanded" class="single-item-name-overlay">
             {{ getItemName(mindslot.item) }}
           </div>
+
+          <!-- For unexpanded slots, show the normal icon + name layout -->
+          <template v-else>
+            <div class="icon-slot has-item clickable single-item-icon">
+              <div class="icon-item-name">
+                {{ getItemName(mindslot.item) }}
+              </div>
+            </div>
+            <div class="single-item-name">
+              {{ getItemName(mindslot.item) }}
+            </div>
+          </template>
         </div>
 
         <!-- Multi-Item or Empty Slot Display -->
@@ -58,12 +72,13 @@
           <IconSlotGrid
             :initialIcons="mindslot.slotIcons || [null, null, null]"
             :iconItems="mindslot.iconItems || [null, null, null]"
+            :customIcons="mindslot.customIcons || [null, null, null]"
             :getItemName="getItemName"
             :clickable="expanded"
             :expanded="expanded"
             @icons-changed="handleIconsChanged"
             @icon-clicked="handleIconClick"
-            @click.stop
+            @custom-icon-changed="handleCustomIconsChanged"
           />
         </div>
       </div>
@@ -247,6 +262,16 @@
       </div>
     </div>
   </div>
+
+  <!-- Hidden file input for slot image upload -->
+  <input
+    ref="slotImageUploadInput"
+    type="file"
+    accept="image/*"
+    @change="handleSlotImageUpload"
+    style="display: none;"
+  >
+
 </template>
 
 <script setup>
@@ -295,6 +320,14 @@
     directIconIndex: {
       type: Number,
       default: -1
+    },
+      expandedSlotIndex: {
+    type: Number,
+    default: null
+    },
+      items: {
+      type: Object,
+      default: () => ({})
     }
   })
 
@@ -306,7 +339,9 @@
     'close',
     'item-updated',
     'slot-icons-changed',
-    'icon-direct-click'
+    'custom-icons-changed',
+    'icon-direct-click',
+    'refresh-items'
   ])
 
   const store = useStore()
@@ -334,6 +369,9 @@
   const isSingleItemSlot = computed(() => {
     return !!(props.mindslot.item && !hasIconItems.value)
   })
+  const slotImageUploadInput = ref(null)
+  let touchTimer = null
+  const longPressDelay = 500
 
   const hasIconItems = computed(() => {
     const iconItems = props.mindslot.iconItems || [null, null, null]
@@ -349,24 +387,6 @@
     return iconItems.filter(item => item !== null && item !== undefined).length > 1
   })
 
-  // Card interaction methods
-  async function handleCardClick() {
-    if (!props.expanded) {
-      emit('click', props.index)
-      return
-    }
-
-    // Expanded card click on background - show icon grid for multi-item slots
-    if (!isFlipped.value && hasIconItems.value) {
-      viewMode.value = 'iconGrid'
-      isFlipped.value = true
-    } else if (!isFlipped.value && isSingleItemSlot.value) {
-      // Single item slot - go to item content
-      viewMode.value = 'itemContent'
-      await flipToItem()
-    }
-  }
-
   function handleIconsChanged(newIcons) {
     emit('slot-icons-changed', {
       index: props.index,
@@ -374,21 +394,83 @@
     })
   }
 
+  // Card interaction methods
+  async function handleCardClick() {
+    console.log('🎮 handleCardClick called - props.expanded:', props.expanded)
+    console.log('🎮 expandedSlotIndex:', props.expandedSlotIndex)
+    // If any slot is expanded, don't handle clicks on unexpanded cards
+    if (!props.expanded && props.expandedSlotIndex !== null) {
+      console.log('🎮 Another slot is expanded - ignoring click on unexpanded card')
+      return
+    }
+    if (!props.expanded) {
+      console.log('🎮 emitting click to parent')
+      emit('click', props.index)
+      return
+    }
+    // If this is an expanded multi-item card, don't handle background clicks
+    if (props.expanded && hasIconItems.value) {
+      console.log('🎮 This is an expanded multi-item card - ignoring background clicks')
+      return
+    }
+    // Check if this is a direct icon click scenario - don't flip automatically
+    if (props.openedFromMindslot && props.initialFlipped) {
+      console.log('🎮 This is a direct icon click - not handling card click')
+      return
+    }
+    // Only flip if clicking the background AND not already showing item content
+    if (!isFlipped.value && hasIconItems.value && viewMode.value !== 'itemContent') {
+      viewMode.value = 'iconGrid'
+      isFlipped.value = true
+    } else if (!isFlipped.value && isSingleItemSlot.value) {
+      // Single item slot - go directly to item content (this will still work!)
+      viewMode.value = 'itemContent'
+      await flipToItem()
+    }
+  }
+
+
+
   async function handleIconClick(iconIndex) {
     const iconItems = props.mindslot.iconItems || [null, null, null]
     const itemId = iconItems[iconIndex]
 
-    if (!itemId) return
+    console.log('=== DEBUG START ===')
+    console.log('iconIndex:', iconIndex)
+    console.log('itemId:', itemId)
+    console.log('props.expanded:', props.expanded)
+    console.log('!props.expanded:', !props.expanded)
 
-    if (!props.expanded) {
-      emit('icon-direct-click', props.index, iconIndex)
+    if (!itemId) {
+      console.log('EARLY RETURN: No item found')
       return
     }
 
-    // If expanded, go directly to item content
+    // Split the condition for debugging
+    const isExpanded = props.expanded
+    console.log('isExpanded variable:', isExpanded)
+
+    if (!isExpanded) {
+      console.log('ENTERING UNEXPANDED BRANCH')
+      console.log('About to emit icon-direct-click with:', props.index, iconIndex)
+      emit('icon-direct-click', props.index, iconIndex)
+      console.log('Emit completed, returning')
+      return
+    }
+
+    console.log('ENTERING EXPANDED BRANCH')
+    // For expanded cards, set up the content and show it directly
     currentIconIndex.value = iconIndex
     viewMode.value = 'itemContent'
-    await loadItemAndFlip(itemId)
+
+    // Load the item data
+    await store.dispatch('mindspace/setItemId', itemId)
+    await nextTick()
+
+    // Set to flipped state to show item content
+    isFlipped.value = true
+
+    console.log('=== DEBUG END ===')
   }
 
   async function switchToIconItem(iconIndex) {
@@ -397,9 +479,60 @@
 
     if (itemId) {
       currentIconIndex.value = iconIndex
-      viewMode.value = 'itemContent'
+      viewMode.value = 'itemContent'  // Go directly to content
       await store.dispatch('mindspace/setItemId', itemId)
       await nextTick()
+    }
+  }
+
+  const handleSlotRightClick = (event) => {
+    if (isSingleItemSlot.value && props.mindslot.item) {
+      event.preventDefault()
+      slotImageUploadInput.value?.click()
+    }
+  }
+
+  const handleSlotTouchStart = () => {
+    if (isSingleItemSlot.value && props.mindslot.item) {
+      touchTimer = setTimeout(() => {
+        slotImageUploadInput.value?.click()
+      }, longPressDelay)
+    }
+  }
+
+  const handleSlotTouchEnd = () => {
+    if (touchTimer) {
+      clearTimeout(touchTimer)
+      touchTimer = null
+    }
+  }
+
+  const handleSlotImageUpload = async (event) => {
+    const file = event.target.files[0]
+    console.log('🖼️ File selected:', file?.name)
+
+    if (file && props.mindslot.item) {
+      try {
+        console.log('🖼️ Uploading image for item:', props.mindslot.item)
+
+        const downloadURL = await store.dispatch('mindspace/handleImageUpload', { file })
+        console.log('🖼️ Image uploaded, URL:', downloadURL)
+
+        if (downloadURL) {
+          await store.dispatch('mindspace/setItemImage', {
+            itemId: props.mindslot.item,
+            imageUrl: downloadURL
+          })
+          console.log('🖼️ Item image updated in database')
+
+          // ADD THIS: Emit event to refresh items in parent
+          emit('refresh-items')
+
+          event.target.value = ''
+        }
+      } catch (error) {
+        console.error('Error uploading slot image:', error)
+      }
     }
   }
 
@@ -516,6 +649,15 @@
     emit('close')
   }
 
+  // Handle Icons
+
+  const handleCustomIconsChanged = (newCustomIcons) => {
+    emit('custom-icons-changed', {
+      index: props.index,
+      customIcons: newCustomIcons
+    })
+  }
+
   // Block management
   const generateRandomId = (length = 10) => {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
@@ -583,18 +725,25 @@
   })
 
   // Watch for direct icon access
-  watch(() => props.directIconIndex, async (newIconIndex) => {
-    if (newIconIndex >= 0 && props.expanded) {
-      const iconItems = props.mindslot.iconItems || [null, null, null]
-      const itemId = iconItems[newIconIndex]
+watch(() => props.directIconIndex, async (newIconIndex) => {
+  console.log('*** WATCHER TRIGGERED ***', { newIconIndex, expanded: props.expanded, initialFlipped: props.initialFlipped })
 
-      if (itemId) {
-        currentIconIndex.value = newIconIndex
-        viewMode.value = 'itemContent'
-        await loadItemAndFlip(itemId)
-      }
+  if (newIconIndex >= 0 && props.expanded) {
+    console.log('*** WATCHER CONDITIONS MET ***')
+    const iconItems = props.mindslot.iconItems || [null, null, null]
+    const itemId = iconItems[newIconIndex]
+
+    if (itemId) {
+      console.log('*** WATCHER SETTING UP ITEM CONTENT ***')
+      currentIconIndex.value = newIconIndex
+      viewMode.value = 'itemContent'
+      await store.dispatch('mindspace/setItemId', itemId)
+      await nextTick()
+      isFlipped.value = true
+      console.log('*** WATCHER COMPLETED ***')
     }
-  }, { immediate: true })
+  }
+}, { immediate: true })
 
   watch([() => props.mindslot.item, isFlipped], async ([newItemId, flipped]) => {
     if (flipped && newItemId && newItemId !== currentItemId.value) {
@@ -607,137 +756,4 @@
 <style lang="scss">
   @import '@/assets/itemWindowStyle.scss';
   @import '@/assets/globalIconStyle.scss';
-
-  // Fix for block-option-container positioning
-  .block-option-container {
-    position: absolute !important;
-    top: 1rem !important;
-    right: 1rem !important;
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    justify-content: flex-end !important;
-    gap: 5px !important;
-    flex-wrap: nowrap !important;
-    z-index: 10 !important;
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 6px;
-    padding: 4px;
-  }
-
-  // Multi-item navigation positioned at top-left
-  .multi-item-nav {
-    position: absolute !important;
-    top: 1rem !important;
-    left: 1rem !important;
-    display: flex;
-    gap: 5px;
-    z-index: 10;
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 6px;
-    padding: 4px;
-  }
-
-  .icon-nav-btn {
-    width: 30px;
-    height: 30px;
-    border: 1px solid #ccc;
-    border-radius: 50%;
-    background: white;
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: bold;
-    transition: all 0.2s ease;
-
-    &:hover {
-      background: #f0f0f0;
-    }
-
-    &.active {
-      background: #007bff;
-      color: white;
-      border-color: #007bff;
-    }
-  }
-
-  // Icon Grid View
-  .icon-grid-view {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    padding: 60px 20px 20px 20px;
-  }
-
-  .icon-grid-header {
-    border-bottom: 1px solid #eee;
-    padding-bottom: 15px;
-    margin-bottom: 40px;
-    text-align: center;
-
-    h3 {
-      margin: 0;
-      font-size: 18px;
-      color: #333;
-    }
-  }
-
-  .icon-grid-content {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .large-icon-grid {
-    display: flex;
-    gap: 30px;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .large-icon-slot {
-    position: relative;
-    width: 150px;
-    height: 150px;
-    border: 3px solid #e0e0e0;
-    border-radius: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: white;
-    transition: all 0.3s ease;
-    cursor: pointer;
-    text-align: center;
-    overflow: hidden;
-
-    &.has-item {
-      border-color: #007bff;
-      background: #f8f9ff;
-
-      &:hover {
-        transform: scale(1.05);
-        box-shadow: 0 5px 20px rgba(0,123,255,0.3);
-        border-color: #0056b3;
-      }
-    }
-
-    &:not(.has-item) {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-  }
-
-  .large-icon-item-name {
-    font-size: 16px;
-    font-weight: 500;
-    color: #333;
-    padding: 15px;
-    word-break: break-word;
-    line-height: 1.3;
-  }
-
-  .large-icon-placeholder {
-    color: #ccc;
-    opacity: 0.7;
-  }
 </style>

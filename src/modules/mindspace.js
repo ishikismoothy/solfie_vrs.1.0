@@ -1098,6 +1098,22 @@ export default {
           throw error;
         }
       },
+      async setItemImage({ dispatch }, { itemId, imageUrl }) {
+        try {
+          console.log('[setItemImage] Updating item image:', { itemId, imageUrl });
+
+          // Update the item's image using your existing mindspaceService
+          await mindspaceService.updateItemImage(itemId, imageUrl);
+
+          // Refresh the mindspace pages to reflect the change
+          await dispatch('setMindSpacePages');
+
+          console.log('[setItemImage] Successfully updated item image');
+        } catch (error) {
+          console.error('[setItemImage] Error updating item image:', error);
+          throw error;
+        }
+      }
     },
 
     getters: {
@@ -1145,6 +1161,7 @@ export default {
         return null;
       },
       getIsEditMode: state => state.isEditMode,
+
     }
   };
 

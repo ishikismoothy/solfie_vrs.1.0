@@ -1,4 +1,4 @@
-<!-- Clean mindSlot.vue -->
+<!-- Fixed mindSlot.vue -->
 <template>
   <Teleport to="body">
     <div
@@ -10,23 +10,38 @@
 
   <!-- Expanded card teleported to body -->
   <Teleport to="body">
-    <ItemWindow
-      v-if="expandedSlotIndex !== null"
-      :key="`expanded-${expandedSlotIndex}`"
-      :mindslot="mindspace.mindslot[expandedSlotIndex]"
-      :index="expandedSlotIndex"
-      :getItemImage="getItemImage"
-      :getItemName="getItemName"
-      :expanded="true"
-      :initialFlipped="openDirectlyToItem"
-      :openedFromMindslot="true"
-      :directIconIndex="directIconIndex"
-      @delete="deleteSlot"
-      @name-change="saveSlotName"
-      @click="handleSlotClick"
-      @close="closeExpandedCard"
-      class="expanded-teleported"
-    />
+    <div
+      v-show="expandedSlotIndex !== null"
+      class="debug-container"
+      :class="{ 'has-slot': expandedSlotIndex !== null && mindspace.mindslot[expandedSlotIndex] }"
+    >
+      <div class="debug-info">
+        DEBUG: expandedSlotIndex={{ expandedSlotIndex }},
+        openDirectlyToItem={{ openDirectlyToItem }},
+        directIconIndex={{ directIconIndex }}
+      </div>
+
+      <ItemWindow
+        v-if="mindspace.mindslot[expandedSlotIndex]"
+        :key="`expanded-${expandedSlotIndex}-${directIconIndex}-${openDirectlyToItem}-${Date.now()}`"
+        :mindslot="mindspace.mindslot[expandedSlotIndex]"
+        :index="expandedSlotIndex"
+        :getItemImage="getItemImage"
+        :getItemName="getItemName"
+        :items="items"
+        :expanded="true"
+        :initialFlipped="openDirectlyToItem"
+        :openedFromMindslot="true"
+        :directIconIndex="directIconIndex"
+        @refresh-items="fetchItems"
+        @delete="deleteSlot"
+        @name-change="saveSlotName"
+        @click="handleSlotClick"
+        @close="closeExpandedCard"
+        @custom-icons-changed="handleCustomIconsChanged"
+        class="expanded-teleported"
+      />
+    </div>
   </Teleport>
 
   <div class="return-to-myself">
@@ -41,13 +56,17 @@
         :index="index"
         :getItemImage="getItemImage"
         :getItemName="getItemName"
+        :items="items"
         :expanded="false"
+        :expandedSlotIndex="expandedSlotIndex"
         v-show="expandedSlotIndex !== index"
+        @refresh-items="fetchItems"
         @delete="deleteSlot"
         @name-change="saveSlotName"
         @slot-icons-changed="handleSlotIconsChanged"
         @click="handleSlotClick"
         @icon-direct-click="handleDirectIconClick"
+        @custom-icons-changed="handleCustomIconsChanged"
       />
     </div>
 
@@ -144,6 +163,7 @@
   const expandedSlotIndex = ref(null)
   const openDirectlyToItem = ref(false)
   const directIconIndex = ref(-1)
+  const preventSlotClick = ref(false) // Add this flag
   const showSlotSelectionModal = ref(false)
   const pendingItem = ref({
     title: '',
@@ -167,8 +187,9 @@
         mindslot: (data.mindslot || []).map(slot => ({
           name: slot.name || 'New Slot',
           item: slot.item || null,
-          iconItems: slot.iconItems || [null, null, null],
-          slotIcons: slot.slotIcons || [null, null, null]
+          iconItems: (slot.iconItems || [null, null, null]).map(item => item === undefined ? null : item),
+          slotIcons: (slot.slotIcons || [null, null, null]).map(icon => icon === undefined ? null : icon),
+          customIcons: (slot.customIcons || [null, null, null]).map(icon => icon === undefined ? null : icon)
         }))
       }
 
@@ -193,6 +214,8 @@
       }
 
       items.value = await mindspaceService.fetchItemsForSlots(currentUser.value)
+      console.log('🔍 Items fetched:', items.value) // ADD THIS DEBUG
+      console.log('🔍 Item we need:', items.value?.[expandedSlotIndex.value]) // ADD THIS DEBUG
     } catch (error) {
       console.error('Error fetching items:', error)
     }
@@ -217,7 +240,8 @@
       iconItems: slotType === 'multi' ?
         (itemId ? [itemId, null, null] : [null, null, null]) :
         [null, null, null],
-      slotIcons: [null, null, null]
+      slotIcons: [null, null, null],
+      customIcons: [null, null, null]  // Explicitly set to null, not undefined
     }
 
     mindspace.value.mindslot = [...mindspace.value.mindslot, newSlot]
@@ -235,17 +259,64 @@
     }
   }
 
-  // Handle direct icon click
-  const handleDirectIconClick = (slotIndex, iconIndex) => {
+  // Handle icons
+  const handleSlotIconsChanged = async ({ index, icons }) => {
+    mindspace.value.mindslot[index] = {
+      ...mindspace.value.mindslot[index],
+      slotIcons: icons
+    }
+    await updateMindspace()
+  }
+
+  const handleCustomIconsChanged = async ({ index, customIcons }) => {
+    // Ensure all values are either null or valid strings, never undefined
+    const safeCustomIcons = customIcons.map(icon => icon === undefined ? null : icon)
+
+    mindspace.value.mindslot[index] = {
+      ...mindspace.value.mindslot[index],
+      customIcons: safeCustomIcons
+    }
+    await updateMindspace()
+  }
+
+  // Handle direct icon click - DEBUGGING VERSION
+  const handleDirectIconClick = async (slotIndex, iconIndex) => {
+    console.log('🔥 handleDirectIconClick START:', slotIndex, iconIndex)
+
     const slot = mindspace.value.mindslot[slotIndex]
     const iconItems = slot.iconItems || [null, null, null]
     const itemId = iconItems[iconIndex]
 
-    if (itemId) {
-      expandedSlotIndex.value = slotIndex
-      openDirectlyToItem.value = true
-      directIconIndex.value = iconIndex
+    if (!itemId) {
+      console.log('❌ NO ITEM ID FOUND!')
+      return
     }
+
+    console.log('✅ Item ID found:', itemId)
+
+    // Set values synchronously - no async here
+    expandedSlotIndex.value = slotIndex
+    openDirectlyToItem.value = true
+    directIconIndex.value = iconIndex
+
+    console.log('🎯 Values set - expandedSlotIndex:', expandedSlotIndex.value)
+    console.log('🎯 Values set - openDirectlyToItem:', openDirectlyToItem.value)
+    console.log('🎯 Values set - directIconIndex:', directIconIndex.value)
+
+    // Prevent any slot clicks for a brief moment
+    setTimeout(() => {
+      console.log('🔒 Setting preventSlotClick to false')
+      preventSlotClick.value = false
+    }, 500)
+
+    preventSlotClick.value = true
+    console.log('🔒 Setting preventSlotClick to true')
+
+    // Add a small delay to see if timing is the issue
+    setTimeout(() => {
+      console.log('⏰ After timeout - expandedSlotIndex:', expandedSlotIndex.value)
+      console.log('⏰ After timeout - condition check:', expandedSlotIndex.value !== null && !!mindspace.value.mindslot[expandedSlotIndex.value])
+    }, 100)
   }
 
   // Handle overlay click
@@ -282,8 +353,9 @@
       const cleanMindslots = (mindspace.value.mindslot || []).map(slot => ({
         name: slot.name || 'New Slot',
         item: slot.item || null,
-        iconItems: slot.iconItems || [null, null, null],
-        slotIcons: slot.slotIcons || [null, null, null]
+        iconItems: (slot.iconItems || [null, null, null]).map(item => item === undefined ? null : item),
+        slotIcons: (slot.slotIcons || [null, null, null]).map(icon => icon === undefined ? null : icon),
+        customIcons: (slot.customIcons || [null, null, null]).map(icon => icon === undefined ? null : icon)
       }))
 
       const updatedData = {
@@ -295,14 +367,6 @@
     } catch (error) {
       console.error('Error updating mindspace:', error)
     }
-  }
-
-  const handleSlotIconsChanged = async ({ index, icons }) => {
-    mindspace.value.mindslot[index] = {
-      ...mindspace.value.mindslot[index],
-      slotIcons: icons
-    }
-    await updateMindspace()
   }
 
   // Helper function to determine slot availability
@@ -453,6 +517,15 @@
     }
   })
 
+  // DEBUG: Track what's changing expandedSlotIndex
+  watch(expandedSlotIndex, (newValue, oldValue) => {
+    console.log('📊 expandedSlotIndex changed:', { oldValue, newValue })
+    if (newValue === null && oldValue !== null) {
+      console.log('❌ expandedSlotIndex was reset to null!')
+      console.trace('Stack trace:')
+    }
+  })
+
   // Lifecycle hooks
   onMounted(async () => {
     emitter.on('showMindslotModal', handleShowMindslotModal)
@@ -466,251 +539,7 @@
 
 </script>
 
-<style scoped>
-.return-to-myself {
-  padding: 20px;
-  background: #fff;
-  border-radius: 30px;
-  margin-bottom: 20px;
-}
-
-.title {
-  font-size: 24px;
-  margin-bottom: 20px;
-}
-
-.mind-slots {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.add-slot-btn {
-  width: 100%;
-  padding: 12px;
-  margin-top: 15px;
-  background: #f0f0f0;
-  border: 2px dashed #ccc;
-  border-radius: 8px;
-  cursor: pointer;
-  color: #666;
-  transition: background 0.2s ease;
-}
-
-.add-slot-btn:hover {
-  background: #e5e5e5;
-}
-
-.card-window-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 1000;
-}
-
-.expanded-teleported {
-  z-index: 2001;
-}
-
-/* Modal Styles */
-.slot-selection-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
-
-.slot-selection-modal {
-  background: white;
-  border-radius: 15px;
-  padding: 25px;
-  max-width: 500px;
-  width: 90%;
-  max-height: 80vh;
-  overflow-y: auto;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-}
-
-.slot-selection-modal h3 {
-  margin: 0 0 20px 0;
-  font-size: 18px;
-  color: #333;
-  text-align: center;
-}
-
-.slot-selection-modal h4 {
-  margin: 0 0 15px 0;
-  font-size: 14px;
-  color: #666;
-}
-
-.available-slots-section {
-  margin-bottom: 20px;
-}
-
-.available-slots-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 15px;
-}
-
-.available-slot-option {
-  background: #f0f8ff;
-  border: 2px solid #4a90e2;
-  border-radius: 8px;
-  padding: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-  text-align: left;
-}
-
-.available-slot-option:hover {
-  background: #e6f3ff;
-  transform: translateY(-1px);
-}
-
-.available-slot-option.multi-item {
-  border-color: #9c4ae2;
-  background: #f8f0ff;
-}
-
-.available-slot-option.multi-item:hover {
-  background: #f0e6ff;
-}
-
-.slot-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.slot-type {
-  font-size: 12px;
-  color: #666;
-  font-style: italic;
-}
-
-.divider {
-  text-align: center;
-  color: #999;
-  font-weight: bold;
-  margin: 15px 0;
-  position: relative;
-}
-
-.divider::before,
-.divider::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  width: 40%;
-  height: 1px;
-  background: #ddd;
-}
-
-.divider::before {
-  left: 0;
-}
-
-.divider::after {
-  right: 0;
-}
-
-.new-slot-section {
-  margin-bottom: 20px;
-}
-
-.new-slot-options {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 15px;
-}
-
-.new-slot-option {
-  border: 2px solid;
-  border-radius: 8px;
-  padding: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-  text-align: left;
-}
-
-.new-slot-option:hover:not(:disabled) {
-  transform: translateY(-1px);
-}
-
-.new-slot-option:disabled {
-  background: #f5f5f5;
-  border-color: #ccc;
-  color: #999;
-  cursor: not-allowed;
-}
-
-.single-item {
-  background: #f0fff0;
-  border-color: #4caf50;
-}
-
-.single-item:hover:not(:disabled) {
-  background: #e8ffe8;
-}
-
-.multi-item {
-  background: #fff0f8;
-  border-color: #e24a90;
-}
-
-.multi-item:hover:not(:disabled) {
-  background: #ffe6f3;
-}
-
-.option-content {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.option-content small {
-  color: #666;
-  font-size: 12px;
-}
-
-.max-slots-warning {
-  text-align: center;
-  color: #ff6b6b;
-  font-weight: bold;
-  font-size: 14px;
-}
-
-.slots-remaining {
-  text-align: center;
-  color: #666;
-  font-size: 14px;
-}
-
-.cancel-btn {
-  background: #f5f5f5;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 10px 20px;
-  cursor: pointer;
-  width: 100%;
-  margin-top: 10px;
-  transition: background 0.2s;
-}
-
-.cancel-btn:hover {
-  background: #eee;
-}
+<style lang="scss">
+@import '@/assets/itemWindowStyle.scss';
+@import '@/assets/globalIconStyle.scss';
 </style>

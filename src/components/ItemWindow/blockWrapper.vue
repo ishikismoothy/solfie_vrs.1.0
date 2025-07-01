@@ -125,3 +125,8 @@ export default {
   }
 };
 </script>
+
+<style lang="scss">
+  @import '@/assets/itemWindowStyle.scss';
+  @import '@/assets/globalIconStyle.scss';
+</style>
