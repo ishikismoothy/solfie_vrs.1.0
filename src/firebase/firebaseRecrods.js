@@ -1,59 +1,88 @@
 // firebase/firebaserecords.js
 import { db } from './firebaseInit';
-import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, doc, getDoc } from 'firebase/firestore';
 
 export const recordService = {
-    async getUserRecords(userId, widgetId = null) {
+    // Get user's widget configuration (usersWidgets)
+    async getUsersWidgets(userId) {
         try {
-            console.log('🔍 Starting getUserRecords with:', { userId, widgetId });
+            console.log('👥 Getting usersWidgets for user:', userId);
             
-            let recordsQuery;
+            const userDocRef = doc(db, 'users', userId);
+            const userDoc = await getDoc(userDocRef);
             
-            if (widgetId) {
-                console.log('📊 Querying for specific widget:', widgetId);
-                // Fixed: Use 'uid' instead of 'userId' and order by 'createdAt' instead of 'analysisDate'
-                recordsQuery = query(
-                    collection(db, 'records'),
-                    where('uid', '==', userId), // Changed from 'userId' to 'uid'
-                    where(`record.${widgetId}`, '!=', null),
-                    orderBy('createdAt', 'desc') // Changed from 'analysisDate' to 'createdAt'
-                );
-            } else {
-                console.log('📊 Querying for all user records');
-                // Fixed: Use 'uid' instead of 'userId'
-                recordsQuery = query(
-                    collection(db, 'records'),
-                    where('uid', '==', userId), // Changed from 'userId' to 'uid'
-                    orderBy('createdAt', 'desc') // Changed from 'analysisDate' to 'createdAt'
-                );
+            if (!userDoc.exists()) {
+                console.warn('⚠️ User document not found');
+                return {};
             }
+            
+            const userData = userDoc.data();
+            const usersWidgets = userData.usersWidgets || {};
+            
+            console.log('✅ UsersWidgets retrieved:', usersWidgets);
+            return usersWidgets;
+        } catch (error) {
+            console.error('❌ Error getting usersWidgets:', error);
+            throw error;
+        }
+    },
+
+    async getUserRecords(userId, currentThemeId = null, widgetId = null) {
+        try {
+            console.log('🔍 Starting getUserRecords with:', { userId, currentThemeId, widgetId });
+            
+            // Always start with basic user filter
+            let recordsQuery = query(
+                collection(db, 'records'),
+                where('uid', '==', userId),
+                orderBy('createdAt', 'desc')
+            );
 
             console.log('🔄 Executing query...');
             const recordsSnapshot = await getDocs(recordsQuery);
-            console.log('📈 Query result - Empty?', recordsSnapshot.empty);
             console.log('📈 Query result - Size:', recordsSnapshot.size);
             
-            const records = [];
+            const allRecords = [];
             
-            recordsSnapshot.forEach((doc, index) => {
+            recordsSnapshot.forEach((doc) => {
                 const docData = doc.data();
-                console.log(`📄 Document ${index + 1}:`, {
+                console.log(`📄 Document ${doc.id}:`, {
                     id: doc.id,
                     uid: docData.uid,
                     hasRecord: !!docData.record,
                     recordKeys: docData.record ? Object.keys(docData.record) : [],
-                    analysisDate: docData.analysisDate,
                     createdAt: docData.createdAt
                 });
                 
-                records.push({
+                allRecords.push({
                     id: doc.id,
                     ...docData
                 });
             });
 
-            console.log('✅ Final records array length:', records.length);
-            return records;
+            // Filter in JavaScript for theme-widget combination
+            let filteredRecords = allRecords;
+            
+            if (currentThemeId && widgetId) {
+                filteredRecords = allRecords.filter(record => {
+                    const hasThemeData = record.record && 
+                                        record.record[currentThemeId] && 
+                                        record.record[currentThemeId][widgetId];
+                    
+                    if (hasThemeData) {
+                        console.log(`✅ Record ${record.id} has data for theme ${currentThemeId} widget ${widgetId}`);
+                    }
+                    
+                    return hasThemeData;
+                });
+            } else if (currentThemeId) {
+                filteredRecords = allRecords.filter(record => {
+                    return record.record && record.record[currentThemeId];
+                });
+            }
+
+            console.log(`✅ Filtered ${filteredRecords.length} records from ${allRecords.length} total`);
+            return filteredRecords;
         } catch (error) {
             console.error('❌ Error fetching records:', error);
             console.error('Error details:', {
@@ -64,129 +93,126 @@ export const recordService = {
         }
     },
 
-    async getWidgetRecords(userId, widgetId) {
+    async getThemeWidgetRecords(userId, currentThemeId, widgetId) {
         try {
-            console.log('🎯 Starting getWidgetRecords with:', { userId, widgetId });
+            console.log('🎯 Getting records for theme-widget:', { userId, currentThemeId, widgetId });
             
-            const records = await this.getUserRecords(userId, widgetId);
+            const records = await this.getUserRecords(userId, currentThemeId, widgetId);
             console.log('📋 Raw records from getUserRecords:', records.length);
             
-            // Debug: Check each record
-            records.forEach((record, index) => {
-                console.log(`Record ${index}:`, {
-                    id: record.id,
-                    uid: record.uid,
-                    hasRecord: !!record.record,
-                    hasWidgetData: record.record && !!record.record[widgetId],
-                    widgetData: record.record ? record.record[widgetId] : null,
-                    createdAt: record.createdAt,
-                    analysisDate: record.analysisDate
-                });
-            });
-            
-            const filteredRecords = records
+            // Extract and format the specific widget data
+            const formattedRecords = records
                 .filter(record => {
-                    const hasData = record.record && record.record[widgetId];
-                    console.log(`Filtering record ${record.id}: ${hasData ? 'PASS' : 'FAIL'}`);
-                    return hasData;
+                    return record.record && 
+                           record.record[currentThemeId] && 
+                           record.record[currentThemeId][widgetId];
                 })
-                .map(record => ({
-                    id: record.id,
-                    analysisDate: record.analysisDate,
-                    createdAt: record.createdAt,
-                    values: record.record[widgetId]
-                }));
+                .map(record => {
+                    const widgetValues = record.record[currentThemeId][widgetId];
+                    
+                    console.log(`📊 Record ${record.id} widget data:`, {
+                        themeId: currentThemeId,
+                        widgetId: widgetId,
+                        values: widgetValues,
+                        createdAt: record.createdAt
+                    });
+                    
+                    return {
+                        id: record.id,
+                        createdAt: record.createdAt,
+                        analysisDate: record.analysisDate || record.createdAt, // Fallback
+                        values: widgetValues
+                    };
+                });
             
-            console.log('✅ Final filtered records:', filteredRecords.length);
-            return filteredRecords;
+            console.log(`✅ Formatted ${formattedRecords.length} theme-widget records`);
+            return formattedRecords;
         } catch (error) {
-            console.error('❌ Error fetching widget records:', error);
+            console.error('❌ Error fetching theme-widget records:', error);
             throw error;
         }
     },
 
-    // Alternative method if you still have index issues
-    async getUserRecordsSimple(userId, widgetId = null) {
+    // Helper method to check if current theme has specific widget
+    async checkThemeHasWidget(userId, currentThemeId, widgetId) {
         try {
-            console.log('🔍 Simple query for uid:', userId);
+            const usersWidgets = await this.getUsersWidgets(userId);
+            const themeWidgets = usersWidgets[currentThemeId] || [];
             
-            // Query without orderBy first
+            const hasWidget = themeWidgets.includes(widgetId);
+            console.log(`🔍 Theme ${currentThemeId} has widget ${widgetId}:`, hasWidget);
+            
+            return hasWidget;
+        } catch (error) {
+            console.error('❌ Error checking theme-widget relationship:', error);
+            return false;
+        }
+    },
+
+    // Get all widgets assigned to current theme
+    async getThemeWidgets(userId, currentThemeId) {
+        try {
+            const usersWidgets = await this.getUsersWidgets(userId);
+            const themeWidgets = usersWidgets[currentThemeId] || [];
+            
+            console.log(`📊 Widgets for theme ${currentThemeId}:`, themeWidgets);
+            return themeWidgets;
+        } catch (error) {
+            console.error('❌ Error getting theme widgets:', error);
+            return [];
+        }
+    },
+
+    // Debug method to see all records structure
+    async debugRecordsStructure(userId, limit = 3) {
+        try {
+            console.log('🔧 DEBUG: Analyzing records structure for user:', userId);
+            
             const recordsQuery = query(
                 collection(db, 'records'),
-                where('uid', '==', userId) // Use 'uid' field
+                where('uid', '==', userId),
+                orderBy('createdAt', 'desc')
             );
 
             const recordsSnapshot = await getDocs(recordsQuery);
-            console.log('📈 Simple query result - Size:', recordsSnapshot.size);
-            
             const records = [];
+            
+            let count = 0;
             recordsSnapshot.forEach(doc => {
-                const data = doc.data();
-                console.log('📄 Document found:', {
-                    id: doc.id,
-                    uid: data.uid,
-                    hasRecord: !!data.record,
-                    recordKeys: data.record ? Object.keys(data.record) : []
-                });
-                
-                // Filter by widget if specified
-                if (!widgetId || (data.record && data.record[widgetId])) {
+                if (count < limit) {
+                    const data = doc.data();
                     records.push({
                         id: doc.id,
-                        ...data
+                        structure: this.analyzeRecordStructure(data.record),
+                        createdAt: data.createdAt
                     });
+                    count++;
                 }
             });
-
-            // Sort by createdAt in JavaScript instead of Firestore
-            records.sort((a, b) => {
-                const dateA = a.createdAt?.toDate?.() || new Date(a.createdAt);
-                const dateB = b.createdAt?.toDate?.() || new Date(b.createdAt);
-                return dateB - dateA; // Descending order (newest first)
-            });
-
-            console.log('✅ Sorted records:', records.length);
+            
+            console.log('🔧 DEBUG: Records structure analysis:', records);
             return records;
         } catch (error) {
-            console.error('❌ Error in simple query:', error);
-            throw error;
+            console.error('❌ Error in debug analysis:', error);
+            return [];
         }
-    }
-};
+    },
 
-// Updated analysis service to handle your date format
-export const analysisServiceUpdated = {
-    groupRecordsByTime(records) {
-        const now = new Date();
-        const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate());
-        const oneYearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
-
-        return {
-            '今日': records.slice(0, 1), // Most recent
-            '6ヶ月': records.filter(record => {
-                // Handle both string dates and Firestore timestamps
-                let recordDate;
-                if (typeof record.analysisDate === 'string') {
-                    recordDate = new Date(record.analysisDate);
-                } else if (record.createdAt?.toDate) {
-                    recordDate = record.createdAt.toDate();
-                } else {
-                    recordDate = new Date(record.createdAt);
-                }
-                return recordDate >= sixMonthsAgo;
-            }),
-            '1年': records.filter(record => {
-                // Handle both string dates and Firestore timestamps
-                let recordDate;
-                if (typeof record.analysisDate === 'string') {
-                    recordDate = new Date(record.analysisDate);
-                } else if (record.createdAt?.toDate) {
-                    recordDate = record.createdAt.toDate();
-                } else {
-                    recordDate = new Date(record.createdAt);
-                }
-                return recordDate >= oneYearAgo;
-            })
-        };
+    analyzeRecordStructure(record) {
+        if (!record) return { themes: [], structure: 'No record data' };
+        
+        const themes = Object.keys(record);
+        const structure = {};
+        
+        themes.forEach(themeId => {
+            if (record[themeId] && typeof record[themeId] === 'object') {
+                structure[themeId] = {
+                    widgets: Object.keys(record[themeId]),
+                    widgetCount: Object.keys(record[themeId]).length
+                };
+            }
+        });
+        
+        return { themes, structure };
     }
 };

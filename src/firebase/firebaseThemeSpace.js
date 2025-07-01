@@ -214,9 +214,52 @@ export const themeService = {
         throw error;
         }
     },
-    // Update theme
     async updateThemeOrder(themes) {
-        const userId = store.state.mindspace.userId;
+        const userId = store.state.user.user.uid;
+        // Validate userId before proceeding
+        if (!userId) {
+            throw new Error('User ID is not available. Please ensure user is logged in.');
+        }
+
+        try {
+            // Extract just the IDs from theme objects
+            const themeIds = themes.map(theme => theme.id);
+            
+            // First, get current user data to check account type
+            const userRef = doc(db, 'users', userId);
+            const userDoc = await getDoc(userRef);
+            
+            if (!userDoc.exists()) {
+                throw new Error('User document not found');
+            }
+            
+            const userData = userDoc.data();
+            const accountType = userData.accountType || 'Basic';
+            
+            // Determine max active themes based on account type
+            const maxActiveThemes = accountType === 'Premium' ? 3 : 1;
+            const activeThemes = themeIds.slice(0, maxActiveThemes);
+            
+            // Always update both fields - this handles account downgrades properly
+            await updateDoc(userRef, {
+                themeOrder: themeIds,
+                activeTheme: activeThemes,
+                updatedAt: new Date().toISOString()
+            });
+            
+            console.log('[updateThemeOrder] User ID:', userId);
+            console.log('[updateThemeOrder] Updated theme order:', themeIds);
+            console.log(`[updateThemeOrder] Account type: ${accountType}, Max active themes: ${maxActiveThemes}`);
+            console.log('[updateThemeOrder] Updated active themes:', activeThemes);
+            
+        } catch (error) {
+            console.error('Error updating user theme order:', error);
+            throw error;
+        }
+    },
+    /* Update theme
+    async updateThemeOrder(themes) {
+        const userId = store.state.user.user.userId;
         try {
             // Extract just the IDs from theme objects
             const themeIds = themes.map(theme => theme.id);
@@ -233,7 +276,7 @@ export const themeService = {
             console.error('Error updating user theme order:', error);
             throw error;
         }
-    },
+    },*/
 
     async updateTheme(id, themeData) {
         const userId = store.state.mindspace.userId;

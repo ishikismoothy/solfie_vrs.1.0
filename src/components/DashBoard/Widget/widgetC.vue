@@ -1,4 +1,4 @@
-<!--widgetA_DecisionPower.vue-->
+<!--widgetC.vue : 活動、環境、表現-->
 <template>
   <section class="chart-section">
     <div class="data-tab-menu" v-if="Object.keys(chartData).length || hasAdviceData">
@@ -16,10 +16,9 @@
       <!-- Loading placeholder -->
     </section>
     
-    <!-- Regular chart view -->
-    <section v-if="!isDataLoading && selectedDataTab !== 'アドバイス' && currentDataValues.items" class="chart-content-section">
+    <!-- Regular chart view - hidden when there's no data -->
+    <section v-if="!isDataLoading && selectedDataTab !== 'アドバイス' && currentDataValues.items && Object.keys(currentDataValues.items).length > 0" class="chart-content-section">
       <h4 v-if="widgetData">{{ widgetData.name }}</h4>
-      <h4 v-else>Loading...</h4>  
       <div class="chart-circle">
         <svg width="0" height="0">
           <defs>
@@ -47,6 +46,15 @@
       </div>
     </section>
 
+    <!-- No data message -->
+    <section v-if="!isDataLoading && selectedDataTab !== 'アドバイス' && (!currentDataValues.items || Object.keys(currentDataValues.items).length === 0)" class="chart-content-section no-data-section">
+      <h4 v-if="widgetData">{{ widgetData.name }}</h4>
+      <h4 v-else>Loading...</h4>
+      <div class="no-data-message">
+        There is no available data yet.
+      </div>
+    </section>
+
     <!-- Advice view -->
     <section v-if="!isDataLoading && selectedDataTab === 'アドバイス'" class="chart-content-section advice-section">
       <h4 v-if="widgetData">{{ widgetData.name }} - アドバイス</h4>
@@ -56,7 +64,7 @@
         <div 
           v-for="(advice, index) in adviceData" 
           :key="index" 
-          class="advice-item flip-card"
+          class="advice-item flip-advice-card"
           @click="toggleFlip(index)"
           @keydown.enter="toggleFlip(index)"
           @keydown.space.prevent="toggleFlip(index)"
@@ -64,26 +72,26 @@
           role="button"
           :aria-label="`アドバイス ${index + 1}: クリックして詳細を表示`"
         >
-          <div class="flip-card-inner" :class="{ 'flipped': flippedCards[index] }">
+          <div class="flip-advice-card-inner" :class="{ 'flipped': flippedCards[index] }">
             <!-- Front side -->
-            <div class="flip-card-front">
+            <div class="flip-advice-card-front">
               <h5 class="advice-title">{{ advice.title }}</h5>
               <p class="advice-text">{{ advice.content }}</p>
-              <div class="flip-indicator">
-                <span class="flip-text">タップして詳細を見る</span>
-                <svg class="flip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <div class="flip-advice-indicator">
+                <span class="flip-advice-text">タップして詳細を見る</span>
+                <svg class="flip-advice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M7 17L17 7M17 7H7M17 7V17"/>
                 </svg>
               </div>
             </div>
             
             <!-- Back side -->
-            <div class="flip-card-back">
+            <div class="flip-advice-card-back">
               <h5 class="advice-title">{{ advice.title }}</h5>
               <p class="advice-description">{{ advice.description }}</p>
-              <div class="flip-indicator">
-                <span class="flip-text">タップして戻る</span>
-                <svg class="flip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <div class="flip-advice-indicator">
+                <span class="flip-advice-text">タップして戻る</span>
+                <svg class="flip-advice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M17 7L7 17M7 17H17M7 17V7"/>
                 </svg>
               </div>
@@ -100,12 +108,11 @@
 </template>
 
 <script>
-//[WidgetA] 
-//ID: CC4ZpLD5Sz2DmwrTG84l
 
 import { defineComponent, ref, computed, watch, onMounted } from 'vue';
 import { useStore } from 'vuex';
 import { widgetService } from '@/firebase/firebaseWidget'
+import { WIDGET_CONFIG } from '@/config/widgetConfig'
 
 export default defineComponent({
   name: 'ChartComponent',
@@ -148,12 +155,18 @@ export default defineComponent({
     loadDataAction: {
       type: String,
       default: 'loadData'
+    },
+    // Widget ID
+    widgetConfig:{
+      type: String,
+      default: 'data_A'
     }
   },
   setup(props) {
     const store = useStore();
-    const id = 'CC4ZpLD5Sz2DmwrTG84l';
+    const id = WIDGET_CONFIG[props.widgetConfig];
     const uid = store.state.user.user.uid;
+    const currentThemeId = store.state.mindspace.currentThemeId;
 
     // Linear interpolation function for smooth animations
     const lerp = (start, end, t) => start * (1 - t) + end * t;
@@ -163,7 +176,10 @@ export default defineComponent({
 
     // Function to toggle flip state
     const toggleFlip = (index) => {
-      flippedCards.value[index] = !flippedCards.value[index];
+      flippedCards.value = {
+        ...flippedCards.value,
+        [index]: !flippedCards.value[index]
+      };
     };
 
     // Computed properties for data from Vuex store
@@ -308,7 +324,7 @@ export default defineComponent({
     // Initialize data when component is mounted
     onMounted(async () => {
       // Load data from Vuex store
-      await store.dispatch(`${props.storeModule}/${props.loadDataAction}`, uid);
+      await store.dispatch(`${props.storeModule}/${props.loadDataAction}`, { uid:uid, themeId:currentThemeId});
       
       // Initialize animated values with the correct structure
       initializeAnimatedValues();
