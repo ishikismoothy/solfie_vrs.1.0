@@ -4,8 +4,7 @@
     <main>
 
       <section class="overview-block">
-        <!--
-        <div class="image-placeholder"></div>-->
+        <!--<div class="image-placeholder"></div>-->
         <h2>{{themeName}}</h2>
         <div class="sat-icon-container">
           <h4 class="sat-title">今日も実感してる？</h4>
@@ -17,11 +16,12 @@
         </div>
       </section>
 
+      <h2 style="color: white;" class="title">意識すること</h2>
+
       <!-- MindSlot Section -->
       <MindSlotView/>
 
-      <!-- Analysis Section -->
-      <SatisfactionDataView/>
+      <h2 style="color: white;" class="title">今の状態</h2>
 
       <!-- Widget Section -->
       <WidgetA
@@ -61,6 +61,11 @@
         widgetConfig="text_B"
       />
 
+      <h2 style="color: white;" class="title">達成感の推移</h2>
+      <!-- Analysis Section -->
+      <SatisfactionDataView/>
+
+      <h2 style="color: white;" class="title">ステータス</h2>
       <section class="stats-section">
         <div class="stat-item">
           <span class="stat-label">Solfieレベル</span>
@@ -76,6 +81,7 @@
         </div>
       </section>
 
+      <!-- 
       <section class="todo-section">
         <h2>今月の選択</h2>
         <div v-if="isTodosLoading" class="todos-loading">
@@ -116,6 +122,7 @@
           </div>
         </div>
       </section>
+      -->
 
       <!-- Add Todo Modal -->
       <div v-if="showModal" class="modal-overlay-todo">

@@ -234,10 +234,10 @@ export const themeService = {
             }
             
             const userData = userDoc.data();
-            const accountType = userData.accountType || 'Basic';
+            const accountPlan = userData.accountPlan || 'Basic';
             
             // Determine max active themes based on account type
-            const maxActiveThemes = accountType === 'Premium' ? 3 : 1;
+            const maxActiveThemes = accountPlan === 'Premium' ? 3 : 1;
             const activeThemes = themeIds.slice(0, maxActiveThemes);
             
             // Always update both fields - this handles account downgrades properly
@@ -249,7 +249,7 @@ export const themeService = {
             
             console.log('[updateThemeOrder] User ID:', userId);
             console.log('[updateThemeOrder] Updated theme order:', themeIds);
-            console.log(`[updateThemeOrder] Account type: ${accountType}, Max active themes: ${maxActiveThemes}`);
+            console.log(`[updateThemeOrder] Account type: ${accountPlan}, Max active themes: ${maxActiveThemes}`);
             console.log('[updateThemeOrder] Updated active themes:', activeThemes);
             
         } catch (error) {

@@ -6,3 +6,9 @@ npm install vue-chartjs chart.js
 
 To handle emit
 npm install mitt
+
+For generating unique access keys
+npm install nanoid
+
+For generating QR code
+npm install qrcode

@@ -1,12 +1,5 @@
-<!-- STILL WORKING ON THE FUNCTION FOR ADDING NEW MIND GRID PAGE -->
-<!-- TRIGGER UPON NO ROOM FOR EXTRA ITEM LISTED -->
-<!-- UPDATED 2024/09/10 18:07 -->
-
-<!--
-FUTURE DEVELOPMENT
-ADD STATUS HEADER
-
--->
+<!-- mindSpace.vue -->
+<!-- LAST UPDATED 2024/09/10 18:07 -->
 
 <template>
     <div class="mindspace-container" :style="containerStyle">

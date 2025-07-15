@@ -1,3 +1,4 @@
+//firebaseMindSpace.js
 import squareSvg from '@/assets/shapes/square.svg';
 import folderSvg from '@/assets/shapes/folder.svg';
 import {

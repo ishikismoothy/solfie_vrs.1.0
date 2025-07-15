@@ -5,7 +5,7 @@
       v-if="expandedSlotIndex !== null"
       class="card-window-overlay"
       @click="handleOverlayClick"
-    />
+    ></div>
   </Teleport>
 
   <!-- Expanded card teleported to body -->
@@ -43,10 +43,9 @@
       />
     </div>
   </Teleport>
-
+  
   <div class="return-to-myself">
-    <h2 class="title">Return to myself</h2>
-
+    
     <!-- Mind Slots Container -->
     <div class="mind-slots">
       <ItemWindow

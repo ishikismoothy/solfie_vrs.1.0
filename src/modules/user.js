@@ -1,3 +1,4 @@
+//module/user.js
 import {
   updateViewThemeHistory,
   updateViewMindspaceHistory,

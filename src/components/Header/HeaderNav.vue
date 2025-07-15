@@ -36,12 +36,13 @@
         {{ user.notifications }}
       </span>
       </button>
-
+      <ShareDashboard/>
+      <!--
       <button class="icon-button"
         v-if="!isEditMode"
       >
         <img src="@//assets/icons/utility/shareIcon.svg" alt="share" />
-      </button>
+      </button>-->
       <button class="icon-button"
         v-if="!isEditMode"
         @click = "toggleDropdown"
@@ -89,6 +90,7 @@ import SlideMenu from './mindSpaceMenu.vue';
 import TruncateText from '../TruncateText/truncateHeaderText.vue';
 import LogoutButton from '@/components/logoutButton.vue';
 import useClickOutside from '../composables/useClickOutside.js';
+import ShareDashboard from '@/components/DashBoard/ShareDashboard.vue';
 
 export default {
   name: 'HeaderNav',
@@ -96,6 +98,7 @@ export default {
     SlideMenu,
     TruncateText,
     LogoutButton,
+    ShareDashboard
   },
   setup() {
     const store = useStore();

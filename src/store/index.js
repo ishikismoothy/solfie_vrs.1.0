@@ -9,6 +9,7 @@ import dataExtraction from '../modules/dataExtraction';
 import mindspace from '../modules/mindspace';
 import themeSpace from '../modules/themeSpace';
 import analysisRecords from '../modules/analysisRecords';
+import sharing from '../modules/sharing';
 
 export default createStore({
   modules: {
@@ -22,5 +23,6 @@ export default createStore({
     dataExtraction,
     mindspace,
     themeSpace,
+    sharing,
   },
 });

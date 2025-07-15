@@ -34,7 +34,16 @@ const routes = [
     name: 'themespace',
     component: () => import('@/views/ThemeSpaceView.vue'),
     meta: { requiresAuth: true }
-  }
+  },
+  {
+    path: '/shared/:accessKey',
+    name: 'SharedDashboard',
+    component: () => import('@/views/SharedDashboardView.vue'),
+    meta: { 
+      requiresAuth: false,
+      isPublicShare: true 
+    }
+  },
 ]
 
 const router = createRouter({
@@ -60,6 +69,13 @@ onAuthStateChanged(getAuth(), (user) => {
 router.beforeEach((to, from, next) => {
   const auth = getAuth();
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
+  const isPublicShare = to.matched.some(record => record.meta.isPublicShare);
+  
+  // Allow public share routes without authentication
+  if (isPublicShare) {
+    next();
+    return;
+  }
 
   if (requiresAuth && !auth.currentUser) {
     next('/login');

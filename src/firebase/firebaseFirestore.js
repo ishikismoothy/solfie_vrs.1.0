@@ -29,12 +29,20 @@ import {
 
   export const createUserDocument = (uid, data) => {
     const defaultData = {
-      name: 'John Doe',
+      displayName: 'No Name',
+      accountPlan: "Free",
+      status: "Active",
+      language: "Japanese",
       email: data.email,
       dateOfBirth: 'None',
+      invoice: {},
       viewHistory: {},
       mindspace: "",
-      theme: "NYf"
+      focusTheme: "",
+      themeOrder: [],
+      usersWidgets: {},
+      activeTheme: [],
+      isAssigned: false,
       // Add more default fields if needed
     };
     return setDoc(doc(db, 'users', uid), { ...defaultData, ...data });

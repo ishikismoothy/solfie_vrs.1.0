@@ -1,3 +1,4 @@
+<!-- DashboardView.vue -->
 <template>
   <LoadingScreen v-model="isLoading" />
 
@@ -61,7 +62,6 @@
     >
       <DockNav />
     </div>
-
 
     <!-- Dock Button -->
     <button
@@ -148,7 +148,7 @@ export default defineComponent({
     MoveItemModal,
     satSlider,
     LoadingScreen,
-    MindUniverse
+    MindUniverse,
   },
   setup() {
     const store = useStore();
@@ -473,4 +473,17 @@ export default defineComponent({
 @import '../assets/satisfactionDataViewStyle.scss';
 @import '../assets/todosStyle.scss';
 @import '../assets/dockStyle.scss';
+
+.dashboard-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  
+  // Position it where appropriate in your layout
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 100;
+}
 </style>

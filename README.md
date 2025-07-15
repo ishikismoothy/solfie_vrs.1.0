@@ -9,6 +9,9 @@ npm install
 ```
 npm install vue-draggable-next
 npm install vue-chartjs chart.js
+npm install mitt
+npm install nanoid
+npm install qrcode
 ```
 
 ### Compiles and hot-reloads for development
