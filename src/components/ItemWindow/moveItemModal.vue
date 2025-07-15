@@ -24,8 +24,8 @@
           <div v-if="!selectedTheme" class="selection-container">
             <h3>テーマスペースを選択</h3>
             <ul class="space-list">
-              <li v-for="theme in themeSpaces" 
-                  :key="theme.id" 
+              <li v-for="theme in themeSpaces"
+                  :key="theme.id"
                   @click="selectTheme(theme)"
                   class="space-item">
                 {{ theme.name }}
@@ -38,8 +38,8 @@
             <h3>マインドスペースを選択</h3>
             <button class="back-button" @click="selectedTheme = null">戻る</button>
             <ul class="space-list">
-              <li v-for="mindspace in mindSpaces" 
-                  :key="mindspace.id" 
+              <li v-for="mindspace in mindSpaces"
+                  :key="mindspace.id"
                   @click="selectMindspace(mindspace)"
                   class="space-item">
                 {{ getMindspaceName(mindspace) }}
@@ -90,7 +90,7 @@ export default {
     required: true
     }
   },
-  
+
   emits: ['close', 'itemMoved'],
 
   setup(props, { emit }) {
@@ -167,7 +167,7 @@ export default {
       lastAction = 'move';
       isLoading.value = true;
       error.value = null;
-      
+
       // Debug logging
       console.log('Moving item with params:', {
         currentMindSpaceId: props.currentMindSpaceId,
@@ -178,7 +178,7 @@ export default {
           selectedMindspace: selectedMindSpace.value
         }
       });
-      
+
       try {
         if (!props.currentMindSpaceId) {
           throw new Error('Current mindspace ID is missing');
@@ -189,13 +189,13 @@ export default {
         if (!props.itemId) {
           throw new Error('Item ID is missing');
         }
-        
+
         await mindspaceService.moveItem(
           props.currentMindSpaceId,
           selectedMindSpace.value.id,
           props.itemId
         );
-        
+
         emit('itemMoved');
         close();
       } catch (err) {
@@ -210,12 +210,12 @@ export default {
       lastAction = 'duplicate';
       isLoading.value = true;
       error.value = null;
-      
+
       console.log('Duplicating item with params:', {
         newMindspaceId: selectedMindSpace.value?.id,
         itemId: props.itemId
       });
-      
+
       try {
         if (!selectedMindSpace.value?.id) {
           throw new Error('Selected mindspace ID is missing');
@@ -228,7 +228,7 @@ export default {
           selectedMindSpace.value.id,
           props.itemId
         );
-        
+
         emit('itemMoved');
         close();
       } catch (err) {
@@ -340,7 +340,6 @@ export default {
 }
 
 .back-button {
-  margin-bottom: 10px;
   padding: 5px 10px;
   background-color: #f0f0f0;
   border: none;

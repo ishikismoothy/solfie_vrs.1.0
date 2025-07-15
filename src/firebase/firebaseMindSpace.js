@@ -679,7 +679,7 @@ export const mindspaceService = {
     }
 
     const storage = getStorage();
-    const storageReference = storageRef(storage, `images/${uid}/${file.name}`);
+    const storageReference = storageRef(storage, `${uid}/images/${file.name}`);
     const uploadTask = uploadBytesResumable(storageReference, file);
 
     return new Promise((resolve, reject) => {
@@ -1584,5 +1584,24 @@ export const mindspaceService = {
       console.error('[updateItemImage] Error updating item image:', error);
       throw error;
     }
+  },
+
+  async updateItemIcon(itemId, iconValue) {
+    try {
+      console.log('[updateItemIcon] Updating item:', itemId, 'with icon:', iconValue);
+
+      const itemRef = doc(db, 'items', itemId);
+      await updateDoc(itemRef, {
+        icon: iconValue,
+        updatedAt: serverTimestamp()
+      });
+
+      console.log('[updateItemIcon] Successfully updated item icon in Firebase');
+      return { success: true };
+    } catch (error) {
+      console.error('[updateItemIcon] Error updating item icon:', error);
+      throw error;
+    }
   }
+
 }

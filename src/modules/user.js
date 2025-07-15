@@ -10,9 +10,13 @@ import {
   query,
   where,
   getDocs,
+  doc,
+  setDoc,
+  deleteDoc
 } from 'firebase/firestore';
 import { getCurrentUserId } from '@/firebase/firebaseAuth';
 import { widgetService } from '@/firebase/firebaseWidget';
+import { mindspaceService } from '@/firebase/firebaseMindSpace';
 
 export default {
   namespaced: true,
@@ -56,6 +60,14 @@ export default {
     },
     userImages: [],
     userWidgets: {},
+    // Add items state
+    items: {
+      data: {},
+      loading: false,
+      lastFetched: null
+    },
+    // Add global icon synchronization state
+    itemCustomIcons: {}, // { itemId: svgString }
     // userIcons: [] NOT YET IN USE
   },
   mutations: {
@@ -110,6 +122,42 @@ export default {
     SET_USER_WIDGETS(state, widgets) {
       state.userWidgets = widgets;
     },
+    // Add items mutations
+    SET_ITEMS_LOADING(state, loading) {
+      state.items.loading = loading;
+    },
+    SET_ITEMS_DATA(state, items) {
+      state.items.data = items;
+      state.items.lastFetched = Date.now();
+    },
+    UPDATE_ITEM(state, { itemId, updates }) {
+      if (state.items.data[itemId]) {
+        state.items.data[itemId] = { ...state.items.data[itemId], ...updates };
+      }
+    },
+
+    // Global Icon Synchronization Mutations
+    SET_ITEM_CUSTOM_ICON: (state, { itemId, customIcon }) => {
+      if (customIcon === null || customIcon === undefined) {
+        // Remove the custom icon
+        if (state.itemCustomIcons[itemId]) {
+          delete state.itemCustomIcons[itemId]
+        }
+      } else {
+        // Set the custom icon
+        state.itemCustomIcons[itemId] = customIcon
+      }
+    },
+
+    SET_ALL_ITEM_CUSTOM_ICONS: (state, customIcons) => {
+      state.itemCustomIcons = { ...customIcons }
+    },
+
+    REMOVE_ITEM_CUSTOM_ICON: (state, itemId) => {
+      if (state.itemCustomIcons[itemId]) {
+        delete state.itemCustomIcons[itemId]
+      }
+    }
   },
   actions: {
     async setDeviceType({ commit }, size){
@@ -272,6 +320,107 @@ export default {
         } catch (error) {
             console.error("Error removing user widget:", error);
         }
+    },
+
+    // Add items actions
+    async fetchItems({ commit, state }, userId = null) {
+      const targetUserId = userId || state.user.uid;
+      if (!targetUserId) {
+        console.log('[user.js/fetchItems] No user ID available');
+        return;
+      }
+
+      if (state.items.loading) {
+        console.log('[user.js/fetchItems] Already loading, skipping');
+        return;
+      }
+
+      commit('SET_ITEMS_LOADING', true);
+      try {
+        console.log('🌍 [user.js/fetchItems] Fetching items for user:', targetUserId);
+        const items = await mindspaceService.fetchItemsForSlots(targetUserId);
+        commit('SET_ITEMS_DATA', items);
+        console.log('🌍 [user.js/fetchItems] Items updated:', Object.keys(items).length, 'items');
+
+        // Log any items with images for debugging
+        const itemsWithImages = Object.values(items).filter(item => item.img);
+        console.log('🌍 [user.js/fetchItems] Items with images:', itemsWithImages.length);
+      } catch (error) {
+        console.error('🌍 [user.js/fetchItems] Error fetching items:', error);
+      } finally {
+        commit('SET_ITEMS_LOADING', false);
+      }
+    },
+
+    updateItemImage({ commit }, { itemId, imageUrl }) {
+      commit('UPDATE_ITEM', {
+        itemId,
+        updates: { img: imageUrl }
+      });
+      console.log('🌍 [user.js/updateItemImage] Updated item image:', itemId);
+    },
+
+    updateItemName({ commit }, { itemId, name }) {
+      commit('UPDATE_ITEM', {
+        itemId,
+        updates: { name }
+      });
+      console.log('🌍 [user.js/updateItemName] Updated item name:', itemId, name);
+    },
+
+    // Global Icon Synchronization Actions
+    async setItemCustomIcon({ commit, state, dispatch }, { itemId, customIcon }) {
+      try {
+        // Update local state
+        commit('SET_ITEM_CUSTOM_ICON', { itemId, customIcon })
+
+        const userId = state.user.uid
+        if (userId) {
+          // Update custom icon in Firebase
+          await updateItemCustomIconInFirebase(userId, itemId, customIcon)
+
+          // NEW: Update the item's icon property
+          await mindspaceService.updateItemIcon(itemId, customIcon || 'square.svg')
+
+          // Refresh items to reflect the change
+          await dispatch('fetchItems', userId)
+        }
+      } catch (error) {
+        console.error('Error setting custom icon:', error)
+        throw error
+      }
+    },
+
+    async fetchItemCustomIcons({ commit, state }) {
+      try {
+        const userId = state.user.uid
+        if (!userId) return
+
+        const customIcons = await getItemCustomIconsFromFirebase(userId)
+        commit('SET_ALL_ITEM_CUSTOM_ICONS', customIcons)
+
+        console.log('✅ Custom icons fetched from Firebase:', Object.keys(customIcons).length, 'icons')
+      } catch (error) {
+        console.error('Error fetching custom icons:', error)
+      }
+    },
+
+    async removeItemCustomIcon({ commit, state }, itemId) {
+      try {
+        // Update local state
+        commit('REMOVE_ITEM_CUSTOM_ICON', itemId)
+
+        // Update in Firebase
+        const userId = state.user.uid
+        if (userId) {
+          await removeItemCustomIconFromFirebase(userId, itemId)
+        }
+
+        console.log(`✅ Custom icon removed for item ${itemId}`)
+      } catch (error) {
+        console.error('Error removing custom icon:', error)
+        throw error
+      }
     }
   },
 
@@ -281,5 +430,56 @@ export default {
     getShowItemWindow: state => state.modalControl.showItemWindow,
     getShowSatWindow: state => state.modalControl.showSatWindow,
     getUserImages: state => state.userImages,
+    // Add items getters
+    getItems: state => state.items.data,
+    getItem: state => itemId => state.items.data[itemId] || null,
+    getItemName: state => itemId => {
+      const item = state.items.data[itemId];
+      return item?.name || item?.title || 'Unnamed Item';
+    },
+    getItemImage: state => itemId => {
+      const item = state.items.data[itemId];
+      return item?.img || null;
+    },
+    isItemsLoading: state => state.items.loading,
+
+    // Global Icon Synchronization Getters
+    getItemCustomIcon: (state) => (itemId) => {
+      return state.itemCustomIcons[itemId] || null
+    },
+
+    getAllItemCustomIcons: (state) => {
+      return state.itemCustomIcons
+    }
   }
 };
+
+// Firebase service functions for icon management
+async function updateItemCustomIconInFirebase(userId, itemId, customIcon) {
+  if (customIcon === null) {
+    // Remove the icon
+    await deleteDoc(doc(db, 'users', userId, 'itemCustomIcons', itemId))
+  } else {
+    // Set the icon
+    await setDoc(doc(db, 'users', userId, 'itemCustomIcons', itemId), {
+      customIcon,
+      updatedAt: new Date()
+    })
+  }
+}
+
+async function getItemCustomIconsFromFirebase(userId) {
+  const q = query(collection(db, 'users', userId, 'itemCustomIcons'))
+  const querySnapshot = await getDocs(q)
+
+  const customIcons = {}
+  querySnapshot.forEach(doc => {
+    customIcons[doc.id] = doc.data().customIcon
+  })
+
+  return customIcons
+}
+
+async function removeItemCustomIconFromFirebase(userId, itemId) {
+  await deleteDoc(doc(db, 'users', userId, 'itemCustomIcons', itemId))
+}
