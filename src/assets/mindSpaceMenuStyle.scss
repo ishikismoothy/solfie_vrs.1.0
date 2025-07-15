@@ -7,7 +7,7 @@
     background: rgba(255, 255, 255, 0.521);
     backdrop-filter: blur(5px);
   }
-  
+
   .menu-container {
     position: fixed;
     top: 0;
@@ -22,7 +22,7 @@
     display: flex;
     flex-direction: column;
   }
-  
+
   .menu-header {
     display: flex;
     justify-content: space-between;
@@ -49,7 +49,7 @@
     font-size: 0.9em;
     color: #333;
     cursor: pointer;
-    padding: 8px 0; 
+    top: 4px;
   }
   .back-icon {
     font-size: 1.4em;
@@ -60,7 +60,7 @@
   .menu-content {
     padding: 16px 0 32px;
     //border-bottom: 1px solid #eee;
-    
+
   }
 
   .content-header {
@@ -80,7 +80,7 @@
     padding: 0 12px;
   }
 
-  
+
 
   .add-button {
     width: 28px;
@@ -121,12 +121,12 @@
   }
 
   //MINDSPACE LIST
-  
+
   .mindspaces-list {
     flex: 1;
     overflow-y: auto;
   }
-  
+
   .mindspace-item {
     position: relative;
     display: flex;
@@ -144,20 +144,20 @@
     .globe-active {
       opacity: 0;
     }
-  
+
     .globe-default {
       opacity: 1;
     }
-  
+
     .globe-icon.is-favourite .globe-active {
       opacity: 1;
     }
-  
+
     .globe-icon.is-favourite .globe-default {
       opacity: 0;
     }
   }
-  
+
   .space-setMindSpace-area {
     position: absolute;
     top: 0;
@@ -175,7 +175,7 @@
     backdrop-filter: blur(5px);
     z-index: 2;
     transition: background-color 0.3s ease;
-  
+
     .set-active-button {
       position: absolute;
       left: 50%;
@@ -203,14 +203,14 @@
         cursor: not-allowed;
       }
     }
-  
+
     &.favorite-background {
       background-color: rgba(255, 97, 49, 0.7);
       backdrop-filter: blur(5px);
-  
+
       .set-active-button {
         color: white;
-        
+
         @media (hover: hover) {
           &:hover {
             color: rgba(255, 255, 255, 0.8);
@@ -225,7 +225,7 @@
     @media (hover: hover) {
       &:hover {
         background-color: rgba(225, 225, 225, 0.7);
-  
+
       &.favorite-background {
         background-color: rgba(255, 86, 34, 0.7);
       }
@@ -233,12 +233,12 @@
     }
     &:active{
       background-color: rgba(225, 225, 225, 0.7);
-  
+
       &.favorite-background {
         background-color: rgba(255, 86, 34, 0.7);
       }
     }
-  
+
   }
 
   .space-setting-area {
@@ -258,13 +258,13 @@
     backdrop-filter: blur(5px);
     z-index: 2;
   }
-  
+
   .settings-icons {
     margin-left: auto; // Push icons to the right
     animation: iconsAppear 0.2s ease-out 0.1s both;
     display: flex;
     gap: 5px;
-    
+
     .icon-button {
       @media (hover: hover) {
         &:hover {
@@ -284,14 +284,14 @@
         display: inline-block;
         width: 18px;
         height: 18px;
-        
+
         svg {
           position: absolute;
           top: 0;
           left: 0;
           transition: opacity 0.2s ease;
         }
-        
+
         //Favourite
         .favourite-active{
             opacity: 0;
@@ -315,16 +315,16 @@
         .privacy-active {
           opacity: 0;
         }
-        
+
         .privacy-default {
           opacity: 1;
         }
-        
+
         &.is-private {
           .privacy-active {
             opacity: 1;
           }
-          
+
           .privacy-default {
             opacity: 0;
           }
@@ -338,7 +338,7 @@
   .slide-leave-active {
     transition: transform 0.3s ease;
   }
-  
+
   .slide-enter-from,
   .slide-leave-to {
     transform: translateX(-100%);
@@ -347,15 +347,15 @@
   // MindSpaceList MindSpace-Setting-area
   .animate-settings-enter {
     animation: settingsEnter 0.2s ease-out;
-    
+
   }
-  
+
   .animate-settings-leave {
     transition: all 0.2s ease-in;
     opacity: 0;
     transform: translateX(-10px);
   }
-  
+
   /*
   .animate-settings-enter {
     animation: settingsEnter 0.2s ease-out;
@@ -397,7 +397,7 @@
       transform: translateX(0);
     }
   }
-  
+
   .loading {
     text-align: center;
     padding: 20px;
@@ -416,55 +416,55 @@
     align-items: center;
     width: 100%;
     gap: 16px;
-  
+
     .header-left {
       flex: 1;
       min-width: 0;
     }
-  
+
     .header-right {
       display: flex;
       gap: 8px;
       align-items: center;
     }
   }
-  
+
   .mindsapce-name-input {
     height: 32px;
     width: 100%;
     border: none;
     outline: none;
     background: transparent;
-    
+
     &:focus {
       outline: none;
       border-bottom: 1px solid #E5E7EB;
     }
-    
+
     &::placeholder {
       color: #9CA3AF;
     }
   }
-  
+
   // Animation
   .modal-enter-active,
   .modal-leave-active {
     transition: opacity 0.3s ease;
   }
-  
+
   .modal-enter-from,
   .modal-leave-to {
     opacity: 0;
   }
-  
+
   .popup-enter-active {
     animation: popup-in 0.3s ease-out;
   }
-  
+
   .popup-leave-active {
     animation: popup-out 0.3s ease-in;
   }
-  
+
   @keyframes popup-in {
     0% {
       transform: scale(0.95);
@@ -475,7 +475,7 @@
       opacity: 1;
     }
   }
-  
+
   @keyframes popup-out {
     0% {
       transform: scale(1);
@@ -486,11 +486,11 @@
       opacity: 0;
     }
   }
-  
+
   .fixed {
     animation: fadeIn 0.2s ease-in-out;
   }
-  
+
   @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }

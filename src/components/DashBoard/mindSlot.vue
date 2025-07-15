@@ -1,77 +1,83 @@
-<!-- Fixed mindSlot.vue -->
+<!-- Cleaned mindSlot.vue - Unified icon selection -->
 <template>
-  <Teleport to="body">
-    <div
-      v-if="expandedSlotIndex !== null"
-      class="card-window-overlay"
-      @click="handleOverlayClick"
-    />
-  </Teleport>
-
-  <!-- Expanded card teleported to body -->
-  <Teleport to="body">
-    <div
-      v-show="expandedSlotIndex !== null"
-      class="debug-container"
-      :class="{ 'has-slot': expandedSlotIndex !== null && mindspace.mindslot[expandedSlotIndex] }"
-    >
-      <div class="debug-info">
-        DEBUG: expandedSlotIndex={{ expandedSlotIndex }},
-        openDirectlyToItem={{ openDirectlyToItem }},
-        directIconIndex={{ directIconIndex }}
-      </div>
-
-      <ItemWindow
-        v-if="mindspace.mindslot[expandedSlotIndex]"
-        :key="`expanded-${expandedSlotIndex}-${directIconIndex}-${openDirectlyToItem}-${Date.now()}`"
-        :mindslot="mindspace.mindslot[expandedSlotIndex]"
-        :index="expandedSlotIndex"
-        :getItemImage="getItemImage"
-        :getItemName="getItemName"
-        :items="items"
-        :expanded="true"
-        :initialFlipped="openDirectlyToItem"
-        :openedFromMindslot="true"
-        :directIconIndex="directIconIndex"
-        @refresh-items="fetchItems"
-        @delete="deleteSlot"
-        @name-change="saveSlotName"
-        @click="handleSlotClick"
-        @close="closeExpandedCard"
-        @custom-icons-changed="handleCustomIconsChanged"
-        class="expanded-teleported"
-      />
-    </div>
-  </Teleport>
-
   <div class="return-to-myself">
     <h2 class="title">Return to myself</h2>
 
     <!-- Mind Slots Container -->
     <div class="mind-slots">
-      <ItemWindow
+      <div
         v-for="(mindslot, index) in mindspace.mindslot"
-        :key="`normal-${index}`"
-        :mindslot="mindslot"
-        :index="index"
-        :getItemImage="getItemImage"
-        :getItemName="getItemName"
-        :items="items"
-        :expanded="false"
-        :expandedSlotIndex="expandedSlotIndex"
-        v-show="expandedSlotIndex !== index"
-        @refresh-items="fetchItems"
-        @delete="deleteSlot"
-        @name-change="saveSlotName"
-        @slot-icons-changed="handleSlotIconsChanged"
-        @click="handleSlotClick"
-        @icon-direct-click="handleDirectIconClick"
-        @custom-icons-changed="handleCustomIconsChanged"
-      />
+        :key="`slot-${index}`"
+        class="mind-slot-card"
+        @click="handleSlotClick(index)"
+      >
+        <div class="slot-header">
+          <input
+            v-if="editingSlotIndex === index"
+            v-model="editingName"
+            @blur="saveSlotName(index)"
+            @keyup.enter="saveSlotName(index)"
+            @click.stop
+            class="slot-name-input"
+            ref="nameInput"
+          />
+          <h3 v-else class="slot-name" @click.stop="startEditingName(index)">
+            {{ mindslot.name || 'New Slot' }}
+          </h3>
+
+          <button
+            @click.stop="deleteSlot(index)"
+            class="delete-btn"
+          >×</button>
+        </div>
+
+        <div class="slot-content">
+          <!-- Single Item Display -->
+          <div v-if="isSingleItemSlot(mindslot) && items[mindslot.item]" class="single-item-content">
+            <div
+              class="icon-slot has-item clickable single-item-icon"
+              @contextmenu.prevent="handleSingleItemRightClick($event, index)"
+              @touchstart="handleSingleItemTouchStart($event, index)"
+              @touchend="handleSingleItemTouchEnd"
+            >
+              <!-- Show custom icon if set, otherwise show item name -->
+              <div v-if="getSingleItemCustomIcon(mindslot)" class="custom-icon" v-html="getSingleItemCustomIcon(mindslot)"></div>
+              <div v-else class="icon-item-name">
+                {{ items[mindslot.item]?.name || items[mindslot.item]?.title || 'Unnamed Item' }}
+              </div>
+            </div>
+            <div class="single-item-name">
+              {{ items[mindslot.item]?.name || items[mindslot.item]?.title || 'Unnamed Item' }}
+            </div>
+          </div>
+
+          <!-- Multi-Item or Empty Slot Display -->
+          <div v-else class="empty-slot-wrapper">
+            <div v-if="!hasAnyItems(mindslot)" class="empty-slot-text">Empty slot</div>
+
+            <IconSlotGrid
+              :initialIcons="mindslot.slotIcons || [null, null, null]"
+              :iconItems="mindslot.iconItems || [null, null, null]"
+              :customIcons="mindslot.customIcons || [null, null, null]"
+              :items="items"
+              :clickable="false"
+              :expanded="false"
+              @icons-changed="(icons) => handleSlotIconsChanged({ index, icons })"
+              @icon-clicked="(iconIndex) => handleDirectIconClick(index, iconIndex)"
+              @icon-right-click="(iconIndex, event) => openIconSelector(event, index, iconIndex)"
+              @custom-icon-changed="(customIcons) => handleCustomIconsChanged({ index, customIcons })"
+            />
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Add Slot Button -->
-    <button @click="addSlot('New Slot')" class="add-slot-btn">
+    <button
+      v-if="mindspace.mindslot.length < 5"
+      @click="addSlot('New Slot')"
+      class="add-slot-btn"
+    >
       Add New Slot
     </button>
 
@@ -140,30 +146,46 @@
         </div>
       </div>
     </Teleport>
+
+    <!-- Icon Selector Modal -->
+    <IconSelector
+      :isVisible="showIconSelector"
+      :position="selectorPosition"
+      :hasCurrentIcon="hasCurrentIcon"
+      :screenPosition="'left'"
+      @close="closeIconSelector"
+      @select-icon="handleIconSelection"
+    />
   </div>
+
+  <!-- Toast popup for when mindslots are full-->
+  <Teleport to="body">
+    <div v-if="showToast" class="toast-notification">
+      {{ toastMessage }}
+    </div>
+  </Teleport>
+
 </template>
 
 <script setup>
-  import { ref, computed, onMounted, watch } from 'vue'
+  import { ref, computed, onMounted, watch, nextTick } from 'vue'
   import { useStore } from 'vuex'
   import { mindspaceService } from '@/firebase/firebaseMindSpace'
   import emitter from '@/eventBus'
-  import ItemWindow from '@/./components/ItemWindow/itemWindow.vue'
+  import IconSlotGrid from '@/./components/ItemWindow/iconSlotGrid.vue'
+  import IconSelector from '@/./components/ItemWindow/IconSelector.vue'
 
   const store = useStore()
   const currentUser = computed(() => store.state.user?.user?.uid)
   const currentMindSpaceId = computed(() => store.state.mindspace?.currentMindSpaceId)
 
-  // Reactive variables
+  // Reactive state
   const mindspace = ref({
     name: '',
     mindslot: []
   })
-  const items = ref({})
-  const expandedSlotIndex = ref(null)
-  const openDirectlyToItem = ref(false)
-  const directIconIndex = ref(-1)
-  const preventSlotClick = ref(false) // Add this flag
+  const editingSlotIndex = ref(null)
+  const editingName = ref('')
   const showSlotSelectionModal = ref(false)
   const pendingItem = ref({
     title: '',
@@ -171,6 +193,137 @@
     availableSlots: [],
     totalSlots: 0
   })
+  const showToast = ref(false)
+  const toastMessage = ref('')
+
+  // Icon selector state
+  const showIconSelector = ref(false)
+  const selectorPosition = ref({ x: 0, y: 0 })
+  const currentSlotIndex = ref(-1)
+  const currentIconIndex = ref(-1) // -1 for single item, 0-2 for multi-item
+  const hasCurrentIcon = ref(false)
+
+  // Touch handling for long press
+  let touchTimer = null
+  const longPressDelay = 500
+
+  // Use Vuex store for items - reactive to changes
+  const items = computed(() => store.getters['user/getItems'])
+
+  // Helper functions
+  const isSingleItemSlot = (mindslot) => {
+    return !!(mindslot.item && !hasIconItems(mindslot))
+  }
+
+  const hasIconItems = (mindslot) => {
+    const iconItems = mindslot.iconItems || [null, null, null]
+    return iconItems.some(item => item !== null && item !== undefined)
+  }
+
+  const hasAnyItems = (mindslot) => {
+    return isSingleItemSlot(mindslot) || hasIconItems(mindslot)
+  }
+
+  // Get custom icon for single item from global store
+  const getSingleItemCustomIcon = (mindslot) => {
+    if (!isSingleItemSlot(mindslot)) return null
+    const itemId = mindslot.item
+    return itemId ? store.getters['user/getItemCustomIcon'](itemId) : null
+  }
+
+  // Single-item icon selection handlers
+  const handleSingleItemRightClick = (event, slotIndex) => {
+    event.preventDefault()
+    openIconSelector(event, slotIndex, -1) // -1 indicates single item
+  }
+
+  const handleSingleItemTouchStart = (event, slotIndex) => {
+    touchTimer = setTimeout(() => {
+      openIconSelector(event.touches[0], slotIndex, -1)
+    }, longPressDelay)
+  }
+
+  const handleSingleItemTouchEnd = () => {
+    if (touchTimer) {
+      clearTimeout(touchTimer)
+      touchTimer = null
+    }
+  }
+
+  // Open icon selector
+  const openIconSelector = (event, slotIndex, iconIndex) => {
+    currentSlotIndex.value = slotIndex
+    currentIconIndex.value = iconIndex
+
+    // Get the actual item ID for the icon
+    const mindslot = mindspace.value.mindslot[slotIndex]
+    let targetItemId = null
+
+    if (iconIndex === -1) {
+      // Single item
+      targetItemId = mindslot.item
+    } else {
+      // Multi-item - get item ID from iconItems array
+      const iconItems = mindslot.iconItems || [null, null, null]
+      targetItemId = iconItems[iconIndex]
+    }
+
+    if (!targetItemId) {
+      console.warn('No item ID found for icon selection')
+      return
+    }
+
+    // Check if this item has a custom icon in global store
+    hasCurrentIcon.value = !!store.getters['user/getItemCustomIcon'](targetItemId)
+
+    selectorPosition.value = { x: 0, y: 0 }
+    showIconSelector.value = true
+  }
+
+  // Close icon selector
+  const closeIconSelector = () => {
+    showIconSelector.value = false
+    currentSlotIndex.value = -1
+    currentIconIndex.value = -1
+    hasCurrentIcon.value = false
+  }
+
+  // Handle icon selection
+  const handleIconSelection = async (selectedIcon) => {
+    if (currentSlotIndex.value >= 0) {
+      const mindslot = mindspace.value.mindslot[currentSlotIndex.value]
+
+      // Get the actual item ID for the icon
+      let targetItemId = null
+      if (currentIconIndex.value === -1) {
+        // Single item
+        targetItemId = mindslot.item
+      } else {
+        // Multi-item - get item ID from iconItems array
+        const iconItems = mindslot.iconItems || [null, null, null]
+        targetItemId = iconItems[currentIconIndex.value]
+      }
+
+      if (!targetItemId) {
+        console.warn('No item ID found for icon update')
+        closeIconSelector()
+        return
+      }
+
+      // Update the global icon store
+      try {
+        await store.dispatch('user/setItemCustomIcon', {
+          itemId: targetItemId,
+          customIcon: selectedIcon?.svg || null
+        })
+        console.log('✅ Icon updated globally for item:', targetItemId)
+      } catch (error) {
+        console.error('❌ Error updating icon:', error)
+      }
+    }
+
+    closeIconSelector()
+  }
 
   // Fetch mindspace slots
   const fetchMindspaceSlots = async () => {
@@ -204,30 +357,61 @@
     }
   }
 
-  // Fetch items
-  const fetchItems = async () => {
-    try {
-      if (!currentUser.value) {
-        console.log('Waiting for user ID...')
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        return fetchItems()
-      }
+  // Handle slot click - emit to unified system
+  const handleSlotClick = (index) => {
+    const mindslot = mindspace.value.mindslot[index]
+    console.log('🎯 Slot clicked, opening unified window for:', mindslot.name)
 
-      items.value = await mindspaceService.fetchItemsForSlots(currentUser.value)
-      console.log('🔍 Items fetched:', items.value) // ADD THIS DEBUG
-      console.log('🔍 Item we need:', items.value?.[expandedSlotIndex.value]) // ADD THIS DEBUG
-    } catch (error) {
-      console.error('Error fetching items:', error)
+    emitter.emit('openUnifiedItemWindow', {
+      mindslot,
+      index,
+      expanded: true,
+      initialFlipped: false,
+      openedFromMindslot: true,
+      directIconIndex: -1,
+      expandedSlotIndex: null
+    })
+  }
+
+  // Handle direct icon click - emit to unified system
+  const handleDirectIconClick = (slotIndex, iconIndex) => {
+    const slot = mindspace.value.mindslot[slotIndex]
+    const iconItems = slot.iconItems || [null, null, null]
+    const itemId = iconItems[iconIndex]
+
+    if (!itemId) {
+      console.log('❌ NO ITEM ID FOUND!')
+      return
     }
+
+    console.log('✅ Icon clicked, opening unified window for item:', itemId)
+
+    emitter.emit('openUnifiedItemWindow', {
+      mindslot: slot,
+      index: slotIndex,
+      expanded: true,
+      initialFlipped: true,
+      openedFromMindslot: true,
+      directIconIndex: iconIndex,
+      expandedSlotIndex: null
+    })
   }
 
-  // Get item image/name functions
-  const getItemImage = async (itemId) => {
-    return await mindspaceService.getItemImage(itemId, items)
+  // Name editing
+  const startEditingName = (index) => {
+    editingSlotIndex.value = index
+    editingName.value = mindspace.value.mindslot[index].name || 'New Slot'
+    nextTick(() => {
+      // Focus the input if needed
+    })
   }
 
-  const getItemName = async (itemId) => {
-    return await mindspaceService.getItemName(itemId, items)
+  const saveSlotName = (index) => {
+    editingSlotIndex.value = null
+    if (editingName.value.trim() !== mindspace.value.mindslot[index].name) {
+      mindspace.value.mindslot[index].name = editingName.value.trim()
+      updateMindspace()
+    }
   }
 
   // Slot management functions
@@ -241,22 +425,11 @@
         (itemId ? [itemId, null, null] : [null, null, null]) :
         [null, null, null],
       slotIcons: [null, null, null],
-      customIcons: [null, null, null]  // Explicitly set to null, not undefined
+      customIcons: [null, null, null]
     }
 
     mindspace.value.mindslot = [...mindspace.value.mindslot, newSlot]
     await updateMindspace()
-  }
-
-  // Handle slot click
-  const handleSlotClick = (index) => {
-    if (expandedSlotIndex.value === index) {
-      expandedSlotIndex.value = null
-    } else {
-      expandedSlotIndex.value = index
-      openDirectlyToItem.value = false
-      directIconIndex.value = -1
-    }
   }
 
   // Handle icons
@@ -269,7 +442,6 @@
   }
 
   const handleCustomIconsChanged = async ({ index, customIcons }) => {
-    // Ensure all values are either null or valid strings, never undefined
     const safeCustomIcons = customIcons.map(icon => icon === undefined ? null : icon)
 
     mindspace.value.mindslot[index] = {
@@ -279,72 +451,10 @@
     await updateMindspace()
   }
 
-  // Handle direct icon click - DEBUGGING VERSION
-  const handleDirectIconClick = async (slotIndex, iconIndex) => {
-    console.log('🔥 handleDirectIconClick START:', slotIndex, iconIndex)
-
-    const slot = mindspace.value.mindslot[slotIndex]
-    const iconItems = slot.iconItems || [null, null, null]
-    const itemId = iconItems[iconIndex]
-
-    if (!itemId) {
-      console.log('❌ NO ITEM ID FOUND!')
-      return
-    }
-
-    console.log('✅ Item ID found:', itemId)
-
-    // Set values synchronously - no async here
-    expandedSlotIndex.value = slotIndex
-    openDirectlyToItem.value = true
-    directIconIndex.value = iconIndex
-
-    console.log('🎯 Values set - expandedSlotIndex:', expandedSlotIndex.value)
-    console.log('🎯 Values set - openDirectlyToItem:', openDirectlyToItem.value)
-    console.log('🎯 Values set - directIconIndex:', directIconIndex.value)
-
-    // Prevent any slot clicks for a brief moment
-    setTimeout(() => {
-      console.log('🔒 Setting preventSlotClick to false')
-      preventSlotClick.value = false
-    }, 500)
-
-    preventSlotClick.value = true
-    console.log('🔒 Setting preventSlotClick to true')
-
-    // Add a small delay to see if timing is the issue
-    setTimeout(() => {
-      console.log('⏰ After timeout - expandedSlotIndex:', expandedSlotIndex.value)
-      console.log('⏰ After timeout - condition check:', expandedSlotIndex.value !== null && !!mindspace.value.mindslot[expandedSlotIndex.value])
-    }, 100)
-  }
-
-  // Handle overlay click
-  const handleOverlayClick = () => {
-    expandedSlotIndex.value = null
-    openDirectlyToItem.value = false
-    directIconIndex.value = -1
-  }
-
-  // Close expanded card
-  const closeExpandedCard = () => {
-    expandedSlotIndex.value = null
-    openDirectlyToItem.value = false
-    directIconIndex.value = -1
-  }
-
   // Delete slot
   const deleteSlot = async (index) => {
     mindspace.value.mindslot.splice(index, 1)
     await updateMindspace()
-  }
-
-  // Save slot name
-  const saveSlotName = async ({ index, newName }) => {
-    if (newName.trim()) {
-      mindspace.value.mindslot[index].name = newName
-      await updateMindspace()
-    }
   }
 
   // Update mindspace
@@ -373,7 +483,6 @@
   const getSlotAvailability = (slot, slotIndex) => {
     const availableSlots = []
 
-    // Check if it's a single-item slot that's empty
     if (!slot.item && (!slot.iconItems || slot.iconItems.every(item => !item))) {
       availableSlots.push({
         slotIndex,
@@ -383,10 +492,8 @@
       })
     }
 
-    // Check if it's a multi-item slot with available spaces
     if (slot.iconItems && Array.isArray(slot.iconItems)) {
       const emptyIconSlots = slot.iconItems.filter(item => !item).length
-      // Only add if there are empty spaces AND it's not also a single-item slot
       if (emptyIconSlots > 0 && !slot.item) {
         availableSlots.push({
           slotIndex,
@@ -438,6 +545,7 @@
   }
 
   const createNewSlot = async (slotType) => {
+    // Check total slots count, not full slots count, since we're creating a new slot
     if (mindspace.value.mindslot.length >= 5) {
       alert('Maximum of 5 mind slots reached. Cannot add more slots.')
       closeSlotSelection()
@@ -452,8 +560,23 @@
   const handleShowMindslotModal = ({ title, itemId }) => {
     const currentSlots = mindspace.value.mindslot || []
 
-    if (currentSlots.length >= 5) {
-      alert('Maximum of 5 mind slots reached. Cannot add more slots.')
+    // Count only FULL slots, not all slots
+    const fullSlots = currentSlots.filter(slot => {
+      if (slot.item && !hasIconItems(slot)) {
+        return true // Single-item slot is full
+      }
+
+      if (hasIconItems(slot)) {
+        const iconItems = slot.iconItems || [null, null, null]
+        return iconItems.every(item => item !== null && item !== undefined)
+      }
+
+      return false
+    })
+
+    // Show toast if all slots are truly full
+    if (fullSlots.length >= 5) {
+      showToastMessage('All mind slots are full!')
       return
     }
 
@@ -473,22 +596,6 @@
     showSlotSelectionModal.value = true
   }
 
-  // Handle opening item directly from event bus
-  const handleOpenItemWindow = ({ id }) => {
-    const slotIndex = mindspace.value.mindslot.findIndex(slot => {
-      if (slot.item === id) return true
-      if (slot.iconItems && slot.iconItems.includes(id)) return true
-      return false
-    })
-
-    if (slotIndex !== -1) {
-      expandedSlotIndex.value = slotIndex
-      openDirectlyToItem.value = true
-    } else {
-      console.warn('Item not found in any slot:', id)
-    }
-  }
-
   const handleRemoveMindslot = ({ slotIndex, iconIndex }) => {
     const slot = mindspace.value.mindslot[slotIndex]
 
@@ -503,37 +610,44 @@
     updateMindspace()
   }
 
+  // Show toast
+  const showToastMessage = (message, duration = 3000) => {
+    toastMessage.value = message
+    showToast.value = true
+    setTimeout(() => {
+      showToast.value = false
+    }, duration)
+  }
+
   // Watchers
-  watch(currentUser, async (newUserId) => {
-    if (newUserId) {
-      await fetchItems()
+  watch(() => currentUser.value, async (newUserId) => {
+    if (newUserId && Object.keys(store.getters['user/getItems']).length === 0) {
+      await store.dispatch('user/fetchItems', newUserId)
     }
   })
 
-  watch(currentMindSpaceId, async (newMindSpaceId) => {
+  watch(() => currentMindSpaceId.value, async (newMindSpaceId) => {
     if (newMindSpaceId) {
       await fetchMindspaceSlots()
-      await fetchItems()
+      if (currentUser.value) {
+        await store.dispatch('user/fetchItems', currentUser.value)
+      }
     }
   })
 
-  // DEBUG: Track what's changing expandedSlotIndex
-  watch(expandedSlotIndex, (newValue, oldValue) => {
-    console.log('📊 expandedSlotIndex changed:', { oldValue, newValue })
-    if (newValue === null && oldValue !== null) {
-      console.log('❌ expandedSlotIndex was reset to null!')
-      console.trace('Stack trace:')
-    }
-  })
+  // Watch the Vuex store items for changes
+  watch(() => store.getters['user/getItems'], (newItems) => {
+    console.log('🎯 mindSlot: Vuex store items changed:', Object.keys(newItems).length, 'items')
+  }, { deep: true })
 
   // Lifecycle hooks
   onMounted(async () => {
     emitter.on('showMindslotModal', handleShowMindslotModal)
-    emitter.on('openItemWindow', handleOpenItemWindow)
     emitter.on('removeMindslot', handleRemoveMindslot)
 
-    if (currentUser.value) {
-      await fetchItems()
+    // Fetch items using Vuex store if needed
+    if (currentUser.value && Object.keys(store.getters['user/getItems']).length === 0) {
+      await store.dispatch('user/fetchItems', currentUser.value)
     }
   })
 
@@ -542,4 +656,5 @@
 <style lang="scss">
 @import '@/assets/itemWindowStyle.scss';
 @import '@/assets/globalIconStyle.scss';
+@import '@/assets/toastStyle.scss';
 </style>

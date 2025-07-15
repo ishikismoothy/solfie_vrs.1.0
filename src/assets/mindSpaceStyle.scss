@@ -1,6 +1,7 @@
 $primary-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 $background-color: #f0f0f0;
 $border-color: #000;
+$icon-color: rgb(255, 86, 56); // Unified icon color
 $badge-colors: (
   lightblue: #87CEEB,
   pink: #FFC0CB,
@@ -8,6 +9,27 @@ $badge-colors: (
   red: #FF6347,
   yellow: #FFD700
 );
+
+// Responsive mixin
+@mixin responsive($breakpoint) {
+  @if $breakpoint == iPhoneSE {
+    @media (max-width: 375px) {
+      @content;
+    }
+  } @else if $breakpoint == iPhonePro {
+    @media (min-width: 376px) and (max-width: 414px) {
+      @content;
+    }
+  } @else if $breakpoint == tablet {
+    @media (min-width: 415px) and (max-width: 768px) {
+      @content;
+    }
+  } @else if $breakpoint == desktop {
+    @media (min-width: 769px) {
+      @content;
+    }
+  }
+}
 
 // Common styles for both mind-Item and folder-item when being dragged
 %dragged-item {
@@ -71,7 +93,6 @@ body > .folder-item.dragging {
   flex-direction: column;
   font-family: $primary-font;
   padding: 0 20px;
-  //height: 89vh;
   height: 100%;
   margin: 0;
   background-color: $background-color;
@@ -87,7 +108,7 @@ body > .folder-item.dragging {
     height: calc(80% - 100px);
     position: relative;
     margin-top: 50px;
-    
+
     .edit-mode-overlay {
       position: fixed;
       top: 0;
@@ -96,12 +117,9 @@ body > .folder-item.dragging {
       bottom: 0;
     }
   }
-  
-  //NOT BEING DRAGGED
+
   .pages-container {
-    //position: relative;
     width: 100%;
-    //overflow: hidden;
     touch-action: pan-y pinch-zoom;
   }
 
@@ -116,8 +134,8 @@ body > .folder-item.dragging {
         .icon-wrapper {
           width: 45px;
           height: 45px;
-        } 
-      } 
+        }
+      }
     }
   }
 
@@ -181,7 +199,7 @@ body > .folder-item.dragging {
     will-change: transform;
     position: absolute;
     padding-top: 20px;
-  
+
     .mind-Item {
       display: flex;
       flex-direction: column;
@@ -192,7 +210,7 @@ body > .folder-item.dragging {
       &:not(.empty):not(.add-item):hover {
         transform: scale(1.05);
       }
-  
+
       .icon-wrapper {
         position: relative;
         margin-bottom: 5px;
@@ -201,10 +219,17 @@ body > .folder-item.dragging {
           position: absolute;
           top: 0;
           right: 0;
-          z-index: 20; // Ensure it's above other content
+          z-index: 20;
         }
-      
+
         .content-wrapper {
+          position: relative;
+          width: 100%;
+          height: 100%;
+        }
+
+        // Unified icon display container
+        .icon-display-container {
           position: relative;
           width: 100%;
           height: 100%;
@@ -218,7 +243,7 @@ body > .folder-item.dragging {
           height: 100%;
           pointer-events: none;
         }
-  
+
         .icon-shadow {
           opacity: 0.3;
           transition: opacity 0.2s ease;
@@ -229,6 +254,7 @@ body > .folder-item.dragging {
           height: 100%;
           object-fit: contain;
           transition: transform 0.2s ease;
+
           @media (hover: hover) {
             &:hover {
               transform: scale(1.1);
@@ -238,6 +264,47 @@ body > .folder-item.dragging {
             transform: scale(1.1);
           }
         }
+
+        // Unified custom icon styling for mind grid
+        .unified-icon {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: $icon-color;
+          z-index: 2;
+          background-color: rgba(255, 255, 255, 0.5);
+          border-radius: 12px;
+
+          svg {
+            width: 80%;
+            height: 80%;
+            max-width: 48px;
+            max-height: 48px;
+            stroke: currentColor;
+            fill: none;
+            transition: transform 0.2s ease;
+          }
+        }
+
+        // Hide default elements when custom icon is present
+        .icon-display-container:has(.unified-icon) {
+          .icon-content,
+          .badge,
+          .icon-shadow-container,
+          .icon-shape {
+            display: none;
+          }
+        }
+      }
+
+      // Enhanced hover effects for unified icons
+      &:not(.empty):not(.add-item):hover .unified-icon svg {
+        transform: scale(1.1);
       }
 
       &.add-item {
@@ -266,7 +333,7 @@ body > .folder-item.dragging {
           }
         }
       }
-  
+
       .icon-shape {
         position: absolute;
         top: 0;
@@ -275,7 +342,7 @@ body > .folder-item.dragging {
         height: 100%;
         fill: url(#icon-gradient);
       }
-  
+
       .icon-content {
         position: relative;
         z-index: 1;
@@ -284,10 +351,9 @@ body > .folder-item.dragging {
         display: flex;
         justify-content: center;
         align-items: center;
-        //font-size: 30px;
         color: white;
       }
-  
+
       .badge {
         position: absolute;
         top: -5px;
@@ -301,30 +367,28 @@ body > .folder-item.dragging {
         font-size: 12px;
         z-index: 2;
       }
-  
+
       .item-name {
         font-size: 12px;
         color: #333;
       }
     }
-    
+
     @each $color, $value in $badge-colors {
       .badge.#{$color} {
         background-color: $value;
       }
     }
   }
-  
+
   .icon-wrapper.folder-hover {
     outline: 2px solid #007bff;
     box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
   }
 
-  //RESPONSIBLE FOR GHOST STYLE DURING THE DRAGGING
+  // Placeholder styling during dragging
   .mind-Item.placeholder {
     opacity: 0.5;
-    //border: 2px dashed #ccc;
-    //background-color: rgba(200, 200, 200, 0.3);
     .icon-wrapper {
       filter: grayscale(100%);
     }
@@ -345,7 +409,7 @@ body > .folder-item.dragging {
     font-size: 14px;
     cursor: pointer;
     transition: background-color 0.3s ease;
-  
+
     &:hover {
       background-color: rgba(255, 255, 255, 1);
     }
@@ -378,7 +442,7 @@ body > .folder-item.dragging {
       background-color: rgba(255, 255, 255, 0.2);
     }
   }
-  
+
   .folder-content {
     width: 80%;
     height: 50%;
@@ -398,10 +462,9 @@ body > .folder-item.dragging {
       color: #333;
     }
   }
-  
+
   .folder-grid-container {
     flex-grow: 1;
-    //overflow: hidden;
     position: relative;
     margin: 10px 0;
   }
@@ -411,7 +474,6 @@ body > .folder-item.dragging {
     grid-template-columns: repeat(4, minmax(80px, 1fr));
     grid-template-rows: repeat(4, 1fr);
     gap: 20px;
-    //padding: 20px;
     position: absolute;
     width: 100%;
     height: 100%;
@@ -424,49 +486,58 @@ body > .folder-item.dragging {
       align-items: center;
       text-align: center;
       transition: transform 0.2s ease;
-    
+
       &:not(.empty):not(.add-item):hover {
         transform: scale(1.05);
       }
-    
+
       .icon-wrapper {
         width: 50px;
         height: 50px;
         position: relative;
         margin-bottom: 5px;
-        
-        /*
-        .delete-button {
+
+        // Unified icon display for folder items
+        .icon-display-container {
+          position: relative;
+          width: 100%;
+          height: 100%;
+        }
+
+        // Unified custom icon styling for folder items
+        .unified-icon {
           position: absolute;
-          top: -8px;
-          right: -8px;
-          width: 20px;
-          height: 20px;
-          border-radius: 50%;
-          background: rgb(170, 170, 170);
-          color: rgb(255, 255, 255);
-          border: none;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
           display: flex;
           align-items: center;
           justify-content: center;
-          cursor: pointer;
-          z-index: 10;
-          padding: 0;
-          font-size: 14px;
-          opacity: 0.4;
-          transition: opacity 0.2s ease;
-          @media (hover: hover) {
-            &:hover {
-              opacity: 0.9;
-            }
+          color: $icon-color;
+          z-index: 2;
+
+          svg {
+            width: 80%;
+            height: 80%;
+            max-width: 40px;
+            max-height: 40px;
+            stroke: currentColor;
+            fill: none;
+            transition: transform 0.2s ease;
           }
-          &:active {
-            opacity: 0.9;
+        }
+
+        // Hide default elements when custom icon is present for folder items
+        .icon-display-container:has(.unified-icon) {
+          .icon-content,
+          .badge,
+          .icon-shadow-container,
+          .icon-shape {
+            display: none;
           }
-        }*/
-        
-        
-    
+        }
+
         .icon-shadow-container {
           position: absolute;
           top: 4px;
@@ -475,73 +546,83 @@ body > .folder-item.dragging {
           height: 100%;
           pointer-events: none;
         }
-    
+
         .icon-shadow {
           opacity: 0.3;
           transition: opacity 0.2s ease;
         }
-    
+
         .icon-shape {
           width: 100%;
           height: 100%;
           object-fit: contain;
           transition: transform 0.2s ease;
         }
-    
+
         &:hover .icon-shape {
           transform: scale(1.1);
         }
+
+        // Enhanced hover effects for folder unified icons
+        &:hover .unified-icon svg {
+          transform: scale(1.1);
+        }
       }
-    
+
+      // Enhanced hover effects for folder items with unified icons
+      &:not(.empty):not(.add-item):hover .unified-icon svg {
+        transform: scale(1.1);
+      }
+
       .item-name {
         transition: opacity 0.2s ease;
         max-width: 100px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-
       }
+
       @include responsive(tablet) {
         .item-name {
           overflow: visible;
           white-space: break-spaces;
         }
       }
-    
+
       &.dragging {
         opacity: 0.5;
         transform: scale(1.1);
-        pointer-events: none;  // Prevent interactions while dragging
-    
+        pointer-events: none;
+
         .icon-wrapper {
           transform: scale(1.1);
         }
       }
-    
+
       &.empty {
         visibility: hidden;
         pointer-events: none;
       }
-    
+
       &.add-item {
         opacity: 0.6;
         transition: opacity 0.3s ease;
-    
+
         &:hover {
           opacity: 1;
         }
-    
+
         .icon-wrapper {
           border: 2px dashed #ccc;
           border-radius: 12px;
           background-color: rgba(0, 0, 0, 0.05);
-    
+
           .icon-content {
             color: #666;
           }
         }
       }
-    
+
       .badge {
         position: absolute;
         top: -5px;
@@ -562,7 +643,7 @@ body > .folder-item.dragging {
       }
     }
   }
-  
+
   .folder-page-indicator {
     padding: 15px 0;
     display: flex;
@@ -608,17 +689,16 @@ body > .folder-item.dragging {
   }
 
   .empty-slots {
-    display: contents; // This makes the container behave as if it wasn't there
+    display: contents;
   }
-  
+
   .folder-item.empty {
     visibility: hidden;
     pointer-events: none;
   }
-
 }
 
-//[addItemPopup.vue]
+// Add Item Popup styling
 .add-item-popup {
   position: fixed;
   top: 50%;
@@ -642,6 +722,7 @@ body > .folder-item.dragging {
     border-radius: 0.5rem;
     padding: 2rem;
     color: #ff4a1d;
+
     @media (hover: hover) {
       &:hover {
         background-color: #f5f5f5;
@@ -650,6 +731,5 @@ body > .folder-item.dragging {
     &:active{
       background-color: #f5f5f5;
     }
-
   }
 }

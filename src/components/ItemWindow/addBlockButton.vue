@@ -25,7 +25,7 @@
             <div class="modal-content" @click.stop>
                 <div class="modal-header">
                     <h3>Add Block</h3>
-                    <button class="icon-button close-button " @click="toggleOptions">
+                    <button class="icon-button close-button" @click="toggleOptions">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -80,27 +80,27 @@
           {
               type: 'title-block',
               label: 'Title',
-              icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>'
+              icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>'
           },
           {
               type: 'body-block',
               label: 'Body',
-              icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="10" x2="3" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="21" y1="18" x2="3" y2="18"></line></svg>'
+              icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="10" x2="3" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="21" y1="18" x2="3" y2="18"></line></svg>'
           },
           {
               type: 'image-block',
               label: 'Image',
-              icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>'
+              icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>'
           },
           {
               type: 'line-block',
               label: 'Line',
-              icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>'
+              icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>'
           },
           {
               type: 'todo-block',
               label: 'Todo',
-              icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>'
+              icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>'
           }
       ];
 
@@ -156,10 +156,10 @@
     margin: 4px 0;
   }
 
-  // Add Button
-  .add-block-button {
-    width: 24px;
-    height: 24px;
+  // Icon Button (Add Block Button)
+  .icon-button {
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -167,17 +167,41 @@
     border: 1px solid #ddd;
     border-radius: 50%;
     cursor: pointer;
-    opacity: 0.2;
-    transition: opacity 0.2s;
+    opacity: 0.7;
+    transition: all 0.2s ease;
 
     &:hover {
       opacity: 1;
       background: #f5f5f5;
+      border-color: #007bff;
+      transform: scale(1.05);
     }
 
-    .plus-icon {
-      color: #666;
-      font-size: 16px;
+    svg {
+      color: #4b5563;
+      width: 20px;
+      height: 20px;
+    }
+
+    &.close-button {
+      width: 28px;
+      height: 28px;
+      opacity: 1;
+
+      &:hover {
+        background: #fef2f2;
+        border-color: #fecaca;
+
+        svg {
+          color: #dc2626;
+        }
+      }
+
+      svg {
+        color: #ef4444;
+        width: 18px;
+        height: 18px;
+      }
     }
   }
 
@@ -197,11 +221,11 @@
 
   .modal-content {
     width: 90%;
-    max-width: 300px;
-    padding: 16px;
+    max-width: 320px;
+    padding: 20px;
     background: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
     margin: 0;
   }
 
@@ -210,13 +234,15 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 16px;
-    padding-bottom: 8px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f3f4f6;
 
     h3 {
       margin: 0;
-      color: #333;
+      color: #374151;
       font-size: 18px;
+      font-weight: 600;
     }
   }
 
@@ -224,40 +250,48 @@
   .options-grid {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    max-height: 70vh; // Add max height in case there are many options
-    overflow-y: auto; // Enable scroll if content overflows
+    gap: 10px;
+    max-height: 70vh;
+    overflow-y: auto;
   }
 
   // Block Options
   .block-option {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
     width: 100%;
-    padding: 12px;
+    padding: 14px 16px;
     background: white;
-    border: 1px solid #eee;
-    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
     cursor: pointer;
     text-align: left;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
 
     &:hover {
-        background: #f5f5f5;
-        border-color: #ddd;
+      background: #f9fafb;
+      border-color: #d1d5db;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
 
     .icon {
-        display: flex;
-        align-items: center;
-        color: #666;
-        min-width: 24px; // Add fixed width for icon to ensure alignment
+      display: flex;
+      align-items: center;
+      color: #6b7280;
+      min-width: 24px;
+
+      svg {
+        width: 18px;
+        height: 18px;
+      }
     }
 
     .label {
-        color: #333;
-        font-size: 14px;
+      color: #374151;
+      font-size: 14px;
+      font-weight: 500;
     }
-    }
+  }
   </style>

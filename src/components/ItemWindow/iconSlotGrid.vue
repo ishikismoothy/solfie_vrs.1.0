@@ -1,68 +1,61 @@
-<!-- Enhanced IconSlotGrid.vue with correct imports -->
+<!-- Enhanced IconSlotGrid.vue - With item names beneath icons -->
 <template>
   <div class="icon-slot-grid" :class="{ expanded: expanded }">
-    <template v-for="(icon, index) in 3" :key="index">
-      <div
-        v-if="getItem(index)"
-        :class="['icon-slot', 'has-item', {
-          'clickable': true,
-          'expanded-view': expanded
-        }]"
-        @click="handleIconClick(index)"
-        @contextmenu.prevent="handleRightClick($event, index)"
-        @touchstart="handleTouchStart($event, index)"
-        @touchend="handleTouchEnd"
-      >
-        <!-- Custom Icon Display (if set) -->
-        <div v-if="getCustomIcon(index)" class="custom-icon" v-html="getCustomIcon(index)"></div>
-
-        <!-- Display item name if available and no custom icon -->
-        <div v-else-if="getItemName" class="icon-item-name">
-          {{ getItemName(getItem(index)) }}
+    <template v-for="index in 3" :key="`slot-${index-1}`">
+      <!-- Wrapper for each slot position -->
+      <div class="slot-wrapper">
+        <div
+          v-if="getItem(index-1)"
+          :class="['icon-slot', 'has-item', {
+            'clickable': clickable,
+            'expanded-view': expanded
+          }]"
+          @click="handleIconClick(index-1)"
+          @contextmenu.prevent="handleRightClick($event, index-1)"
+          @touchstart="handleTouchStart($event, index-1)"
+          @touchend="handleTouchEnd"
+        >
+          <!-- Icon display area -->
+          <div class="icon-display-area">
+            <!-- Custom Icon Display from global store (if set) -->
+            <div v-if="getGlobalCustomIcon(index-1)" class="custom-icon unified-icon" v-html="getGlobalCustomIcon(index-1)"></div>
+            <!-- Default item name display when no custom icon -->
+            <div v-else class="icon-item-name">
+              {{ getItemName(index-1) }}
+            </div>
+            <!-- Click indicator for expanded items -->
+            <div v-if="expanded && clickable" class="click-indicator">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </div>
+          </div>
         </div>
 
-        <!-- Click indicator for expanded items -->
-        <div v-if="expanded" class="click-indicator">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="9 18 15 12 9 6"></polyline>
-          </svg>
+        <!-- Empty slot with unified mindspace styling -->
+        <div
+          v-else
+          :class="['icon-slot', 'empty-slot', 'mindspace-style']"
+          @contextmenu.prevent="handleRightClick($event, index-1)"
+          @touchstart="handleTouchStart($event, index-1)"
+          @touchend="handleTouchEnd"
+        >
+          <div class="empty-slot-placeholder">
+          </div>
         </div>
-      </div>
 
-      <!-- Empty slot with right-click/long-press capability -->
-      <div
-        v-else
-        :class="['icon-slot', 'empty-slot']"
-        @contextmenu.prevent="handleRightClick($event, index)"
-        @touchstart="handleTouchStart($event, index)"
-        @touchend="handleTouchEnd"
-      >
-        <div class="empty-slot-placeholder">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="8" x2="12" y2="16"></line>
-            <line x1="8" y1="12" x2="16" y2="12"></line>
-          </svg>
+        <!-- Item name beneath the icon - always show when item exists -->
+        <div v-if="getItem(index-1) && getItemName(index-1)" class="slot-item-name">
+          {{ getItemName(index-1) }}
         </div>
       </div>
     </template>
   </div>
-
-  <!-- Icon Selector Component - Teleported to body -->
-  <Teleport to="body">
-    <IconSelector
-      :isVisible="showIconSelector"
-      :position="selectorPosition"
-      :hasCurrentIcon="hasCurrentIcon"
-      @close="closeIconSelector"
-      @select-icon="handleIconSelection"
-    />
-  </Teleport>
 </template>
 
 <script setup>
-import { defineProps, defineEmits, ref } from 'vue'
-import IconSelector from './IconSelector.vue'
+import { defineProps, defineEmits } from 'vue'
+import { useStore } from 'vuex'
 
 const props = defineProps({
   initialIcons: {
@@ -75,11 +68,11 @@ const props = defineProps({
   },
   customIcons: {
     type: Array,
-    default: () => [null, null, null] // Array of custom icon SVG strings
+    default: () => [null, null, null]
   },
-  getItemName: {
-    type: Function,
-    default: null
+  items: {
+    type: Object,
+    default: () => ({})
   },
   clickable: {
     type: Boolean,
@@ -91,26 +84,57 @@ const props = defineProps({
   }
 })
 
-  const emit = defineEmits(['icons-changed', 'icon-clicked', 'custom-icon-changed', 'click'])
+const emit = defineEmits(['icons-changed', 'icon-clicked', 'custom-icon-changed', 'click', 'icon-right-click'])
 
-// Icon selector state
-const showIconSelector = ref(false)
-const selectorPosition = ref({ x: 0, y: 0 })
-const currentSlotIndex = ref(-1)
-const hasCurrentIcon = ref(false)
+const store = useStore()
 
 // Touch handling for long press
 let touchTimer = null
-const longPressDelay = 500 // 500ms for long press
+const longPressDelay = 500
 
 // Get item at index
 const getItem = (index) => {
-  return props.iconItems?.[index] || null
+  if (!props.iconItems || index < 0 || index >= props.iconItems.length) {
+    return null
+  }
+  return props.iconItems[index] || null
 }
 
-// Get custom icon at index
-const getCustomIcon = (index) => {
-  return props.customIcons?.[index] || null
+// Get custom icon from global store using item ID
+const getGlobalCustomIcon = (index) => {
+  const itemId = getItem(index)
+  if (!itemId) return null
+
+  try {
+    return store.getters['user/getItemCustomIcon'](itemId)
+  } catch (error) {
+    console.warn('Error getting custom icon:', error)
+    return null
+  }
+}
+
+// Get item name at index
+const getItemName = (index) => {
+  const itemId = getItem(index)
+  if (!itemId) return null
+
+  try {
+    // First try to get from props.items
+    if (props.items && props.items[itemId]) {
+      const item = props.items[itemId]
+      return item?.name || item?.title || null
+    }
+
+    // If not found in props, try the store getter
+    if (store.getters['user/getItemName']) {
+      return store.getters['user/getItemName'](itemId)
+    }
+
+    return null
+  } catch (error) {
+    console.warn('Error getting item name:', error)
+    return null
+  }
 }
 
 // Handle icon click
@@ -125,13 +149,17 @@ const handleIconClick = (index) => {
 // Handle right click for icon selection
 const handleRightClick = (event, index) => {
   event.preventDefault()
-  openIconSelector(event, index)
+  emit('icon-right-click', index, event)
 }
 
 // Handle touch start for long press
 const handleTouchStart = (event, index) => {
+  if (touchTimer) {
+    clearTimeout(touchTimer)
+  }
+
   touchTimer = setTimeout(() => {
-    openIconSelector(event.touches[0], index)
+    emit('icon-right-click', index, event.touches ? event.touches[0] : event)
   }, longPressDelay)
 }
 
@@ -142,53 +170,6 @@ const handleTouchEnd = () => {
     touchTimer = null
   }
 }
-
-// Open icon selector
-const openIconSelector = (event, index) => {
-  currentSlotIndex.value = index
-  hasCurrentIcon.value = !!getCustomIcon(index)
-
-  // Position doesn't matter now since we center it, but keeping for compatibility
-  selectorPosition.value = {
-    x: 0,
-    y: 0
-  }
-
-  showIconSelector.value = true
-}
-
-// Close icon selector
-const closeIconSelector = () => {
-  showIconSelector.value = false
-  currentSlotIndex.value = -1
-  hasCurrentIcon.value = false
-}
-
-// Handle icon selection
-const handleIconSelection = (selectedIcon) => {
-  console.log('handleIconSelection called with:', selectedIcon) // Debug
-  if (currentSlotIndex.value >= 0) {
-    const newCustomIcons = [...(props.customIcons || [null, null, null])]
-
-    if (selectedIcon === null) {
-      // Remove custom icon - explicitly set to null
-      newCustomIcons[currentSlotIndex.value] = null
-      console.log('Removing icon at index:', currentSlotIndex.value) // Debug
-    } else {
-      // Set new custom icon - ensure it's a string, not undefined
-      const svgContent = selectedIcon.svg || null
-      newCustomIcons[currentSlotIndex.value] = svgContent
-      console.log('Setting icon at index:', currentSlotIndex.value, 'SVG length:', svgContent?.length) // Debug
-    }
-
-    // Ensure no undefined values in the array
-    const safeCustomIcons = newCustomIcons.map(icon => icon === undefined ? null : icon)
-    console.log('Emitting custom-icon-changed with:', safeCustomIcons) // Debug
-
-    emit('custom-icon-changed', safeCustomIcons)
-  }
-}
-
 </script>
 
 <style lang="scss">

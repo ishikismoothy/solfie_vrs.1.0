@@ -1,9 +1,233 @@
-// Variables
-$hover-bg: #f1f1f3;
-$gray-light: #cccccc;
-$gray-medium: #888888;
-$gray-dark: #4a5568;
+// src/assets/itemWindowStyle.scss
+
+// Brand Colors
+$primary-color: #ff5638;
+$primary-light: #fdbca2;
+$accent-blue: #007bff;
+$accent-blue-light: #e0e7ff;
+
+// Neutral Colors
 $white: #ffffff;
+$gray-50: #f9fafb;
+$gray-100: #f3f4f6;
+$gray-200: #e5e7eb;
+$gray-300: #d1d5db;
+$gray-400: #9ca3af;
+$gray-500: #6b7280;
+$gray-600: #4b5563;
+$gray-700: #374151;
+$gray-800: #1f2937;
+$gray-900: #111827;
+
+// Semantic Colors
+$success: #22c55e;
+$success-light: #dcfce7;
+$warning: #f59e0b;
+$warning-light: #fef3c7;
+$error: #ef4444;
+$error-light: #fef2f2;
+$info: #3b82f6;
+$info-light: #dbeafe;
+
+// Background Colors
+$bg-primary: $white;
+$bg-secondary: $gray-50;
+$bg-tertiary: $gray-100;
+$bg-overlay: rgba(0, 0, 0, 0.5);
+$bg-overlay-light: rgba(0, 0, 0, 0.4);
+
+// Border Colors
+$border-light: #eee;
+$border-medium: #ddd;
+$border-dark: #ccc;
+$border-focus: $accent-blue;
+
+// Text Colors
+$text-primary: $gray-700;
+$text-secondary: $gray-500;
+$text-muted: $gray-400;
+$text-disabled: $gray-300;
+
+// Interactive States
+$hover-bg: #f5f5f5;
+$hover-border: $accent-blue;
+$focus-ring: rgba(59, 130, 246, 0.1);
+
+// Legacy Variables (for backward compatibility)
+$gray-light: $gray-300;
+$gray-medium: $gray-500;
+$gray-dark: $gray-600;
+$mindspace-border: $border-dark;
+$mindspace-hover-border: $hover-border;
+$mindspace-bg: rgba(255, 255, 255, 0.8);
+$mindspace-hover-bg: rgba(248, 249, 255, 0.9);
+$icon-color: $primary-color;
+
+.todo-block {
+  position: relative;
+
+  .todo-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .todo-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid $bg-tertiary;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .todo-checkbox {
+        width: 18px;
+        height: 18px;
+        margin-top: 2px;
+        cursor: pointer;
+        accent-color: $info;
+        flex-shrink: 0;
+
+        &:checked {
+          accent-color: $success;
+        }
+      }
+
+      .todo-text {
+        flex: 1;
+        font-size: 14px;
+        line-height: 1.5;
+        color: $text-primary;
+        background: transparent;
+        border: none;
+        resize: none;
+        outline: none;
+        font-family: inherit;
+        min-height: 20px;
+        padding: 2px 4px;
+        border-radius: 4px;
+        transition: background-color 0.2s ease;
+
+        &:focus {
+          background: $bg-secondary;
+          outline: 2px solid $accent-blue-light;
+        }
+
+        &.completed {
+          text-decoration: line-through;
+          color: $text-muted;
+        }
+
+        &::placeholder {
+          color: $text-muted;
+          font-style: italic;
+        }
+      }
+
+      .todo-delete-btn {
+        opacity: 0;
+        background: none;
+        border: none;
+        color: $error;
+        cursor: pointer;
+        padding: 2px;
+        border-radius: 3px;
+        transition: all 0.2s ease;
+
+        &:hover {
+          background: $error-light;
+        }
+
+        svg {
+          width: 14px;
+          height: 14px;
+        }
+      }
+
+      &:hover .todo-delete-btn {
+        opacity: 1;
+      }
+    }
+  }
+
+  .todo-controls {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 12px;
+
+    .add-todo-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: $bg-tertiary;
+      border: 1px solid $border-medium;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      color: $text-secondary;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: $gray-200;
+        color: $text-primary;
+        border-color: $border-focus;
+      }
+
+      svg {
+        width: 14px;
+        height: 14px;
+      }
+    }
+  }
+
+  .empty-todo-state {
+    text-align: center;
+    padding: 32px 20px;
+    color: $text-muted;
+    font-style: italic;
+
+    svg {
+      width: 32px;
+      height: 32px;
+      margin-bottom: 12px;
+      opacity: 0.4;
+      color: $text-muted;
+    }
+
+    p {
+      margin: 0;
+      font-size: 14px;
+    }
+  }
+}
+
+
+
+// ===========================
+// UNIVERSAL FONT STYLING
+// ===========================
+
+// Apply font to all elements within components using this stylesheet
+.item-window-content,
+.mind-slot-card,
+.block-wrapper,
+.todo-block,
+.modal-content,
+.icon-selector-menu,
+.slot-selection-modal {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+  *, *::before, *::after {
+    font-family: inherit;
+  }
+}
+
+// ===========================
+// MIND SLOT COMPONENTS
+// ===========================
 
 // ===========================
 // MIND SLOT COMPONENTS
@@ -12,7 +236,7 @@ $white: #ffffff;
 // Main mind slot container
 .return-to-myself {
   padding: 20px;
-  background: #fff;
+  background: $bg-primary;
   border-radius: 30px;
   margin-bottom: 20px;
 
@@ -32,15 +256,15 @@ $white: #ffffff;
   width: 100%;
   padding: 12px;
   margin-top: 15px;
-  background: #f0f0f0;
-  border: 2px dashed #ccc;
+  background: $bg-tertiary;
+  border: 2px dashed $border-dark;
   border-radius: 8px;
   cursor: pointer;
-  color: #666;
+  color: $text-secondary;
   transition: background 0.2s ease;
 
   &:hover {
-    background: #e5e5e5;
+    background: $gray-200;
   }
 }
 
@@ -51,7 +275,7 @@ $white: #ffffff;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: $bg-overlay;
   z-index: 1000;
 }
 
@@ -66,11 +290,12 @@ $white: #ffffff;
 .mind-slot-card {
   position: relative;
   width: 100%;
-  min-height: 240px;
+  min-height: 180px;
   margin: 0.5rem;
   cursor: pointer;
   perspective: 1000px;
   transition: all 0.3s ease;
+  background-color: rgb(231, 231, 231);
 
   &.expanded {
     position: fixed;
@@ -108,7 +333,7 @@ $white: #ffffff;
   backface-visibility: hidden;
   transition: transform 0.6s;
   border-radius: 8px;
-  background: white;
+  background: $bg-primary;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
   overflow: hidden;
 }
@@ -132,8 +357,8 @@ $white: #ffffff;
   align-items: center;
   padding: 10px;
   background: rgba(0, 0, 0, 0.05);
-  border-bottom: 1px solid #eee;
-  background-color: rgb(253, 188, 162);
+  border-bottom: 1px solid $border-light;
+  background-color: $primary-light;
 }
 
 .slot-name {
@@ -155,13 +380,14 @@ $white: #ffffff;
   height: calc(100% - 60px);
   background-size: cover;
   background-position: center;
+  background-repeat: no-repeat;
   display: flex;
   align-items: center;
   justify-content: flex-start;
   position: relative;
   padding: 15px;
   gap: 15px;
-  background-color: rgb(231, 231, 231)
+  background-color: rgb(231, 231, 231);
 }
 
 // ===========================
@@ -191,6 +417,20 @@ $white: #ffffff;
   }
 }
 
+.single-item-name-overlay {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: $text-primary;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(4px);
+}
+
 // ===========================
 // EMPTY SLOT STYLING
 // ===========================
@@ -207,13 +447,13 @@ $white: #ffffff;
 }
 
 .empty-slot-text {
-  color: #666;
+  color: $text-secondary;
   font-size: 12px;
   text-align: center;
 }
 
 // ===========================
-// ICON SLOT GRID
+// UNIFIED ICON SLOT GRID
 // ===========================
 
 .icon-slot-grid {
@@ -228,33 +468,57 @@ $white: #ffffff;
   }
 }
 
+.slot-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .icon-slot {
   position: relative;
   width: 100px;
   height: 100px;
-  border: 2px solid #e0e0e0;
-  border-radius: 12px;
+  border: 2px solid $border-medium;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: white;
+  background: $bg-primary;
   transition: all 0.2s ease;
   overflow: hidden;
   user-select: none;
 
   &.has-item {
-    border-color: rgb(253, 188, 162);
-    background: #f8f9ff;
+    border-color: $primary-light;
+    background: $gray-100;
   }
 
   &.empty-slot {
     border-style: dashed;
-    background: #fafafa;
+    background: $bg-secondary;
     cursor: pointer;
 
     &:hover {
-      border-color: #007bff;
-      background: #f8f9ff;
+      border-color: $mindspace-hover-border;
+      background: $mindspace-hover-bg;
+    }
+
+    // Unified mindspace styling for empty slots
+    &.mindspace-style {
+      background: $mindspace-bg;
+      border: 2px dashed $mindspace-border;
+      border-radius: 12px;
+
+      &:hover {
+        border-color: $mindspace-hover-border;
+        background: $mindspace-hover-bg;
+      }
+
+      .empty-slot-placeholder {
+        color: $text-muted;
+        opacity: 0.6;
+      }
     }
   }
 
@@ -264,10 +528,23 @@ $white: #ffffff;
   }
 
   &.expanded-view {
-    width: 150px;
-    height: 150px;
+    width: 64px;
+    height: 64px;
   }
 }
+
+.icon-display-area {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// ===========================
+// UNIFIED CUSTOM ICON STYLING
+// ===========================
 
 .custom-icon {
   display: flex;
@@ -275,7 +552,7 @@ $white: #ffffff;
   justify-content: center;
   width: 100%;
   height: 100%;
-  color: rgb(255, 86, 56);
+  color: $icon-color;
 
   svg {
     width: 100%;
@@ -283,25 +560,58 @@ $white: #ffffff;
     max-width: 48px;
     max-height: 48px;
     stroke: currentColor;
+    fill: none;
+  }
+}
+
+.large-custom-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: $icon-color;
+
+  svg {
+    width: 80%;
+    height: 80%;
+    max-width: 96px;
+    max-height: 96px;
+    stroke: currentColor;
+    fill: none;
   }
 }
 
 .icon-item-name {
-  font-size: 11px;
+  font-size: 12px;
   text-align: center;
-  color: #333;
+  color: $text-primary;
   font-weight: 500;
   line-height: 1.2;
   padding: 4px;
   word-break: break-word;
   overflow: hidden;
   display: -webkit-box;
+  // stylelint-disable-next-line property-no-vendor-prefix
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
 }
 
+.slot-item-name {
+  font-size: 12px;
+  color: $text-secondary;
+  text-align: center;
+  line-height: 1.1;
+  max-width: 60px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 4px;
+  padding: 0 2px;
+}
+
 .empty-slot-placeholder {
-  color: #ccc;
+  color: $text-disabled;
   opacity: 0.7;
 }
 
@@ -313,8 +623,8 @@ $white: #ffffff;
   height: 20px;
   border-radius: 50%;
   border: none;
-  background: #ff4444;
-  color: white;
+  background: $error;
+  color: $white;
   font-size: 14px;
   font-weight: bold;
   cursor: pointer;
@@ -325,7 +635,7 @@ $white: #ffffff;
   z-index: 5;
 
   &:hover {
-    background: #cc0000;
+    background: #dc2626;
     transform: scale(1.1);
   }
 }
@@ -334,8 +644,14 @@ $white: #ffffff;
   position: absolute;
   bottom: 4px;
   right: 4px;
-  color: #666;
+  color: $text-secondary;
   opacity: 0.7;
+}
+
+.expanded .icon-slot {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 20px;
 }
 
 // ===========================
@@ -349,15 +665,27 @@ $white: #ffffff;
   right: 0 !important;
   bottom: 0 !important;
   z-index: 999999 !important;
-  background: rgba(0, 0, 0, 0.4);
+  background: $bg-overlay-light;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
+
+  // When called from mind grid (right side)
+  &.right-screen {
+    left: 50% !important;
+    justify-content: center !important;
+  }
+
+  // When called from mind slots (left side)
+  &.left-screen {
+    right: 50% !important;
+    justify-content: center !important;
+  }
 }
 
 .icon-selector-menu {
   position: relative !important;
-  background: white;
+  background: $bg-primary;
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
   padding: 20px;
@@ -365,7 +693,7 @@ $white: #ffffff;
   max-width: 90vw;
   height: 500px;
   max-height: 80vh;
-  border: 1px solid #e0e0e0;
+  border: 1px solid $gray-200;
   display: flex;
   flex-direction: column;
   margin: auto;
@@ -377,13 +705,13 @@ $white: #ffffff;
   align-items: center;
   margin-bottom: 16px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid $bg-tertiary;
   flex-shrink: 0;
 
   h4 {
     margin: 0;
     font-size: 18px;
-    color: #333;
+    color: $text-primary;
     font-weight: 600;
   }
 }
@@ -393,15 +721,15 @@ $white: #ffffff;
   border: none;
   font-size: 22px;
   cursor: pointer;
-  color: #666;
+  color: $text-secondary;
   padding: 6px;
   border-radius: 4px;
   transition: all 0.2s ease;
   line-height: 1;
 
   &:hover {
-    background: #f5f5f5;
-    color: #333;
+    background: $hover-bg;
+    color: $text-primary;
   }
 }
 
@@ -491,8 +819,8 @@ $white: #ffffff;
     height: 32px !important;
     max-width: 32px !important;
     max-height: 32px !important;
-    min-width: 24px !important;
-    min-height: 24px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
     stroke: currentColor !important;
     fill: none !important;
   }
@@ -507,6 +835,147 @@ $white: #ffffff;
 }
 
 // ===========================
+// ADD BLOCK BUTTON COMPONENT
+// ===========================
+
+.add-block-wrapper {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  margin: 4px 0;
+}
+
+.icon-button {
+  width: 36px;
+  height: 36px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $bg-primary;
+  border: 1px solid $border-medium;
+  border-radius: 50%;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: all 0.2s;
+
+  &:hover {
+    opacity: 1;
+    background: $hover-bg;
+    border-color: $border-focus;
+    transform: scale(1.05);
+  }
+
+  svg {
+    color: $gray-600;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+// Modal overlay for add block options
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $bg-overlay;
+  z-index: 1000;
+}
+
+.modal-content {
+  width: 90%;
+  max-width: 300px;
+  padding: 16px;
+  background: $bg-primary;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  margin: 0;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+
+  h3 {
+    margin: 0;
+    color: $text-primary;
+    font-size: 18px;
+  }
+
+  .close-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: $text-secondary;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: $hover-bg;
+      color: $gray-700;
+    }
+
+    svg {
+      width:32px;
+      height: 32px;
+    }
+  }
+}
+
+.options-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.block-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  background: $bg-primary;
+  border: 1px solid $border-light;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s;
+
+  &:hover {
+    background: $hover-bg;
+    border-color: $border-medium;
+  }
+
+  .icon {
+    display: flex;
+    align-items: center;
+    color: $gray-600;
+    min-width: 24px;
+
+    svg {
+      width: 32px;
+      height: 32px;
+    }
+  }
+
+  .label {
+    color: $text-primary;
+    font-size: 14px;
+  }
+}
+
+// ===========================
 // ITEM WINDOW CONTENT
 // ===========================
 
@@ -514,6 +983,14 @@ $white: #ffffff;
   height: 100%;
   display: flex;
   flex-direction: column;
+
+  img {
+    max-width: 100%;
+    max-height: 400px;
+    height: auto;
+    width: auto;
+    object-fit: contain;
+  }
 }
 
 .block-option-container {
@@ -545,24 +1022,29 @@ $white: #ffffff;
 }
 
 .icon-nav-btn {
-  width: 30px;
-  height: 30px;
-  border: 1px solid #ccc;
+  width: 36px;
+  height: 36px;
+  border: 1px solid $border-dark;
   border-radius: 50%;
-  background: white;
+  background: $bg-primary;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: bold;
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   &:hover {
-    background: #f0f0f0;
+    background: $hover-bg;
+    border-color: $border-focus;
+    transform: scale(1.05);
   }
 
   &.active {
-    background: rgb(253, 188, 162);
-    color: white;
-    border-color: rgb(255, 86, 56);
+    background: $primary-light;
+    color: $white;
+    border-color: $primary-color;
   }
 }
 
@@ -746,26 +1228,234 @@ $white: #ffffff;
 
 .block-wrapper {
   position: relative;
-  margin: 1rem 0;
-  padding: 1rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.5rem;
+  border: 1px solid $gray-200;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  background: $bg-primary;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: $gray-300;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  &.onBlockEdit {
+    border-color: $primary-light;
+    box-shadow: 0 0 0 1px $focus-ring;
+  }
+}
+
+.block-content {
+  position: relative;
+}
+
+.block-controls {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+  padding: 6px;
+  background: $bg-secondary;
+  border-radius: 6px;
+  border: 1px solid $gray-200;
+  width: fit-content;
+}
+
+.control-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid $gray-200;
+  border-radius: 6px;
+  background: $bg-primary;
+  color: $gray-600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: 14px;
+  font-weight: 500;
+
+  &:hover:not(:disabled) {
+    background: $bg-secondary;
+    color: $gray-700;
+    border-color: $gray-300;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0px);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  &.text-red-500 {
+    color: $error;
+
+    &:hover:not(:disabled) {
+      background: $error-light;
+      color: #dc2626;
+      border-color: #fecaca;
+    }
+  }
+}
+
+.todo-block {
+  position: relative;
+
+  .todo-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .todo-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid $bg-tertiary;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .todo-checkbox {
+        width: 18px;
+        height: 18px;
+        margin-top: 2px;
+        cursor: pointer;
+        accent-color: $info;
+        flex-shrink: 0;
+
+        &:checked {
+          accent-color: $success;
+        }
+      }
+
+      .todo-text {
+        flex: 1;
+        font-size: 14px;
+        line-height: 1.5;
+        color: $text-primary;
+        background: transparent;
+        border: none;
+        resize: none;
+        outline: none;
+        font-family: inherit;
+        min-height: 20px;
+        padding: 2px 4px;
+        border-radius: 4px;
+        transition: background-color 0.2s ease;
+
+        &:focus {
+          background: $bg-secondary;
+          outline: 2px solid $accent-blue-light;
+        }
+
+        &.completed {
+          text-decoration: line-through;
+          color: $text-muted;
+        }
+
+        &::placeholder {
+          color: $text-muted;
+          font-style: italic;
+        }
+      }
+
+      .todo-delete-btn {
+        opacity: 0;
+        background: none;
+        border: none;
+        color: $error;
+        cursor: pointer;
+        padding: 2px;
+        border-radius: 3px;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+
+        &:hover {
+          background: $error-light;
+        }
+
+        svg {
+          width: 14px;
+          height: 14px;
+        }
+      }
+
+      &:hover .todo-delete-btn {
+        opacity: 1;
+      }
+    }
+  }
+
+  .todo-controls {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 12px;
+
+    .add-todo-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: $bg-tertiary;
+      border: 1px solid $border-medium;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      color: $text-secondary;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: $gray-200;
+        color: $text-primary;
+        border-color: $border-focus;
+      }
+
+      svg {
+        width: 14px;
+        height: 14px;
+      }
+    }
+  }
+
+  .empty-todo-state {
+    text-align: center;
+    padding: 32px 20px;
+    color: $text-muted;
+    font-style: italic;
+
+    svg {
+      width: 32px;
+      height: 32px;
+      margin-bottom: 12px;
+      opacity: 0.4;
+      color: $text-muted;
+    }
+
+    p {
+      margin: 0;
+      font-size: 14px;
+    }
+  }
 }
 
 .image-block {
   margin: 1rem 0;
   text-align: center;
 
-  .image-item {
-    max-width: 100%;
-    max-height: 400px;
-    height: auto;
-    width: auto;
-    object-fit: contain;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  }
-
+  .image-item,
   img {
     max-width: 100%;
     max-height: 400px;
@@ -777,15 +1467,12 @@ $white: #ffffff;
   }
 }
 
-// General image constraints for any images in item window
-.item-window-content {
-  img {
-    max-width: 100%;
-    max-height: 400px;
-    height: auto;
-    width: auto;
-    object-fit: contain;
-  }
+.timestamp-info {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid $bg-secondary;
+  font-size: 12px;
+  color: $text-secondary;
 }
 
 // ===========================
@@ -799,7 +1486,7 @@ $white: #ffffff;
   font-size: 18px;
   margin: 20px 0;
   border: none;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid $gray-200;
   outline: none;
 }
 
@@ -1027,22 +1714,29 @@ $white: #ffffff;
   }
 
   .icon-slot {
-    width: 50px;
-    height: 50px;
+    width: 40px;
+    height: 40px;
 
     &.expanded-view {
-      width: 70px;
-      height: 70px;
+      width: 56px;
+      height: 56px;
     }
   }
 
-  .custom-icon svg {
-    max-width: 36px;
-    max-height: 36px;
+  .custom-icon {
+    svg {
+      max-width: 32px;
+      max-height: 32px;
+    }
   }
 
   .icon-item-name {
-    font-size: 10px;
+    font-size: 12px;
+  }
+
+  .slot-item-name {
+    font-size: 12px;
+    max-width: 92px;
   }
 
   .multi-item-nav {
@@ -1051,112 +1745,42 @@ $white: #ffffff;
   }
 }
 
-// background image for single item content
+// ===========================
+// ICON STYLING OVERRIDES
+// ===========================
 
-.slot-content {
-  // When used as background image container
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+.block-option-container .icon-button {
+  svg {
+    stroke: $gray-600 !important;
+    fill: none !important;
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  &:hover svg {
+    stroke: $gray-700 !important;
+  }
 }
 
-.single-item-name-overlay {
-  position: absolute;
-  top: 15px;
-  left: 15px;
-  background: rgba(255, 255, 255, 0.9);
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(4px);
+.editBlock-button svg,
+.moveItem-button svg,
+.duplicateBlock-button svg {
+  stroke: $gray-600 !important;
+  width: 18px !important;
+  height: 18px !important;
 }
 
-// Block content styling
-
-.block-wrapper {
-  position: relative;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 16px;
-  background: white;
-  transition: all 0.2s ease;
+.close-button svg {
+  stroke: $error !important;
+  width: 32px !important;
+  height: 32px !important;
 }
 
-.block-wrapper:hover {
-  border-color: #d1d5db;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.block-wrapper.onBlockEdit {
-  border-color: rgb(253, 188, 162);
-  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.1);
-}
-
-.block-content {
-  position: relative;
-}
-
-.block-controls {
-  display: flex;
-  gap: 4px;
-  margin-bottom: 12px;
-  padding: 6px;
-  background: #f8fafc;
-  border-radius: 6px;
-  border: 1px solid #e2e8f0;
-  width: fit-content;
-}
-
-.control-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: 4px;
-  background: white;
-  color: #64748b;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  font-size: 14px;
-  font-weight: 500;
-  border: 1px solid #e2e8f0;
-}
-
-.control-btn:hover:not(:disabled) {
-  background: #f1f5f9;
-  color: #475569;
-  border-color: #cbd5e1;
-}
-
-.control-btn:active:not(:disabled) {
-  transform: translateY(1px);
-}
-
-.control-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.control-btn.text-red-500 {
-  color: #ef4444;
-}
-
-.control-btn.text-red-500:hover:not(:disabled) {
-  background: #fef2f2;
-  color: #dc2626;
-  border-color: #fecaca;
-}
-
-.timestamp-info {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid #f1f5f9;
-  font-size: 12px;
-  color: #6b7280;
+.delete-btn,
+.icon-button:has(svg polyline[points*="3 6 5 6 21 6"]) {
+  svg {
+    stroke: $error !important;
+    width: 32px !important;
+    height: 32px !important;
+  }
 }

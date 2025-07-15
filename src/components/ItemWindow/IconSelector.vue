@@ -1,8 +1,9 @@
-<!-- IconSelector.vue -->
+<!-- IconSelector.vue with dynamic positioning -->
 <template>
   <div
     v-if="isVisible"
     class="icon-selector-overlay"
+    :class="screenPositionClass"
     @click="closeSelector"
     @contextmenu.prevent
   >
@@ -48,7 +49,7 @@
 </template>
 
 <script setup>
-  import { ref, onMounted, onUnmounted, defineProps, defineEmits } from 'vue'
+  import { ref, onMounted, onUnmounted, defineProps, defineEmits, computed } from 'vue'
   import { getManualIconList } from '@/utility/iconLoader'
 
   const props = defineProps({
@@ -63,10 +64,22 @@
     hasCurrentIcon: {
       type: Boolean,
       default: false
+    },
+    screenPosition: {
+      type: String,
+      default: 'center', // 'left', 'right', or 'center'
+      validator: (value) => ['left', 'right', 'center'].includes(value)
     }
   })
 
   const emit = defineEmits(['close', 'select-icon'])
+
+  // Compute the CSS class based on screen position
+  const screenPositionClass = computed(() => {
+    if (props.screenPosition === 'left') return 'left-screen'
+    if (props.screenPosition === 'right') return 'right-screen'
+    return '' // center (default)
+  })
 
   // Available icons - loaded from your assets folder
   const availableIcons = ref([])

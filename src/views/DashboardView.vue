@@ -35,7 +35,7 @@
 
       <!-- MindSpace view -->
       <div class="view mindspace-view">
-        <mindSpace/>
+        <mindSpace />
       </div>
     </div>
 
@@ -56,12 +56,10 @@
       :style="{
         transform: `translateY(${navPosition}px)`,
         zIndex: navZindex
-
       }"
     >
       <DockNav />
     </div>
-
 
     <!-- Dock Button -->
     <button
@@ -81,25 +79,24 @@
       </svg>
     </button>
 
+    <!-- Unified Item Window overlay -->
     <Teleport to="body">
       <div
-        v-if="showItemWindow"
+        v-if="showAnyItemWindow"
         class="item-window-overlay"
-        @click="closeItemWindow"
+        @click="closeAnyItemWindow"
       />
     </Teleport>
 
+    <!-- Unified Item Window -->
     <Teleport to="body">
       <ItemWindow
-        v-if="showItemWindow && currentItemForWindow"
-        :mindslot="currentItemForWindow"
-        :index="0"
-        :getItemImage="getItemImage"
-        :getItemName="getItemName"
-        :expanded="true"
-        :initialFlipped="false"
-        @close="closeItemWindow"
-        class="mindspace-item-window"
+        v-if="showAnyItemWindow && unifiedItemWindowProps"
+        v-bind="unifiedItemWindowProps"
+        :items="mindspaceItems"
+        @close="closeAnyItemWindow"
+        @refresh-items="fetchMindspaceItems"
+        class="unified-item-window"
       />
     </Teleport>
 
@@ -123,7 +120,7 @@
 <script>
 import { defineComponent, computed, ref, onMounted, watch } from 'vue';
 import { useStore } from 'vuex';
-import { useRouter } from 'vue-router'; // Add this import at the top
+import { useRouter } from 'vue-router';
 import DockNav from '@/components/dockNav.vue';
 import HeaderNav from '@/components/Header/HeaderNav.vue';
 import Dashboard from '@/components/DashBoard/dashboard.vue';
@@ -134,7 +131,8 @@ import MoveItemModal from '@/components/ItemWindow/moveItemModal.vue';
 import LoadingScreen from '@/components/loadingScreen.vue';
 import satSlider from '@/components/DashBoard/satisfactionSlider.vue';
 import MindUniverse from '@/components/Universe/widgetGallary.vue';
-import { disableBodyScroll,  /*enableBodyScroll, /*clearAllBodyScrollLocks*/ } from 'body-scroll-lock';
+import { disableBodyScroll } from 'body-scroll-lock';
+import emitter from '@/eventBus'
 
 export default defineComponent({
   name: 'DashboardView',
@@ -172,16 +170,99 @@ export default defineComponent({
     const slidePosition = computed(() => {
       if (isDragging.value) {
         const delta = currentX.value - startX.value;
-        const basePosition = isMindSpaceView.value ? 0 : -50; // Changed from -100 to -50
-        const dragPosition = (delta / window.innerWidth) * 50; // Changed from 100 to 50
+        const basePosition = isMindSpaceView.value ? 0 : -50;
+        const dragPosition = (delta / window.innerWidth) * 50;
         return Math.max(-50, Math.min(0, basePosition + dragPosition));
       }
-      return isMindSpaceView.value ? 0 : -50; // Changed from -100 to -50
+      return isMindSpaceView.value ? 0 : -50;
     });
     const bodyElement = document.querySelector('body');
     const selectedItemId = computed(() => store.getters['mindspace/getItemId']);
-    const getItemImage = () => {return null;}; // Placeholder for item image retrieval, can be replaced with actual logic
-    const getItemName = () => {return store.getters['mindspace/getItemName'] || 'Unnamed Item';}; // Placeholder for item name retrieval, can be replaced with actual logic
+
+    // Unified item window state
+    const currentItemWindowConfig = ref(null);
+
+    // Use Vuex store for items
+    const mindspaceItems = computed(() => store.getters['user/getItems'])
+
+    // Fetch items using Vuex store
+    const fetchMindspaceItems = async () => {
+      if (!userId.value) {
+        console.log('Waiting for user ID...')
+        return
+      }
+      await store.dispatch('user/fetchItems', userId.value)
+    }
+
+    // Updated getItemImage function
+    const getItemImage = (itemId) => {
+      return store.getters['user/getItemImage'](itemId)
+    }
+
+    // Updated getItemName function
+    const getItemName = (itemId) => {
+      return store.getters['user/getItemName'](itemId)
+    }
+
+    // Unified window controls
+    const showAnyItemWindow = computed(() => {
+      return store.state.user.modalControl.showItemWindow || !!currentItemWindowConfig.value
+    })
+
+    const unifiedItemWindowProps = computed(() => {
+      // Priority: mindslot config over mind grid config
+      if (currentItemWindowConfig.value) {
+        return currentItemWindowConfig.value
+      }
+
+      // Fallback to mind grid item window
+      if (store.state.user.modalControl.showItemWindow && selectedItemId.value) {
+        return {
+          mindslot: {
+            name: store.getters['mindspace/getItemName'] || 'Unnamed Item',
+            item: selectedItemId.value
+          },
+          index: 0,
+          getItemImage,
+          getItemName,
+          fromMindGrid: true,
+          expanded: true,
+          initialFlipped: false,
+          openedFromMindslot: false,
+          directIconIndex: -1,
+          expandedSlotIndex: null
+        }
+      }
+
+      return null
+    })
+
+    const closeAnyItemWindow = () => {
+      // Clear mindslot window config
+      currentItemWindowConfig.value = null
+      // Clear mind grid window
+      store.dispatch('user/triggerItemWindow', false)
+    }
+
+    // Handle mindslot item window requests
+    const handleMindslotItemWindow = (config) => {
+      console.log('🎯 Unified: Opening mindslot item window with config:', config)
+      // Close any existing mind grid window
+      store.dispatch('user/triggerItemWindow', false)
+      // Set mindslot config
+      currentItemWindowConfig.value = {
+        ...config,
+        getItemImage,
+        getItemName,
+        fromMindGrid: false
+      }
+    }
+
+    // Handle close requests from mindslot
+    const handleCloseUnifiedItemWindow = () => {
+      console.log('🎯 Unified: Closing item window from mindslot')
+      closeAnyItemWindow()
+    }
 
     //[MONITOR] MODAL AND EDIT TOGGLE
     const showMindUniverseModal = computed(() => store.state.user.modalControl.showMindUniverseWindow);
@@ -194,7 +275,6 @@ export default defineComponent({
     // Update toggleView:
     const toggleView = () => {
       isMindSpaceView.value = !isMindSpaceView.value;
-      // Optional: Add a class to body to handle transitions
       document.body.classList.toggle('switching-view');
     };
 
@@ -245,7 +325,7 @@ export default defineComponent({
 
       if (isDragging.value) {
           const delta = currentX.value - startX.value;
-          const threshold = window.innerWidth * 0.1; // Changed from 0.2 to 0.1
+          const threshold = window.innerWidth * 0.1;
 
           if (Math.abs(delta) > threshold) {
             isMindSpaceView.value = delta > 0;
@@ -257,12 +337,6 @@ export default defineComponent({
       }
     };
 
-    //Item Window
-    const showItemWindow = computed(() => store.state.user.modalControl.showItemWindow);
-    const closeItemWindow = () => {
-        store.dispatch('user/triggerItemWindow', false);
-    };
-
     const showMoveItemWindow = computed(() => store.state.user.modalControl.showMoveItemWindow);
     const closeMoveItemWindow = () => {
         store.dispatch('user/triggerMoveItemWindow', false);
@@ -272,7 +346,6 @@ export default defineComponent({
     const closeSatWindow = () => {
         store.dispatch('user/triggerSatWindow', false);
     };
-
 
     // Nav visibility state
     const isNavVisible = computed(() => store.state.user.dock.isVisible);
@@ -287,7 +360,7 @@ export default defineComponent({
     const updateZIndex = () => {
       navZindex.value = isChatBoxExpanded.value ? 700 : 1000;
     };
-    // Toggle nav visibility
+
     const toggleNav = async () => {
       const newValue = !isNavVisible.value;
       await store.dispatch('user/setDockVisibility', newValue);
@@ -296,9 +369,6 @@ export default defineComponent({
       updateZIndex();
     };
 
-
-
-    // Update positions based on nav visibility
     const updatePositions = () => {
       const navHeight = 180;
       if (isNavVisible.value) {
@@ -320,7 +390,6 @@ export default defineComponent({
       }
     });
 
-    // Add watch for isNavVisible to handle state changes
     watch(isNavVisible, () => {
       updatePositions();
     });
@@ -328,37 +397,27 @@ export default defineComponent({
     watch(isChatBoxExpanded, (newValue) => {
       console.log('[DashboardView.vue] ChatBox Expanded changed:', newValue);
       if (newValue) {
-        // When expanding
         isTransitioning.value=true;
-        //navRef.value.classList.add('transitioning');
         setTimeout(() => {
           isTransitioning.value=false;
-          //navRef.value.classList.remove('transitioning');
         }, 1000);
       } else {
-        // When collapsing
         isTransitioning.value=true;
-        //navRef.value.classList.add('transitioning');
         setTimeout(() => {
-          //navRef.value.classList.remove('transitioning');
           isTransitioning.value=false;
         }, 1000);
       }
-      // Force a style update if needed
       updatePositions();
     });
 
-    const currentItemForWindow = computed(() => {
-      if (!selectedItemId.value) return null;
-
-      return {
-        name: store.getters['mindspace/getItemName'] || 'Unnamed Item',
-        item: selectedItemId.value
-      };
-    });
+    // Watch for userId changes to fetch items
+    watch(userId, async (newUserId) => {
+      if (newUserId) {
+        await fetchMindspaceItems()
+      }
+    })
 
     onMounted(async () => {
-      //console.log("[DashboardView.vue]access store state: ",isNavVisible);
       const dashboardView = document.querySelector('.view.dashboard-view');
       const itemWindowView = document.querySelector('.itemWindow-view');
 
@@ -368,26 +427,28 @@ export default defineComponent({
         }
       });
 
-      // IF USER ACCESS TO DASHBOARD STRAIGHT.
+      // Set up event listener for mindslot item windows
+      emitter.on('openUnifiedItemWindow', handleMindslotItemWindow)
+      emitter.on('closeUnifiedItemWindow', handleCloseUnifiedItemWindow)
+
       try {
-        // Make sure we have a userId first
         if (!userId.value) {
           await store.dispatch('user/setUserId');
           console.log("[DashboardView.vue]",userId.value);
         }
 
-        // If no theme is selected
+        if (userId.value) {
+          await fetchMindspaceItems()
+        }
+
         if (!currentThemeId.value) {
           const loadView = await store.dispatch('mindspace/loadViewThemeId',store.state.user.user.uid);
-
           if (!loadView) {
             return router.push('/themespace');
           }
         }
 
-        // Load pages if we have a theme
         await store.dispatch('mindspace/setMindSpace');
-        //toggleView();
 
       } catch (error) {
         console.error('Error in setup:', error);
@@ -399,7 +460,6 @@ export default defineComponent({
         await store.dispatch('scores/fetchSatisfactionData',currentThemeId.value);
       }
     });
-
 
     const updateMindSpace = async () => {
       await store.dispatch('mindspace/setMindSpacePages');
@@ -419,8 +479,11 @@ export default defineComponent({
       currentMindSpaceId,
       currentItemId,
 
-      showItemWindow,
-      closeItemWindow,
+      // Unified item window
+      showAnyItemWindow,
+      unifiedItemWindowProps,
+      closeAnyItemWindow,
+
       showMoveItemWindow,
       closeMoveItemWindow,
       showSatWindow,
@@ -441,9 +504,9 @@ export default defineComponent({
       //Dock Menu visibility Handlings
       showMindUniverseModal,
 
-      // Item Window
-      selectedItemId,
-      currentItemForWindow,
+      // Shared items
+      mindspaceItems,
+      fetchMindspaceItems,
       getItemImage,
       getItemName,
     };
