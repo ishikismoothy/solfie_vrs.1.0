@@ -1,51 +1,8 @@
-<!-- mindSlot.vue -->
+<!-- Cleaned mindSlot.vue - Unified icon selection -->
 <template>
-  <Teleport to="body">
-    <div
-      v-if="expandedSlotIndex !== null"
-      class="card-window-overlay"
-      @click="handleOverlayClick"
-    ></div>
-  </Teleport>
-
-  <!-- Expanded card teleported to body -->
-  <Teleport to="body">
-    <div
-      v-show="expandedSlotIndex !== null"
-      class="debug-container"
-      :class="{ 'has-slot': expandedSlotIndex !== null && mindspace.mindslot[expandedSlotIndex] }"
-    >
-      <div class="debug-info">
-        DEBUG: expandedSlotIndex={{ expandedSlotIndex }},
-        openDirectlyToItem={{ openDirectlyToItem }},
-        directIconIndex={{ directIconIndex }}
-      </div>
-
-      <ItemWindow
-        v-if="mindspace.mindslot[expandedSlotIndex]"
-        :key="`expanded-${expandedSlotIndex}-${directIconIndex}-${openDirectlyToItem}-${Date.now()}`"
-        :mindslot="mindspace.mindslot[expandedSlotIndex]"
-        :index="expandedSlotIndex"
-        :getItemImage="getItemImage"
-        :getItemName="getItemName"
-        :items="items"
-        :expanded="true"
-        :initialFlipped="openDirectlyToItem"
-        :openedFromMindslot="true"
-        :directIconIndex="directIconIndex"
-        @refresh-items="fetchItems"
-        @delete="deleteSlot"
-        @name-change="saveSlotName"
-        @click="handleSlotClick"
-        @close="closeExpandedCard"
-        @custom-icons-changed="handleCustomIconsChanged"
-        class="expanded-teleported"
-      />
-    </div>
-  </Teleport>
-  
   <div class="return-to-myself">
-    
+    <h2 class="title">Return to myself</h2>
+
     <!-- Mind Slots Container -->
     <div class="mind-slots">
       <div
