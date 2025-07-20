@@ -6,9 +6,6 @@ import { getAvailableWidgets } from '@/config/widgetConfig';
 export const analysisService = {
   async getAnalysisData(userId, currentThemeId, usersWidgets) {
     try {
-      console.log('🎯 Getting analysis data for theme:', currentThemeId);
-      console.log('👥 Users widgets config:', usersWidgets);
-      
       if (!currentThemeId || !usersWidgets) {
         console.warn('⚠️ Missing theme or widget configuration');
         return {};
@@ -16,12 +13,10 @@ export const analysisService = {
 
       // Get only widgets that are available in current theme
       const availableWidgets = getAvailableWidgets(currentThemeId, usersWidgets, false);
-      console.log('📊 Available widgets for current theme:', availableWidgets);
       
       const results = {};
       
       for (const [key, widgetId] of Object.entries(availableWidgets)) {
-        console.log(`🔍 Processing ${key} with widget ${widgetId}`);
         results[key] = await this.processWidgetAnalysis(userId, currentThemeId, widgetId);
       }
       
@@ -33,6 +28,7 @@ export const analysisService = {
         }
       });
       
+      console.log('✅ Analysis data loaded:', results);
       return results;
     } catch (error) {
       console.error('❌ Error getting analysis data:', error);
@@ -42,8 +38,6 @@ export const analysisService = {
 
   async getAdviceData(userId, currentThemeId, usersWidgets) {
     try {
-      console.log('💡 Getting advice data for theme:', currentThemeId);
-      
       if (!currentThemeId || !usersWidgets) {
         console.warn('⚠️ Missing theme or widget configuration for advice');
         return {};
@@ -51,12 +45,10 @@ export const analysisService = {
 
       // Get only advice widgets that are available in current theme
       const availableAdviceWidgets = getAvailableWidgets(currentThemeId, usersWidgets, true);
-      console.log('💡 Available advice widgets for current theme:', availableAdviceWidgets);
       
       const results = {};
       
       for (const [key, widgetId] of Object.entries(availableAdviceWidgets)) {
-        console.log(`💡 Processing advice ${key} with widget ${widgetId}`);
         results[key] = await this.processAdviceData(userId, currentThemeId, widgetId);
       }
       
@@ -68,6 +60,7 @@ export const analysisService = {
         }
       });
       
+      console.log('✅ Advice data loaded:', results);
       return results;
     } catch (error) {
       console.error('❌ Error getting advice data:', error);
@@ -77,8 +70,6 @@ export const analysisService = {
 
   async processWidgetAnalysis(userId, currentThemeId, widgetId) {
     try {
-      console.log('🔍 Processing widget analysis for:', { userId, currentThemeId, widgetId });
-      
       // Get widget configuration and user records for specific theme-widget combination
       const [widget, records] = await Promise.all([
         widgetService.getWidget(widgetId),
@@ -86,11 +77,8 @@ export const analysisService = {
       ]);
 
       if (records.length === 0) {
-        console.log('📭 No records found for theme-widget combination');
         return { '今日': { percentage: 0, items: {} } };
       }
-
-      console.log(`📈 Found ${records.length} records for ${widgetId} in theme ${currentThemeId}`);
 
       // Group records by time periods
       const timeGroups = this.groupRecordsByTime(records);
@@ -113,8 +101,6 @@ export const analysisService = {
 
   async processAdviceData(userId, currentThemeId, widgetId) {
     try {
-      console.log('🎯 Processing advice data for:', { userId, currentThemeId, widgetId });
-      
       // Get widget configuration and user records for specific theme-widget combination
       const [widget, records] = await Promise.all([
         widgetService.getWidget(widgetId),
@@ -122,7 +108,6 @@ export const analysisService = {
       ]);
 
       if (!records || records.length === 0 || !widget.entries) {
-        console.log('📭 No advice records found for theme-widget combination');
         return [];
       }
 
@@ -130,11 +115,8 @@ export const analysisService = {
       const latestRecord = records[0];
       
       if (!latestRecord.values || !Array.isArray(latestRecord.values)) {
-        console.log('📭 Latest record has no valid values');
         return [];
       }
-
-      console.log(`💡 Processing advice from latest record with ${latestRecord.values.length} values`);
 
       // Process the advice data from the object format
       const adviceData = [];
@@ -260,8 +242,6 @@ export const analysisService = {
 
   async getTextData(userId, currentThemeId, usersWidgets) {
     try {
-      console.log('📝 Getting text widget data for theme:', currentThemeId);
-      
       if (!currentThemeId || !usersWidgets) {
         console.warn('⚠️ Missing theme or widget configuration for text widgets');
         return {};
@@ -269,12 +249,10 @@ export const analysisService = {
 
       // Get only text widgets that are available in current theme
       const availableTextWidgets = getAvailableWidgets(currentThemeId, usersWidgets, false, true);
-      console.log('📝 Available text widgets for current theme:', availableTextWidgets);
       
       const results = {};
       
       for (const [key, widgetId] of Object.entries(availableTextWidgets)) {
-        console.log(`📝 Processing text widget ${key} with widget ${widgetId}`);
         results[key] = await this.processTextData(userId, currentThemeId, widgetId);
       }
       
@@ -286,7 +264,7 @@ export const analysisService = {
         }
       });
       
-      console.log('📝 Final text data results:', results);
+      console.log('✅ Text data loaded:', results);
       return results;
     } catch (error) {
       console.error('❌ Error getting text data:', error);
@@ -296,34 +274,23 @@ export const analysisService = {
 
   async processTextData(userId, currentThemeId, widgetId) {
     try {
-      console.log('📝 Processing text data for:', { userId, currentThemeId, widgetId });
-      
       // Get widget configuration and user records for specific theme-widget combination
-      const [widget, records] = await Promise.all([
+      const [/*widget*/, records] = await Promise.all([
         widgetService.getWidgetById(widgetId), // Fixed: use getWidgetById
         recordService.getThemeWidgetRecords(userId, currentThemeId, widgetId)
       ]);
 
-      console.log('📝 Widget data:', widget);
-      console.log('📝 Records found:', records?.length || 0);
-
       if (!records || records.length === 0) {
-        console.log('📭 No text records found for theme-widget combination');
         return null;
       }
 
       // Get the most recent record
       const latestRecord = records[0];
-      console.log('📝 Latest record:', JSON.stringify(latestRecord, null, 2));
       
       // Check if this record has widget data
       if (!latestRecord || !latestRecord.values || !Array.isArray(latestRecord.values) || latestRecord.values.length === 0) {
-        console.log('📭 Latest record has no valid values');
         return null;
       }
-
-      console.log(`📝 Processing text from latest record with ${latestRecord.values.length} values`);
-      console.log('📝 First value:', JSON.stringify(latestRecord.values[0], null, 2));
 
       // Process the text data - expecting object format: { contents: "...", description: "..." }
       const valueObject = latestRecord.values[0]; // Text widgets typically have one entry
@@ -341,14 +308,12 @@ export const analysisService = {
         return textData;
       } else if (typeof valueObject === 'string') {
         // Handle string format (backwards compatibility)
-        console.log('📝 Processing string value:', valueObject);
         return {
           content: valueObject,
           description: ''
         };
       } else if (typeof valueObject === 'number') {
         // Handle numeric values
-        console.log('📝 Processing numeric value:', valueObject);
         return {
           content: valueObject.toString(),
           description: ''
@@ -359,7 +324,6 @@ export const analysisService = {
       return null;
     } catch (error) {
       console.error('❌ Error processing text data:', error);
-      console.error('Error stack:', error.stack);
       return null;
     }
   },

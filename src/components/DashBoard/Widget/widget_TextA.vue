@@ -27,7 +27,7 @@
 </template>
 
 <script>
-import { defineComponent, ref, computed, onMounted, watch } from 'vue';
+import { defineComponent, ref, computed, onMounted } from 'vue';
 import { useStore } from 'vuex';
 import { widgetService } from '@/firebase/firebaseWidget';
 import { TEXT_WIDGET_CONFIG } from '@/config/widgetConfig';
@@ -50,11 +50,6 @@ export default defineComponent({
       type: String,
       default: 'isLoading'
     },
-    // Action name to load data
-    loadDataAction: {
-      type: String,
-      default: 'loadData'
-    },
     // Widget ID
     widgetConfig: {
       type: String,
@@ -62,73 +57,40 @@ export default defineComponent({
     }
   },
   setup(props) {
-    console.log('🚀 Widget_TextA setup started with props:', props);
-    
     const store = useStore();
     const id = TEXT_WIDGET_CONFIG[props.widgetConfig];
-    console.log('📋 Widget ID from config:', id);
-    console.log('📋 TEXT_WIDGET_CONFIG:', TEXT_WIDGET_CONFIG);
-    
-    const uid = computed(() => store.state.user?.user?.uid);
-    const currentThemeId = computed(() => store.state.mindspace?.currentThemeId);
-    
-    console.log('👤 Initial UID:', uid.value);
-    console.log('🎨 Initial Theme ID:', currentThemeId.value);
 
-    // Get quote data from the store
+    // Get quote data from the store (already loaded by dashboard)
     const textData = computed(() => {
-      console.log('🔍 Computing textData...');
-      console.log('📍 textStatePath:', props.textStatePath);
-      
       const pathParts = props.textStatePath.split('.');
       let data = store.state[props.storeModule];
-      console.log('📦 Initial store module data:', data);
       
       for (const part of pathParts) {
-        console.log(`  📍 Accessing part: ${part}`);
         if (data && data[part]) {
           data = data[part];
-          console.log(`  ✅ Found data for ${part}:`, data);
         } else {
-          console.log(`  ❌ No data found for ${part}`);
           return null;
         }
       }
       
       // If data is an array, get the first item
       if (Array.isArray(data) && data.length > 0) {
-        console.log('📋 Data is array, returning first item:', data[0]);
         return data[0];
       }
       
-      console.log('📋 Final textData:', data);
       return data;
     });
     
     const isDataLoading = computed(() => {
-      const loading = store.getters[`${props.storeModule}/${props.loadingGetterName}`];
-      console.log('⏳ Loading state:', loading);
-      return loading;
-    });
-
-    // Watch for changes in textData
-    watch(textData, (newData) => {
-      console.log('👀 textData changed:', newData);
-    });
-
-    // Watch for changes in loading state
-    watch(isDataLoading, (newLoading) => {
-      console.log('⏳ Loading state changed:', newLoading);
+      return store.getters[`${props.storeModule}/${props.loadingGetterName}`];
     });
 
     // Get Widget Data for widget Name
     const widgetData = ref(null);
     
     async function getWidget(widgetId) {
-      console.log('🔧 Getting widget data for ID:', widgetId);
       try {
         const data = await widgetService.getWidgetById(widgetId);
-        console.log('✅ Widget data received:', data);
         
         return {
           name: data.name, 
@@ -136,76 +98,22 @@ export default defineComponent({
           entries: data.entries
         };
       } catch (error) {
-        console.error("❌ Error getting widget data:", error);
+        console.error("Error getting widget data:", error);
         return null;
       }
     }
 
-    // Initialize data when component is mounted
+    // Initialize only widget metadata when component is mounted
     onMounted(async () => {
-      console.log('🎬 Component mounted');
-      console.log('👤 Current UID:', uid.value);
-      console.log('🎨 Current Theme ID:', currentThemeId.value);
+      // REMOVED: Data loading - now handled by dashboard component
+      // The dashboard will call store.dispatch('analysisRecords/loadData')
+      // before any widgets are mounted
       
-      try {
-        // Check current store state
-        console.log('📦 Current store state:', store.state);
-        console.log('📦 Analysis Records module:', store.state[props.storeModule]);
-        console.log('📦 Analysis Data:', store.state[props.storeModule]?.analysisData);
-        console.log('📦 text_A data:', store.state[props.storeModule]?.analysisData?.text_A);
-        
-        // Load data from Vuex store
-        if (uid.value && currentThemeId.value) {
-          console.log('📡 Dispatching loadData action...');
-          
-          // Add a timeout to prevent hanging promises
-          const loadDataPromise = store.dispatch(`${props.storeModule}/${props.loadDataAction}`, { 
-            uid: uid.value, 
-            themeId: currentThemeId.value
-          });
-          
-          // Set a timeout of 30 seconds
-          const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('Load data timeout after 30 seconds')), 30000);
-          });
-          
-          // Race between the actual load and timeout
-          await Promise.race([loadDataPromise, timeoutPromise]);
-          
-          console.log('✅ LoadData action completed');
-          
-          // Check store state after loading
-          console.log('📦 Store state after loading:', store.state[props.storeModule]?.analysisData);
-          console.log('📦 text_A after loading:', store.state[props.storeModule]?.analysisData?.text_A);
-        } else {
-          console.warn('⚠️ Cannot load data: missing uid or themeId');
-        }
-        
-        // Get widget data
-        if (id) {
-          console.log('🔧 Loading widget data...');
-          
-          // Also add timeout for widget loading
-          const widgetPromise = getWidget(id);
-          const widgetTimeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('Widget load timeout after 10 seconds')), 10000);
-          });
-          
-          widgetData.value = await Promise.race([widgetPromise, widgetTimeoutPromise]);
-          console.log('✅ Widget data loaded:', widgetData.value);
-        } else {
-          console.warn('⚠️ No widget ID found in config');
-        }
-      } catch (error) {
-        console.error('❌ Error in onMounted:', error);
-        console.error('Error stack:', error.stack);
-        
-        // Set a user-friendly error state if needed
-        // You might want to add an error ref to show to users
-        // errorMessage.value = 'データの読み込みに失敗しました。ページを更新してください。';
+      // Only get widget metadata (name, description, etc.)
+      if (id) {
+        widgetData.value = await getWidget(id);
       }
     });
-          
 
     return {
       widgetData,
@@ -217,4 +125,50 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.text-widget-section {
+  margin-bottom: 1rem;
+}
+
+.text-widget-loading {
+  padding: 2rem;
+  text-align: center;
+}
+
+.loading-text {
+  color: #666;
+  font-style: italic;
+}
+
+.text-widget-title {
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.text-container {
+  margin: 1rem 0;
+}
+
+.text-mark-start {
+  left: 0;
+  top: -0.5rem;
+}
+
+.text-mark-end {
+  right: 0;
+  bottom: -0.5rem;
+}
+
+.text-title {
+  display: block;
+  text-align: right;
+  margin-top: 1rem;
+  font-style: normal;
+  color: #666;
+}
+
+.no-text-data {
+  text-align: center;
+  color: #999;
+  padding: 2rem;
+}
 </style>

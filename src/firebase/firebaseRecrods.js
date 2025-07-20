@@ -1,4 +1,4 @@
-// firebase/firebaserecords.js
+// firebase/firebaseRecords.js
 import { db } from './firebaseInit';
 import { collection, query, where, orderBy, getDocs, doc, getDoc } from 'firebase/firestore';
 
@@ -6,8 +6,6 @@ export const recordService = {
     // Get user's widget configuration (usersWidgets)
     async getUsersWidgets(userId) {
         try {
-            console.log('👥 Getting usersWidgets for user:', userId);
-            
             const userDocRef = doc(db, 'users', userId);
             const userDoc = await getDoc(userDocRef);
             
@@ -29,8 +27,6 @@ export const recordService = {
 
     async getUserRecords(userId, currentThemeId = null, widgetId = null) {
         try {
-            console.log('🔍 Starting getUserRecords with:', { userId, currentThemeId, widgetId });
-            
             // Always start with basic user filter
             let recordsQuery = query(
                 collection(db, 'records'),
@@ -38,22 +34,12 @@ export const recordService = {
                 orderBy('createdAt', 'desc')
             );
 
-            console.log('🔄 Executing query...');
             const recordsSnapshot = await getDocs(recordsQuery);
-            console.log('📈 Query result - Size:', recordsSnapshot.size);
             
             const allRecords = [];
             
             recordsSnapshot.forEach((doc) => {
                 const docData = doc.data();
-                console.log(`📄 Document ${doc.id}:`, {
-                    id: doc.id,
-                    uid: docData.uid,
-                    hasRecord: !!docData.record,
-                    recordKeys: docData.record ? Object.keys(docData.record) : [],
-                    createdAt: docData.createdAt
-                });
-                
                 allRecords.push({
                     id: doc.id,
                     ...docData
@@ -69,10 +55,6 @@ export const recordService = {
                                         record.record[currentThemeId] && 
                                         record.record[currentThemeId][widgetId];
                     
-                    if (hasThemeData) {
-                        console.log(`✅ Record ${record.id} has data for theme ${currentThemeId} widget ${widgetId}`);
-                    }
-                    
                     return hasThemeData;
                 });
             } else if (currentThemeId) {
@@ -81,24 +63,17 @@ export const recordService = {
                 });
             }
 
-            console.log(`✅ Filtered ${filteredRecords.length} records from ${allRecords.length} total`);
+            console.log(`✅ Retrieved ${filteredRecords.length} records for user`);
             return filteredRecords;
         } catch (error) {
             console.error('❌ Error fetching records:', error);
-            console.error('Error details:', {
-                code: error.code,
-                message: error.message
-            });
             throw error;
         }
     },
 
     async getThemeWidgetRecords(userId, currentThemeId, widgetId) {
         try {
-            console.log('🎯 Getting records for theme-widget:', { userId, currentThemeId, widgetId });
-            
             const records = await this.getUserRecords(userId, currentThemeId, widgetId);
-            console.log('📋 Raw records from getUserRecords:', records.length);
             
             // Extract and format the specific widget data
             const formattedRecords = records
@@ -109,13 +84,6 @@ export const recordService = {
                 })
                 .map(record => {
                     const widgetValues = record.record[currentThemeId][widgetId];
-                    
-                    console.log(`📊 Record ${record.id} widget data:`, {
-                        themeId: currentThemeId,
-                        widgetId: widgetId,
-                        values: widgetValues,
-                        createdAt: record.createdAt
-                    });
                     
                     return {
                         id: record.id,
@@ -140,7 +108,6 @@ export const recordService = {
             const themeWidgets = usersWidgets[currentThemeId] || [];
             
             const hasWidget = themeWidgets.includes(widgetId);
-            console.log(`🔍 Theme ${currentThemeId} has widget ${widgetId}:`, hasWidget);
             
             return hasWidget;
         } catch (error) {
@@ -155,7 +122,6 @@ export const recordService = {
             const usersWidgets = await this.getUsersWidgets(userId);
             const themeWidgets = usersWidgets[currentThemeId] || [];
             
-            console.log(`📊 Widgets for theme ${currentThemeId}:`, themeWidgets);
             return themeWidgets;
         } catch (error) {
             console.error('❌ Error getting theme widgets:', error);

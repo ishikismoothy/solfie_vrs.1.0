@@ -1,4 +1,4 @@
-import { createRouter, createWebHashHistory } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 import { getAuth, onAuthStateChanged } from 'firebase/auth'
 import { firebaseApp } from '@/firebase/firebaseInit'
 
@@ -23,12 +23,12 @@ const routes = [
     component: () => import('../views/DashboardView.vue'),
     meta: { requiresAuth: true }
   },
-   {
-     path: '/dataextract',
-     name: 'dataextract',
-     component: () => import('../views/dataExtractTestView.vue'),
-     meta: { requiresAuth: true }
-   },
+  {
+    path: '/dataextract',
+    name: 'dataextract',
+    component: () => import('../views/dataExtractTestView.vue'),
+    meta: { requiresAuth: true }
+  },
   {
     path: '/themespace',
     name: 'themespace',
@@ -47,27 +47,33 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHashHistory(),
+  history: createWebHistory(process.env.BASE_URL),
   routes
 })
 
+// Remove the automatic redirect on auth state change
+// This was causing issues with shared links
 let isAuthInitialized = false;
 
-onAuthStateChanged(getAuth(), (user) => {
-  if (!isAuthInitialized) {
-    isAuthInitialized = true;
-    if (user) {
-      // Redirect to themespace if authenticated
-      router.push('/themespace');
-    } else {
-      // Redirect to login if not authenticated
-      router.push('/login');
-    }
-  }
+onAuthStateChanged(getAuth(), () => {
+  isAuthInitialized = true;
+  // Don't do any automatic redirects here
+  // Let the route guards handle navigation
 });
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const auth = getAuth();
+  
+  // Wait for auth to initialize if it hasn't yet
+  if (!isAuthInitialized) {
+    await new Promise((resolve) => {
+      const unsubscribe = onAuthStateChanged(getAuth(), () => {
+        unsubscribe();
+        resolve();
+      });
+    });
+  }
+  
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
   const isPublicShare = to.matched.some(record => record.meta.isPublicShare);
   
@@ -77,11 +83,19 @@ router.beforeEach((to, from, next) => {
     return;
   }
 
+  // Handle auth-required routes
   if (requiresAuth && !auth.currentUser) {
     next('/login');
-  } else if (to.path === '/login' && auth.currentUser) {
-    next('/dashboard');
-  } else {
+  } 
+  // Redirect authenticated users away from login
+  else if (to.path === '/login' && auth.currentUser) {
+    next('/themespace');
+  } 
+  // Handle root path for authenticated users
+  else if (to.path === '/' && auth.currentUser) {
+    next('/themespace');
+  }
+  else {
     next();
   }
 })

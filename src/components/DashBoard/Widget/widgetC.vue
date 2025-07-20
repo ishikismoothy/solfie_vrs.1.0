@@ -22,7 +22,7 @@
       <div class="chart-circle">
         <svg width="0" height="0">
           <defs>
-            <linearGradient id="chartGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <linearGradient id="chartGradientC" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" style="stop-color:#ff500b;stop-opacity:1" />
               <stop offset="100%" style="stop-color:#E190CB;stop-opacity:1" />
             </linearGradient>
@@ -30,7 +30,7 @@
         </svg>
         <svg viewBox="0 0 100 100">
           <circle cx="50" cy="50" r="45" fill="none" stroke="#eee" stroke-width="10" />
-          <circle cx="50" cy="50" r="45" fill="none" stroke="url(#chartGradient)" stroke-width="10"
+          <circle cx="50" cy="50" r="45" fill="none" stroke="url(#chartGradientC)" stroke-width="10"
                   stroke-dasharray="282.7" :stroke-dashoffset="282.7 - (282.7 * (animatedValues[selectedDataTab]?.percentage || 0) / 100)"
                   stroke-linecap="round" class="chart-fill-circle" />
         </svg>
@@ -108,14 +108,13 @@
 </template>
 
 <script>
-
 import { defineComponent, ref, computed, watch, onMounted } from 'vue';
 import { useStore } from 'vuex';
 import { widgetService } from '@/firebase/firebaseWidget'
 import { WIDGET_CONFIG } from '@/config/widgetConfig'
 
 export default defineComponent({
-  name: 'ChartComponent',
+  name: 'WidgetC',
   props: {
     // Store module name to fetch data from
     storeModule: {
@@ -125,48 +124,41 @@ export default defineComponent({
     // Tab key in the store
     tabKey: {
       type: String,
-      default: 'decisionMakingPower'
+      default: 'activityEnvironmentExpression'  // Fixed: Updated default
     },
     tabType: {
       type: String,
-      default: 'tab_A'
+      default: 'tab_C'  // Fixed: Updated default
     },
     // Getter name for data
     dataGetterName: {
       type: String,
-      default: 'getDataA'
+      default: 'getDataC'  // Fixed: Updated default
     },
     // State path to chart data
     dataStatePath: {
       type: String,
-      default: 'analysisData.data_A'
+      default: 'analysisData.data_C'  // Fixed: Updated default
     },
     // State path to advice data
     adviceStatePath: {
       type: String,
-      default: 'analysisData.advice_A'
+      default: 'analysisData.advice_C'  // Fixed: Updated default
     },
     // State path to loading status
     loadingGetterName: {
       type: String,
       default: 'isLoading'
     },
-    // Action name to load data
-    loadDataAction: {
-      type: String,
-      default: 'loadData'
-    },
     // Widget ID
-    widgetConfig:{
+    widgetConfig: {
       type: String,
-      default: 'data_A'
+      default: 'data_C'  // Fixed: Updated default
     }
   },
   setup(props) {
     const store = useStore();
     const id = WIDGET_CONFIG[props.widgetConfig];
-    const uid = store.state.user.user.uid;
-    const currentThemeId = store.state.mindspace.currentThemeId;
 
     // Linear interpolation function for smooth animations
     const lerp = (start, end, t) => start * (1 - t) + end * t;
@@ -296,6 +288,11 @@ export default defineComponent({
       }
     }, { immediate: true });
 
+    // Watch for data changes to initialize animated values
+    watch(chartData, () => {
+      initializeAnimatedValues();
+    }, { immediate: true });
+
     // Reset flip states when switching to advice tab
     watch(selectedDataTab, (newTab) => {
       if (newTab === 'アドバイス') {
@@ -303,11 +300,10 @@ export default defineComponent({
       }
     });
 
-    //Get Widget Data for widget Name
+    // Get Widget Data for widget Name
     const widgetData = ref(null);
     async function getWidget(widgetId) {
       try {
-        // Make sure to await the Promise
         const data = await widgetService.getWidgetById(widgetId);
         
         return {
@@ -321,16 +317,19 @@ export default defineComponent({
       }
     }
 
-    // Initialize data when component is mounted
+    // Initialize only widget metadata when component is mounted
     onMounted(async () => {
-      // Load data from Vuex store
-      await store.dispatch(`${props.storeModule}/${props.loadDataAction}`, { uid:uid, themeId:currentThemeId});
+      // REMOVED: Data loading - now handled by dashboard component
+      // The dashboard will call store.dispatch('analysisRecords/loadData')
+      // before any widgets are mounted
       
-      // Initialize animated values with the correct structure
+      // Initialize animated values with the data that's already in the store
       initializeAnimatedValues();
 
-      // Get widget data
-      widgetData.value = await getWidget(id);
+      // Only get widget metadata (name, description, etc.)
+      if (id) {
+        widgetData.value = await getWidget(id);
+      }
     });
 
     return {

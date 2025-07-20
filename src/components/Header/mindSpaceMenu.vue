@@ -66,13 +66,11 @@
             <div class="mindspace-content">
               <div class="globe-icon" :class="{ 'is-favourite': defaultMindSpaceId === mindspace.id }">
                 <button
-                  class = "icon-button" 
                   @click="toggleSetMindSpace(mindspace.id)"
                 >
-                <img src="@//assets/icons/utility/globeIcon.svg" class="globe-default" alt="globe" />
-                <img src="@//assets/icons/utility/globeIcon_active.svg" class="globe-active" alt="globe-active" />
-              </button>
-
+                  <img src="@//assets/icons/utility/globeIcon.svg" class="globe-default" alt="globe" />
+                  <img src="@//assets/icons/utility/globeIcon_active.svg" class="globe-active" alt="globe-active" />
+                </button>
               </div>
               
               <TruncateText
@@ -338,18 +336,22 @@
       };
 
       const toggleFavourite = async (mindSpace) => {
-        console.log("[mindSpaceMenu.vue/toggleFavourite]",mindSpace.id);
-        closeSettings();
+        console.log("[mindSpaceMenu.vue/toggleFavourite]", mindSpace.id);
+        
+        // Close both overlays
+        activeSettingsId.value = null;
+        activeSetMindSpaceId.value = null;
 
-        // Implement favorite toggle logic
+        // Update in Firebase
         const result = await mindspaceService.setDefaultMindspace(props.themeId, mindSpace.id);
 
         if (result.success) {
-          console.log("[mindSpaceMenu.vue]",result.message)
-          await store.dispatch('mindspace/setMindSpace');
-        }else{
+          console.log("[mindSpaceMenu.vue]", result.message);
+          // Pass the whole mindSpace object instead of just the ID
+          await store.dispatch('mindspace/updateDefaultMindSpace', mindSpace);
+        } else {
           console.log(result.error);
-        } 
+        }
       };
 
       const togglePrivacy = async (mindspace) => {

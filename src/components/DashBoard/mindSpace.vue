@@ -1050,7 +1050,20 @@
       const refreshMindGridAfterOperation = async () => {
         try {
           console.log('[refreshMindGridAfterOperation] Refreshing mind grid data');
-          await store.dispatch('mindspace/setMindSpacePages');
+          
+          // Check if we have a currentMindSpaceId first
+          const currentMindSpaceId = store.state.mindspace.currentMindSpaceId;
+          
+          if (!currentMindSpaceId) {
+            console.log('[refreshMindGridAfterOperation] No currentMindSpaceId yet, initializing mindspace...');
+            // If no mindSpaceId, we need to initialize first
+            await store.dispatch('mindspace/setMindSpace');
+            // setMindSpace already calls setMindSpacePages, so we're done
+          } else {
+            // Only refresh if we already have a mindSpaceId (e.g., after edit operations)
+            await store.dispatch('mindspace/setMindSpacePages');
+          }
+          
           await nextTick();
           console.log('[refreshMindGridAfterOperation] Mind grid refreshed successfully');
         } catch (error) {
@@ -1059,19 +1072,53 @@
       };
 
       const containerStyle = computed(() => {
-          if (background.value.type === 'color') {
-              return { backgroundColor: background.value.value1 };
-          } else {
-              return { backgroundImage: `url(${background.value.value2})` };
-          }
+        if (background.value.type === 'color') {
+          return { backgroundColor: background.value.value1 };
+        } else {
+          return { backgroundImage: `url(${background.value.value2})` };
+        }
       });
 
       onMounted(async () => {
         updateTime();
         setInterval(updateTime, 60000);
 
-        await store.dispatch('user/fetchItemCustomIcons');
-        await refreshMindGridAfterOperation();
+        try {
+          // Check if mindspace data is already loaded
+          const currentMindSpaceId = store.state.mindspace.currentMindSpaceId;
+          const mindSpacePages = store.state.mindspace.mindSpacePages;
+          
+          if (!currentMindSpaceId) {
+            console.log('[onMounted] Waiting for parent component to initialize mindspace...');
+            // The parent component (DashboardView) handles the initialization
+            // We'll wait for it to be ready
+            
+            const unwatch = watch(
+              () => store.state.mindspace.currentMindSpaceId,
+              async (newId) => {
+                if (newId) {
+                  //console.log('[onMounted] Mindspace initialized by parent, loading custom icons...');
+                  await store.dispatch('user/fetchItemCustomIcons');
+                  // Don't call refreshMindGridAfterOperation here as parent already loaded the data
+                  unwatch();
+                }
+              },
+              { immediate: true }
+            );
+          } else if (mindSpacePages && mindSpacePages.length > 0 && mindSpacePages[0].items !== undefined) {
+            // Mindspace is already initialized and has data, just fetch custom icons
+            console.log('[onMounted] Mindspace already loaded, fetching custom icons only...');
+            await store.dispatch('user/fetchItemCustomIcons');
+            // Don't refresh grid data as it's already loaded
+          } else {
+            // Mindspace ID exists but pages might not be loaded (edge case)
+            console.log('[onMounted] Mindspace ID exists but pages not loaded, refreshing...');
+            await store.dispatch('user/fetchItemCustomIcons');
+            await refreshMindGridAfterOperation();
+          }
+        } catch (error) {
+          console.error('[onMounted] Error during initialization:', error);
+        }
 
         window.addEventListener('resize', () => {
           pageWidth.value = window.innerWidth;

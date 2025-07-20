@@ -3,7 +3,7 @@
   <header class="header-container">
     <div class="left-section">
       <div class="globe-icon">
-        <button class="icon-button"
+        <button
           @click="toggleMenu"
         >
           <img src="@//assets/icons/utility/globeIcon.svg" alt="globe" />

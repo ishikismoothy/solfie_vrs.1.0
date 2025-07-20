@@ -95,8 +95,6 @@ export default {
       // Get current theme ID from themeSpace store
       async getCurrentThemeId({ commit }, themeId) {
         try {
-          
-          console.log('🎯 Final current theme ID:', themeId);
           commit('SET_CURRENT_THEME_ID', themeId);
           return themeId;
         } catch (error) {
@@ -126,8 +124,6 @@ export default {
             throw new Error('User not authenticated');
           }
 
-          console.log('🚀 Loading data for current theme...');
-
           // Get current theme ID and users widgets configuration
           const [currentThemeId, usersWidgets] = await Promise.all([
             dispatch('getCurrentThemeId', themeId),
@@ -140,18 +136,12 @@ export default {
             return;
           }
 
-          console.log('📊 Loading data with:', { currentThemeId, usersWidgets });
-
           // Load all types of data in parallel
           const [analysisData, adviceData, textData] = await Promise.all([
             analysisService.getAnalysisData(uid, currentThemeId, usersWidgets),
             analysisService.getAdviceData(uid, currentThemeId, usersWidgets),
             analysisService.getTextData(uid, currentThemeId, usersWidgets)
           ]);
-          
-          console.log('📈 Analysis data loaded:', analysisData);
-          console.log('💡 Advice data loaded:', adviceData);
-          console.log('📝 Text data loaded:', textData);
           
           // Commit the data to store
           commit('SET_DATA_A', analysisData.data_A || {});
@@ -170,12 +160,7 @@ export default {
           // Track the theme we loaded data for
           commit('SET_LAST_LOADED_THEME_ID', currentThemeId);
           
-          console.log('✅ All data committed to store successfully');
-          console.log('📦 Final store state:', {
-            data: analysisData,
-            advice: adviceData,
-            text: textData
-          });
+          console.log('✅ All data loaded successfully for theme:', currentThemeId);
           
           commit('SET_LOADING', false);
         } catch (error) {
@@ -205,8 +190,6 @@ export default {
             usersWidgets = await dispatch('getUsersWidgets', uid);
           }
 
-          console.log('🎯 Loading specific widget data:', { widgetKey, isAdvice, currentThemeId });
-          
           // Get the widget ID for this category
           const widgetConfig = isAdvice ? ADVICE_WIDGET_CONFIG : WIDGET_CONFIG;
           const widgetId = widgetConfig[widgetKey];
@@ -231,6 +214,7 @@ export default {
           }
           
           commit('SET_ANALYSIS_DATA', { key: widgetKey, data: widgetData });
+          console.log(`✅ Widget data loaded for ${widgetKey}`);
         } catch (error) {
           console.error(`❌ Error loading ${widgetKey} data:`, error);
           throw error;
@@ -365,7 +349,7 @@ export default {
       },
       
       // Debug getter
-      getDebugInfo: (state, getters, rootState, rootGetters) => {
+      getDebugInfo: (state, getters, rootGetters) => {
         return {
           currentThemeId: state.currentThemeId,
           focusedThemeFromStore: rootGetters['themeSpace/getFocusedThemeId'],

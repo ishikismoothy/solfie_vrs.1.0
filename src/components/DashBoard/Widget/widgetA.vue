@@ -108,14 +108,13 @@
 </template>
 
 <script>
-
 import { defineComponent, ref, computed, watch, onMounted } from 'vue';
 import { useStore } from 'vuex';
 import { widgetService } from '@/firebase/firebaseWidget'
 import { WIDGET_CONFIG } from '@/config/widgetConfig'
 
 export default defineComponent({
-  name: 'ChartComponent',
+  name: 'WidgetA',
   props: {
     // Store module name to fetch data from
     storeModule: {
@@ -151,13 +150,8 @@ export default defineComponent({
       type: String,
       default: 'isLoading'
     },
-    // Action name to load data
-    loadDataAction: {
-      type: String,
-      default: 'loadData'
-    },
     // Widget ID
-    widgetConfig:{
+    widgetConfig: {
       type: String,
       default: 'data_A'
     }
@@ -165,8 +159,6 @@ export default defineComponent({
   setup(props) {
     const store = useStore();
     const id = WIDGET_CONFIG[props.widgetConfig];
-    const uid = store.state.user.user.uid;
-    const currentThemeId = store.state.mindspace.currentThemeId;
 
     // Linear interpolation function for smooth animations
     const lerp = (start, end, t) => start * (1 - t) + end * t;
@@ -296,6 +288,11 @@ export default defineComponent({
       }
     }, { immediate: true });
 
+    // Watch for data changes to initialize animated values
+    watch(chartData, () => {
+      initializeAnimatedValues();
+    }, { immediate: true });
+
     // Reset flip states when switching to advice tab
     watch(selectedDataTab, (newTab) => {
       if (newTab === 'アドバイス') {
@@ -303,11 +300,10 @@ export default defineComponent({
       }
     });
 
-    //Get Widget Data for widget Name
+    // Get Widget Data for widget Name
     const widgetData = ref(null);
     async function getWidget(widgetId) {
       try {
-        // Make sure to await the Promise
         const data = await widgetService.getWidgetById(widgetId);
         
         return {
@@ -321,16 +317,15 @@ export default defineComponent({
       }
     }
 
-    // Initialize data when component is mounted
+    // Initialize only widget metadata when component is mounted
     onMounted(async () => {
-      // Load data from Vuex store
-      await store.dispatch(`${props.storeModule}/${props.loadDataAction}`, { uid:uid, themeId:currentThemeId});
-      
-      // Initialize animated values with the correct structure
+      // Initialize animated values with the data that's already in the store
       initializeAnimatedValues();
 
-      // Get widget data
-      widgetData.value = await getWidget(id);
+      // Only get widget metadata (name, description, etc.)
+      if (id) {
+        widgetData.value = await getWidget(id);
+      }
     });
 
     return {

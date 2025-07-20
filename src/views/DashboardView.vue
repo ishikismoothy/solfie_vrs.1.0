@@ -1,4 +1,4 @@
-<!-- DashboardView.vue -->
+<!-- views/DashboardView.vue -->
 <template>
   <LoadingScreen v-model="isLoading" />
 
@@ -435,7 +435,7 @@ export default defineComponent({
       try {
         if (!userId.value) {
           await store.dispatch('user/setUserId');
-          console.log("[DashboardView.vue]",userId.value);
+          console.log("[DashboardView.vue]", userId.value);
         }
 
         if (userId.value) {
@@ -443,22 +443,48 @@ export default defineComponent({
         }
 
         if (!currentThemeId.value) {
-          const loadView = await store.dispatch('mindspace/loadViewThemeId',store.state.user.user.uid);
+          const loadView = await store.dispatch('mindspace/loadViewThemeId', store.state.user.user.uid);
           if (!loadView) {
             return router.push('/themespace');
           }
         }
 
+        // Call setMindSpace instead of setMindSpaceId directly
+        // This will handle the proper initialization flow
         await store.dispatch('mindspace/setMindSpace');
+
+        // Load all dashboard-related data after core initialization
+        await Promise.all([
+          store.dispatch('user/setLastViewLocationHistory', { lastLocation: "mindspace" }),
+          store.dispatch('themeSpace/setThemeId', currentThemeId.value),
+          store.dispatch('themeSpace/getSelfAssessment'),
+          store.dispatch('scores/fetchSatisfactionData', currentThemeId.value)
+        ]);
+
+        // Load widget data after everything else is ready
+        if (userId.value && currentThemeId.value) {
+          console.log('[DashboardView.vue] Loading widget data for:', {
+            uid: userId.value,
+            themeId: currentThemeId.value
+          });
+          
+          await store.dispatch('analysisRecords/loadData', { 
+            uid: userId.value, 
+            themeId: currentThemeId.value 
+          });
+          
+          // Also load other dashboard data that was previously in dashboard.vue
+          await Promise.all([
+            store.dispatch('chat/addRandomMessages'),
+            store.dispatch('scores/loadScoresData'),
+            store.dispatch('todos/loadTodosData'),
+            store.dispatch('user/getUserWidgets')
+          ]);
+        }
 
       } catch (error) {
         console.error('Error in setup:', error);
         router.push('/themespace');
-      }finally{
-        await store.dispatch('user/setLastViewLocationHistory', {lastLocation:"mindspace"});
-        store.dispatch('themeSpace/setThemeId', currentThemeId.value);
-        await store.dispatch('themeSpace/getSelfAssessment');
-        await store.dispatch('scores/fetchSatisfactionData',currentThemeId.value);
       }
     });
 

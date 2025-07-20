@@ -1,7 +1,6 @@
-<!-- Cleaned mindSlot.vue - Unified icon selection -->
+<!-- src/components/mindSlot.vue -->
 <template>
   <div class="return-to-myself">
-    <h2 class="title">Return to myself</h2>
 
     <!-- Mind Slots Container -->
     <div class="mind-slots">
@@ -13,7 +12,7 @@
       >
         <div class="slot-header">
           <input
-            v-if="editingSlotIndex === index"
+            v-if="editingSlotIndex === index && !isViewOnly"
             v-model="editingName"
             @blur="saveSlotName(index)"
             @keyup.enter="saveSlotName(index)"
@@ -21,11 +20,13 @@
             class="slot-name-input"
             ref="nameInput"
           />
-          <h3 v-else class="slot-name" @click.stop="startEditingName(index)">
+          <h3 v-else class="slot-name" @click.stop="!isViewOnly && startEditingName(index)">
             {{ mindslot.name || 'New Slot' }}
           </h3>
 
+          <!-- Hide delete button in view-only mode -->
           <button
+            v-if="!isViewOnly"
             @click.stop="deleteSlot(index)"
             class="delete-btn"
           >×</button>
@@ -36,9 +37,9 @@
           <div v-if="isSingleItemSlot(mindslot) && items[mindslot.item]" class="single-item-content">
             <div
               class="icon-slot has-item clickable single-item-icon"
-              @contextmenu.prevent="handleSingleItemRightClick($event, index)"
-              @touchstart="handleSingleItemTouchStart($event, index)"
-              @touchend="handleSingleItemTouchEnd"
+              @contextmenu.prevent="!isViewOnly && handleSingleItemRightClick($event, index)"
+              @touchstart="!isViewOnly && handleSingleItemTouchStart($event, index)"
+              @touchend="!isViewOnly && handleSingleItemTouchEnd()"
             >
               <!-- Show custom icon if set, otherwise show item name -->
               <div v-if="getSingleItemCustomIcon(mindslot)" class="custom-icon" v-html="getSingleItemCustomIcon(mindslot)"></div>
@@ -62,19 +63,19 @@
               :items="items"
               :clickable="false"
               :expanded="false"
-              @icons-changed="(icons) => handleSlotIconsChanged({ index, icons })"
+              @icons-changed="(icons) => !isViewOnly && handleSlotIconsChanged({ index, icons })"
               @icon-clicked="(iconIndex) => handleDirectIconClick(index, iconIndex)"
-              @icon-right-click="(iconIndex, event) => openIconSelector(event, index, iconIndex)"
-              @custom-icon-changed="(customIcons) => handleCustomIconsChanged({ index, customIcons })"
+              @icon-right-click="(iconIndex, event) => !isViewOnly && openIconSelector(event, index, iconIndex)"
+              @custom-icon-changed="(customIcons) => !isViewOnly && handleCustomIconsChanged({ index, customIcons })"
             />
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Add Slot Button -->
+    <!-- Add Slot Button - Hidden in view-only mode -->
     <button
-      v-if="mindspace.mindslot.length < 5"
+      v-if="mindspace.mindslot.length < 5 && !isViewOnly"
       @click="addSlot('New Slot')"
       class="add-slot-btn"
     >
@@ -179,6 +180,26 @@
   const currentUser = computed(() => store.state.user?.user?.uid)
   const currentMindSpaceId = computed(() => store.state.mindspace?.currentMindSpaceId)
 
+  // Check if in view-only mode (shared view without edit permissions)
+  const isSharedView = computed(() => store.state.mindspace?.isSharedView || false)
+  const isEditMode = computed(() => store.state.mindspace?.isEditMode || false)
+  
+  // 1. Add the currentShareData getter from the sharing module
+  const currentShareData = computed(() => store.state.sharing?.currentShareData)
+  // 2. Update the isViewOnly computed property
+  const isViewOnly = computed(() => {
+    // If there's share data, check the access level
+    if (currentShareData.value?.access) {
+      // Only 'view' access should be view-only
+      // 'editor' and 'co-creator' can edit
+      return currentShareData.value.access === 'view'
+    }
+    
+    // Fallback to original logic if no share data
+    // View-only if in shared view AND not in edit mode
+    return isSharedView.value && !isEditMode.value
+  })
+
   // Reactive state
   const mindspace = ref({
     name: '',
@@ -233,11 +254,13 @@
 
   // Single-item icon selection handlers
   const handleSingleItemRightClick = (event, slotIndex) => {
+    if (isViewOnly.value) return
     event.preventDefault()
     openIconSelector(event, slotIndex, -1) // -1 indicates single item
   }
 
   const handleSingleItemTouchStart = (event, slotIndex) => {
+    if (isViewOnly.value) return
     touchTimer = setTimeout(() => {
       openIconSelector(event.touches[0], slotIndex, -1)
     }, longPressDelay)
@@ -252,6 +275,8 @@
 
   // Open icon selector
   const openIconSelector = (event, slotIndex, iconIndex) => {
+    if (isViewOnly.value) return
+    
     currentSlotIndex.value = slotIndex
     currentIconIndex.value = iconIndex
 
@@ -290,6 +315,8 @@
 
   // Handle icon selection
   const handleIconSelection = async (selectedIcon) => {
+    if (isViewOnly.value) return
+    
     if (currentSlotIndex.value >= 0) {
       const mindslot = mindspace.value.mindslot[currentSlotIndex.value]
 
@@ -399,6 +426,8 @@
 
   // Name editing
   const startEditingName = (index) => {
+    if (isViewOnly.value) return
+    
     editingSlotIndex.value = index
     editingName.value = mindspace.value.mindslot[index].name || 'New Slot'
     nextTick(() => {
@@ -407,6 +436,8 @@
   }
 
   const saveSlotName = (index) => {
+    if (isViewOnly.value) return
+    
     editingSlotIndex.value = null
     if (editingName.value.trim() !== mindspace.value.mindslot[index].name) {
       mindspace.value.mindslot[index].name = editingName.value.trim()
@@ -416,6 +447,7 @@
 
   // Slot management functions
   const addSlot = async (title, itemId, slotType = 'single') => {
+    if (isViewOnly.value) return
     if (mindspace.value.mindslot.length >= 5) return
 
     const newSlot = {
@@ -434,6 +466,8 @@
 
   // Handle icons
   const handleSlotIconsChanged = async ({ index, icons }) => {
+    if (isViewOnly.value) return
+    
     mindspace.value.mindslot[index] = {
       ...mindspace.value.mindslot[index],
       slotIcons: icons
@@ -442,6 +476,8 @@
   }
 
   const handleCustomIconsChanged = async ({ index, customIcons }) => {
+    if (isViewOnly.value) return
+    
     const safeCustomIcons = customIcons.map(icon => icon === undefined ? null : icon)
 
     mindspace.value.mindslot[index] = {
@@ -453,12 +489,16 @@
 
   // Delete slot
   const deleteSlot = async (index) => {
+    if (isViewOnly.value) return
+    
     mindspace.value.mindslot.splice(index, 1)
     await updateMindspace()
   }
 
   // Update mindspace
   const updateMindspace = async () => {
+    if (isViewOnly.value) return
+    
     try {
       const cleanMindslots = (mindspace.value.mindslot || []).map(slot => ({
         name: slot.name || 'New Slot',
@@ -519,6 +559,8 @@
   }
 
   const addToExistingSlot = async (slot) => {
+    if (isViewOnly.value) return
+    
     const slotData = mindspace.value.mindslot[slot.slotIndex]
 
     if (slot.type === 'empty') {
@@ -545,6 +587,8 @@
   }
 
   const createNewSlot = async (slotType) => {
+    if (isViewOnly.value) return
+    
     // Check total slots count, not full slots count, since we're creating a new slot
     if (mindspace.value.mindslot.length >= 5) {
       alert('Maximum of 5 mind slots reached. Cannot add more slots.')
@@ -558,6 +602,11 @@
 
   // Handle modal trigger from +MIND button
   const handleShowMindslotModal = ({ title, itemId }) => {
+    if (isViewOnly.value) {
+      showToastMessage('Cannot edit mindslots in view-only mode')
+      return
+    }
+    
     const currentSlots = mindspace.value.mindslot || []
 
     // Count only FULL slots, not all slots
@@ -597,6 +646,8 @@
   }
 
   const handleRemoveMindslot = ({ slotIndex, iconIndex }) => {
+    if (isViewOnly.value) return
+    
     const slot = mindspace.value.mindslot[slotIndex]
 
     if (iconIndex !== undefined) {

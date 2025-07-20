@@ -1,4 +1,4 @@
-<!-- dashboard.vue -->
+<!-- src/components/dashboard.vue -->
 <template>
 <div class="dashboard">
     <main>
@@ -36,7 +36,6 @@
         dataStatePath="analysisData.data_B"
         adviceStatePath="analysisData.advice_B"
         loadingGetterName="isLoading"
-        loadDataAction="loadData"
         widgetConfig="data_B"
       />
       <WidgetC
@@ -48,7 +47,6 @@
         dataStatePath="analysisData.data_C"
         adviceStatePath="analysisData.advice_C"
         loadingGetterName="isLoading"
-        loadDataAction="loadData"
         widgetConfig="data_C"
       />
       <Widget_TextA
@@ -269,10 +267,13 @@
       };
 
       onMounted(async () => {
-        await store.dispatch('chat/addRandomMessages');
-        await store.dispatch('scores/loadScoresData');
-        await store.dispatch('todos/loadTodosData');
-        await store.dispatch('user/getUserWidgets');
+        // All data loading is now handled by the parent component (DashboardView.vue)
+        // This component can focus on UI-specific initialization if needed
+        
+        console.log('[Dashboard.vue] Component mounted, data should be loaded by parent');
+        
+        // Any component-specific initialization that doesn't involve data loading
+        // For example, setting up intervals, event listeners, etc.
       });
 
       //console.log('Entire store state:', store.state);

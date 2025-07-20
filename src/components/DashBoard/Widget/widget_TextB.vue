@@ -43,31 +43,24 @@ export default defineComponent({
     // State path to quote data
     textStatePath: {
       type: String,
-      default: 'analysisData.text_A'
+      default: 'analysisData.text_B'  // Fixed: Changed default from text_A to text_B
     },
     // State path to loading status
     loadingGetterName: {
       type: String,
       default: 'isLoading'
     },
-    // Action name to load data
-    loadDataAction: {
-      type: String,
-      default: 'loadData'
-    },
     // Widget ID
     widgetConfig: {
       type: String,
-      default: 'text_A'
+      default: 'text_B'  // Fixed: Changed default from text_A to text_B
     }
   },
   setup(props) {
     const store = useStore();
     const id = TEXT_WIDGET_CONFIG[props.widgetConfig];
-    const uid = computed(() => store.state.user?.user?.uid);
-    const currentThemeId = computed(() => store.state.mindspace?.currentThemeId);
 
-    // Get quote data from the store
+    // Get quote data from the store (already loaded by dashboard)
     const textData = computed(() => {
       const pathParts = props.textStatePath.split('.');
       let data = store.state[props.storeModule];
@@ -88,7 +81,9 @@ export default defineComponent({
       return data;
     });
     
-    const isDataLoading = computed(() => store.getters[`${props.storeModule}/${props.loadingGetterName}`]);
+    const isDataLoading = computed(() => {
+      return store.getters[`${props.storeModule}/${props.loadingGetterName}`];
+    });
 
     // Get Widget Data for widget Name
     const widgetData = ref(null);
@@ -108,17 +103,13 @@ export default defineComponent({
       }
     }
 
-    // Initialize data when component is mounted
+    // Initialize only widget metadata when component is mounted
     onMounted(async () => {
-      // Load data from Vuex store
-      if (uid.value && currentThemeId.value) {
-        await store.dispatch(`${props.storeModule}/${props.loadDataAction}`, { 
-          uid: uid.value, 
-          themeId: currentThemeId.value
-        });
-      }
+      // REMOVED: Data loading - now handled by dashboard component
+      // The dashboard will call store.dispatch('analysisRecords/loadData')
+      // before any widgets are mounted
       
-      // Get widget data
+      // Only get widget metadata (name, description, etc.)
       if (id) {
         widgetData.value = await getWidget(id);
       }
@@ -132,3 +123,52 @@ export default defineComponent({
   }
 });
 </script>
+
+<style scoped>
+.text-widget-section {
+  margin-bottom: 1rem;
+}
+
+.text-widget-loading {
+  padding: 2rem;
+  text-align: center;
+}
+
+.loading-text {
+  color: #666;
+  font-style: italic;
+}
+
+.text-widget-title {
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.text-container {
+  margin: 1rem 0;
+}
+
+.text-mark-start {
+  left: 0;
+  top: -0.5rem;
+}
+
+.text-mark-end {
+  right: 0;
+  bottom: -0.5rem;
+}
+
+.text-title {
+  display: block;
+  text-align: right;
+  margin-top: 1rem;
+  font-style: normal;
+  color: #666;
+}
+
+.no-text-data {
+  text-align: center;
+  color: #999;
+  padding: 2rem;
+}
+</style>
