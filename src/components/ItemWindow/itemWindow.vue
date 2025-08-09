@@ -9,299 +9,312 @@
     }"
     @click="handleCardClick"
   >
-    <!-- Card Front: Slot Display -->
-    <div class="card-face front">
-      <div class="slot-header">
-        <input
-          v-if="isEditingName && isFlipped"
-          v-model="editingName"
-          @blur="saveSlotName"
-          @keyup.enter="saveSlotName"
-          @click.stop
-          class="slot-name-input"
-          ref="nameInput"
-        />
-        <h3 v-else class="slot-name" @click.stop="isFlipped && startEditingName()">
-          {{ mindslot.name || 'New Slot' }}
-        </h3>
+    <div class="card-flip-container">
+      <!-- Card Front: Slot Display -->
+      <div class="card-face front">
+        <div class="slot-header">
+          <input
+            v-if="isEditingName && isFlipped"
+            v-model="editingName"
+            @blur="saveSlotName"
+            @keyup.enter="saveSlotName"
+            @click.stop
+            class="slot-name-input"
+            ref="nameInput"
+          />
+          <h3 v-else class="slot-name" @click.stop="isFlipped && startEditingName()">
+            {{ mindslot.name || 'New Slot' }}
+          </h3>
 
-        <button
-          v-if="expanded"
-          @click.stop="handleClose"
-          class="icon-button close-button"
-        >×</button>
+          <button
+            v-if="expanded"
+            @click.stop="handleClose"
+            class="icon-button close-button"
+          >
+        <button @click.stop="handleClose" class="icon-button close-button">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button></button>
 
-        <button
-          v-else
-          @click.stop="$emit('delete', index)"
-          class="delete-btn"
-        >×</button>
-      </div>
+          <button
+            v-else
+            @click.stop="$emit('delete', index)"
+            class="delete-btn"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
 
-      <div class="slot-content"
-        :style="expanded && (isSingleItemSlot || isFromMindGrid) && getCurrentItemImage() ?
-                { backgroundImage: `url(${getCurrentItemImage()})` } : {}"
-        @contextmenu.prevent="handleSlotRightClick"
-        @touchstart="handleSlotTouchStart"
-        @touchend="handleSlotTouchEnd">
+        <div class="slot-content"
+          :style="expanded && (isSingleItemSlot || isFromMindGrid) && getCurrentItemImage() ?
+                  { backgroundImage: `url(${getCurrentItemImage()})` } : {}"
+          @contextmenu.prevent="handleSlotRightClick"
+          @touchstart="handleSlotTouchStart"
+          @touchend="handleSlotTouchEnd">
 
-        <!-- Single Item Display -->
-        <div v-if="isSingleItemSlot && items[mindslot.item]" class="single-item-content">
-          <!-- For expanded slots, just show the name in top-left -->
-          <div v-if="expanded" class="single-item-name-overlay">
-            {{ items[mindslot.item]?.name || items[mindslot.item]?.title || 'Unnamed Item' }}
-          </div>
-
-          <!-- For unexpanded slots, show the normal icon + name layout -->
-          <template v-else>
-            <div
-              class="icon-slot has-item clickable single-item-icon"
-              @contextmenu.prevent="handleSingleItemRightClick($event)"
-              @touchstart="handleSingleItemTouchStart($event)"
-              @touchend="handleSingleItemTouchEnd"
-            >
-              <!-- Show custom icon if set, otherwise show item name -->
-              <div v-if="getSingleItemCustomIcon()" class="custom-icon" v-html="getSingleItemCustomIcon()"></div>
-              <div v-else class="icon-item-name">
-                {{ items[mindslot.item]?.name || items[mindslot.item]?.title || 'Unnamed Item' }}
-              </div>
-            </div>
-            <div class="single-item-name">
+          <!-- Single Item Display -->
+          <div v-if="isSingleItemSlot && items[mindslot.item]" class="single-item-content">
+            <!-- For expanded slots, just show the name in top-left -->
+            <div v-if="expanded" class="single-item-name-overlay">
               {{ items[mindslot.item]?.name || items[mindslot.item]?.title || 'Unnamed Item' }}
             </div>
-          </template>
-        </div>
 
-        <!-- Mind Grid Item Display -->
-        <div v-else-if="isFromMindGrid && currentItemId" class="single-item-content">
-          <!-- For expanded slots, just show the name in top-left -->
-          <div v-if="expanded" class="single-item-name-overlay">
-            {{ currentItemName }}
+            <!-- For unexpanded slots, show the normal icon + name layout -->
+            <template v-else>
+              <div
+                class="icon-slot has-item clickable single-item-icon"
+                @contextmenu.prevent="handleSingleItemRightClick($event)"
+                @touchstart="handleSingleItemTouchStart($event)"
+                @touchend="handleSingleItemTouchEnd"
+              >
+                <!-- Show custom icon if set, otherwise show item name -->
+                <div v-if="getSingleItemCustomIcon()" class="custom-icon" v-html="getSingleItemCustomIcon()"></div>
+                <div v-else class="icon-item-name">
+                  {{ items[mindslot.item]?.name || items[mindslot.item]?.title || 'Unnamed Item' }}
+                </div>
+              </div>
+              <div class="single-item-name">
+                {{ items[mindslot.item]?.name || items[mindslot.item]?.title || 'Unnamed Item' }}
+              </div>
+            </template>
           </div>
 
-          <!-- For unexpanded slots, show the normal icon + name layout -->
-          <template v-else>
-            <div class="icon-slot has-item clickable single-item-icon">
-              <div class="icon-item-name">
-                {{ currentItemName }}
-              </div>
-            </div>
-            <div class="single-item-name">
+          <!-- Mind Grid Item Display -->
+          <div v-else-if="isFromMindGrid && currentItemId" class="single-item-content">
+            <!-- For expanded slots, just show the name in top-left -->
+            <div v-if="expanded" class="single-item-name-overlay">
               {{ currentItemName }}
             </div>
-          </template>
+
+            <!-- For unexpanded slots, show the normal icon + name layout -->
+            <template v-else>
+              <div class="icon-slot has-item clickable single-item-icon">
+                <div class="icon-item-name">
+                  {{ currentItemName }}
+                </div>
+              </div>
+              <div class="single-item-name">
+                {{ currentItemName }}
+              </div>
+            </template>
+          </div>
+
+          <!-- Multi-Item or Empty Slot Display -->
+          <div v-else class="empty-slot-wrapper">
+            <div v-if="!hasAnyItems" class="empty-slot-text">Empty slot</div>
+
+            <IconSlotGrid
+              :initialIcons="mindslot.slotIcons || [null, null, null]"
+              :iconItems="mindslot.iconItems || [null, null, null]"
+              :customIcons="mindslot.customIcons || [null, null, null]"
+              :items="items"
+              :clickable="expanded"
+              :expanded="expanded"
+              @icons-changed="handleIconsChanged"
+              @icon-clicked="handleIconClick"
+              @icon-right-click="openIconSelector"
+              @custom-icon-changed="handleCustomIconsChanged"
+            />
+          </div>
         </div>
 
-        <!-- Multi-Item or Empty Slot Display -->
-        <div v-else class="empty-slot-wrapper">
-          <div v-if="!hasAnyItems" class="empty-slot-text">Empty slot</div>
-
-          <IconSlotGrid
-            :initialIcons="mindslot.slotIcons || [null, null, null]"
-            :iconItems="mindslot.iconItems || [null, null, null]"
-            :customIcons="mindslot.customIcons || [null, null, null]"
-            :items="items"
-            :clickable="expanded"
-            :expanded="expanded"
-            @icons-changed="handleIconsChanged"
-            @icon-clicked="handleIconClick"
-            @icon-right-click="openIconSelector"
-            @custom-icon-changed="handleCustomIconsChanged"
-          />
+        <!-- Flip indicator when expanded -->
+        <div v-if="expanded && (hasAnyItems || isFromMindGrid)" class="flip-indicator">
+          <span v-if="isSingleItemSlot || isFromMindGrid">Click to view item details →</span>
+          <span v-else>Click icons to view items →</span>
         </div>
       </div>
 
-      <!-- Flip indicator when expanded -->
-      <div v-if="expanded && (hasAnyItems || isFromMindGrid)" class="flip-indicator">
-        <span v-if="isSingleItemSlot || isFromMindGrid">Click to view item details →</span>
-        <span v-else>Click icons to view items →</span>
-      </div>
-    </div>
-
-    <!-- Card Back: Item Details -->
-    <div class="card-face back">
-      <div class="item-window-content">
-        <!-- Button Container -->
-        <div class="block-option-container">
-          <template v-if="!currentItemId">
-            <button @click.stop="handleClose" class="icon-button close-button">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
-          </template>
-
-          <template v-else>
-            <button class="icon-button editBlock-button" @click.stop="toggleEditBlock">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75 1.84-1.83z"/>
-                <path d="M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/>
-              </svg>
-            </button>
-
-            <template v-if="!openedFromMindslot">
-              <button class="icon-button moveItem-button" @click.stop="openMoveItemModal">
+      <!-- Card Back: Item Details -->
+      <div class="card-face back">
+        <div class="item-window-content">
+          <!-- Button Container -->
+          <div class="block-option-container">
+            <template v-if="!currentItemId">
+              <button @click.stop="handleClose" class="icon-button close-button">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M3 6h18v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6z"/>
-                  <path d="M3 6l2-4h3l2 4"/>
-                  <path d="M8 14h8M16 14l-3 3M16 14l-3-3"/>
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg>
-              </button>
-
-              <button class="icon-button duplicateBlock-button" @click.stop="openDuplicateDialog">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                  <path d="m5 15-1 0a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                </svg>
-              </button>
-
-              <button class="icon-button" @click.stop="openDeleteDialog">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="3 6 5 6 21 6"></polyline>
-                  <path d="m19 6-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
-                  <path d="m8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                  <line x1="10" y1="11" x2="10" y2="17"></line>
-                  <line x1="14" y1="11" x2="14" y2="17"></line>
-                </svg>
-              </button>
-
-              <button class="icon-button" @click.stop="triggerAddMindslot">
-                +MIND
               </button>
             </template>
 
-            <button v-if="openedFromMindslot" class="icon-button" @click.stop="triggerRemoveMindslot">
-              -MIND
-            </button>
+            <template v-else>
+              <button class="icon-button editBlock-button" @click.stop="toggleEditBlock">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75 1.84-1.83z"/>
+                  <path d="M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/>
+                </svg>
+              </button>
 
-            <button @click.stop="flipToSlot" class="icon-button back-button">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M4 10L3.29289 10.7071L2.58579 10L3.29289 9.29289L4 10ZM21 18C21 18.5523 20.5523 19 20 19C19.4477 19 19 18.5523 19 18L21 18ZM8.29289 15.7071L3.29289 10.7071L4.70711 9.29289L9.70711 14.2929L8.29289 15.7071ZM3.29289 9.29289L8.29289 4.29289L9.70711 5.70711L4.70711 10.7071L3.29289 9.29289ZM4 9L14 9L14 11L4 11L4 9ZM21 16L21 18L19 18L19 16L21 16ZM14 9C17.866 9 21 12.134 21 16L19 16C19 13.2386 16.7614 11 14 11L14 9Z" fill="#33363F"/>
-              </svg>
-            </button>
-
-            <button @click.stop="handleClose" class="icon-button close-button">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
-          </template>
-        </div>
-
-        <!-- Empty Slot View -->
-        <div v-if="viewMode === 'slot' || !currentItemId" class="empty-slot-view">
-          <div class="empty-slot-header">
-            <h3 class="empty-slot-title">Empty Slot</h3>
-          </div>
-          <div class="empty-slot-content">
-            <div class="empty-slot-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="16" y1="2" x2="16" y2="6"></line>
-                <line x1="8" y1="2" x2="8" y2="6"></line>
-                <line x1="3" y1="10" x2="21" y2="10"></line>
-              </svg>
-            </div>
-            <h4>This slot is empty</h4>
-            <p>Select items from your mindspace to fill this slot, or close this window and choose a different slot.</p>
-          </div>
-        </div>
-
-        <!-- Icon Grid View -->
-        <div v-else-if="viewMode === 'iconGrid'" class="icon-grid-view">
-          <div class="icon-grid-header">
-            <h3>Choose an item to view</h3>
-          </div>
-
-          <div class="icon-grid-content">
-            <div class="large-icon-grid">
-              <div
-                v-for="(item, iconIndex) in (mindslot.iconItems || [null, null, null])"
-                :key="iconIndex"
-                :class="['large-icon-slot', { 'has-item': item }]"
-                @click="switchToIconItem(iconIndex)"
-                @contextmenu.prevent="openIconSelector($event, iconIndex)"
-                @touchstart="handleLargeIconTouchStart($event, iconIndex)"
-                @touchend="handleLargeIconTouchEnd"
-              >
-                <!-- Show custom icon if set -->
-                <div v-if="getLargeCustomIcon(iconIndex)" class="large-custom-icon" v-html="getLargeCustomIcon(iconIndex)"></div>
-                <!-- Show item name if available and no custom icon -->
-                <div v-else-if="item && getItemName" class="large-icon-item-name">
-                  {{ getItemName(item) }}
-                </div>
-                <!-- Empty placeholder -->
-                <div v-else class="large-icon-placeholder">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="12" y1="8" x2="12" y2="16"></line>
-                    <line x1="8" y1="12" x2="16" y2="12"></line>
+              <template v-if="!openedFromMindslot">
+                <button class="icon-button moveItem-button" @click.stop="openMoveItemModal">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 6h18v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6z"/>
+                    <path d="M3 6l2-4h3l2 4"/>
+                    <path d="M8 14h8M16 14l-3 3M16 14l-3-3"/>
                   </svg>
+                </button>
+
+                <button class="icon-button duplicateBlock-button" @click.stop="openDuplicateDialog">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="m5 15-1 0a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                </button>
+
+                <button class="icon-button" @click.stop="openDeleteDialog">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="m19 6-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                    <path d="m8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                  </svg>
+                </button>
+
+                <button class="icon-button" @click.stop="triggerAddMindslot">
+                  +MIND
+                </button>
+              </template>
+
+              <button v-if="openedFromMindslot" class="icon-button" @click.stop="triggerRemoveMindslot">
+                -MIND
+              </button>
+
+              <button @click.stop="flipToSlot" class="icon-button back-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M4 10L3.29289 10.7071L2.58579 10L3.29289 9.29289L4 10ZM21 18C21 18.5523 20.5523 19 20 19C19.4477 19 19 18.5523 19 18L21 18ZM8.29289 15.7071L3.29289 10.7071L4.70711 9.29289L9.70711 14.2929L8.29289 15.7071ZM3.29289 9.29289L8.29289 4.29289L9.70711 5.70711L4.70711 10.7071L3.29289 9.29289ZM4 9L14 9L14 11L4 11L4 9ZM21 16L21 18L19 18L19 16L21 16ZM14 9C17.866 9 21 12.134 21 16L19 16C19 13.2386 16.7614 11 14 11L14 9Z" fill="#33363F"/>
+                </svg>
+              </button>
+
+              <button @click.stop="handleClose" class="icon-button close-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </template>
+          </div>
+
+          <!-- Empty Slot View -->
+          <div v-if="viewMode === 'slot' || !currentItemId" class="empty-slot-view">
+            <div class="empty-slot-header">
+              <h3 class="empty-slot-title">Empty Slot</h3>
+            </div>
+            <div class="empty-slot-content">
+              <div class="empty-slot-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+              </div>
+              <!-- <h4>This slot is empty</h4>
+              <p>Select items from your mindspace to fill this slot, or close this window and choose a different slot.</p> -->
+            </div>
+          </div>
+
+          <!-- Icon Grid View -->
+          <div v-else-if="viewMode === 'iconGrid'" class="icon-grid-view">
+            <div class="icon-grid-header">
+              <h3>Choose an item to view</h3>
+            </div>
+
+            <div class="icon-grid-content">
+              <div class="large-icon-grid">
+                <div
+                  v-for="(item, iconIndex) in (mindslot.iconItems || [null, null, null])"
+                  :key="iconIndex"
+                  :class="['large-icon-slot', { 'has-item': item }]"
+                  @click="switchToIconItem(iconIndex)"
+                  @contextmenu.prevent="openIconSelector($event, iconIndex)"
+                  @touchstart="handleLargeIconTouchStart($event, iconIndex)"
+                  @touchend="handleLargeIconTouchEnd"
+                >
+                  <!-- Show custom icon if set -->
+                  <div v-if="getLargeCustomIcon(iconIndex)" class="large-custom-icon" v-html="getLargeCustomIcon(iconIndex)"></div>
+                  <!-- Show item name if available and no custom icon -->
+                  <div v-else-if="item && getItemName" class="large-icon-item-name">
+                    {{ getItemName(item) }}
+                  </div>
+                  <!-- Empty placeholder -->
+                  <div v-else class="large-icon-placeholder">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="12" y1="8" x2="12" y2="16"></line>
+                      <line x1="8" y1="12" x2="16" y2="12"></line>
+                    </svg>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Item Content View -->
-        <div v-else-if="viewMode === 'itemContent'" class="regular-item-view">
-          <div class="item-header">
-            <div class="item-title-section">
-              <input
-                v-if="isEditingItemName"
-                v-model="editedItemName"
-                class="edit-input-name"
-                type="text"
-                ref="itemNameInput"
-                @blur="saveItemName"
-                @keyup.enter="saveItemName"
-                @click.stop
-              />
-              <h3 v-else @click.stop="startEditingItemName">
-                {{ currentItemName }}
-              </h3>
+          <!-- Item Content View -->
+          <div v-else-if="viewMode === 'itemContent'" class="regular-item-view">
+            <div class="item-header">
+              <div class="item-title-section">
+                <input
+                  v-if="isEditingItemName"
+                  v-model="editedItemName"
+                  class="edit-input-name"
+                  type="text"
+                  ref="itemNameInput"
+                  @blur="saveItemName"
+                  @keyup.enter="saveItemName"
+                  @click.stop
+                />
+                <h3 v-else @click.stop="startEditingItemName">
+                  {{ currentItemName }}
+                </h3>
+              </div>
             </div>
-          </div>
 
-          <div class="blocks-container">
-            <AddBlockButton
-              :index="0"
-              :is-block-edit="isBlockEdit"
-              @add="handleAddBlock"
-              @add-image="handleImageUpload"
-              v-if="isBlockEdit"
-            />
-            <template v-for="(block, index) in blocks" :key="block.id">
-              <block-wrapper
-                :block="block"
-                :index="index"
-                :total-blocks="blocks.length"
-                @edit="handleBlockEdit"
-              />
+            <div class="blocks-container">
               <AddBlockButton
-                :index="index + 1"
+                :index="0"
                 :is-block-edit="isBlockEdit"
                 @add="handleAddBlock"
                 @add-image="handleImageUpload"
                 v-if="isBlockEdit"
               />
-            </template>
+              <template v-for="(block, index) in blocks" :key="block.id">
+                <block-wrapper
+                  :block="block"
+                  :index="index"
+                  :total-blocks="blocks.length"
+                  @edit="handleBlockEdit"
+                />
+                <AddBlockButton
+                  :index="index + 1"
+                  :is-block-edit="isBlockEdit"
+                  @add="handleAddBlock"
+                  @add-image="handleImageUpload"
+                  v-if="isBlockEdit"
+                />
+              </template>
+            </div>
           </div>
         </div>
-      </div>
-      <!-- Multi-item navigation -->
-      <div v-if="!isSingleItemSlot && !isFromMindGrid && hasMultipleItems" class="multi-item-nav">
-        <template v-for="(item, iconIndex) in mindslot.iconItems" :key="iconIndex">
-          <button
-            v-if="item"
-            @click.stop="switchToIconItem(iconIndex)"
-            :class="['icon-nav-btn', { active: currentIconIndex === iconIndex }]"
-          >
-            {{ iconIndex + 1 }}
-          </button>
-        </template>
+        <!-- Multi-item navigation -->
+        <div v-if="!isSingleItemSlot && !isFromMindGrid && hasMultipleItems" class="multi-item-nav">
+          <template v-for="(item, iconIndex) in mindslot.iconItems" :key="iconIndex">
+            <button
+              v-if="item"
+              @click.stop="switchToIconItem(iconIndex)"
+              :class="['icon-nav-btn', { active: currentIconIndex === iconIndex }]"
+            >
+              {{ iconIndex + 1 }}
+            </button>
+          </template>
+        </div>
       </div>
     </div>
   </div>
@@ -754,6 +767,7 @@
   }
 
   function handleClose() {
+    store.dispatch('user/setIsBlockEdit', false)
     emit('close')
   }
 
