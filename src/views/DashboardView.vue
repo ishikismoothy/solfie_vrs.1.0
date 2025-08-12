@@ -239,6 +239,8 @@ export default defineComponent({
     })
 
     const closeAnyItemWindow = () => {
+      // Reset edit mode when closing itemwindow via clickaway
+      store.dispatch('user/setIsBlockEdit', false)
       // Clear mindslot window config
       currentItemWindowConfig.value = null
       // Clear mind grid window
@@ -467,12 +469,12 @@ export default defineComponent({
             uid: userId.value,
             themeId: currentThemeId.value
           });
-          
-          await store.dispatch('analysisRecords/loadData', { 
-            uid: userId.value, 
-            themeId: currentThemeId.value 
+
+          await store.dispatch('analysisRecords/loadData', {
+            uid: userId.value,
+            themeId: currentThemeId.value
           });
-          
+
           // Also load other dashboard data that was previously in dashboard.vue
           await Promise.all([
             store.dispatch('chat/addRandomMessages'),
@@ -569,7 +571,7 @@ export default defineComponent({
   align-items: center;
   gap: 16px;
   padding: 16px;
-  
+
   // Position it where appropriate in your layout
   position: absolute;
   top: 20px;

@@ -29,7 +29,12 @@
             v-if="!isViewOnly"
             @click.stop="deleteSlot(index)"
             class="delete-btn"
-          >×</button>
+          >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+          </button>
         </div>
 
         <div class="slot-content">
@@ -54,9 +59,50 @@
 
           <!-- Multi-Item or Empty Slot Display -->
           <div v-else class="empty-slot-wrapper">
-            <div v-if="!hasAnyItems(mindslot)" class="empty-slot-text">Empty slot</div>
+            <div v-if="!hasAnyItems(mindslot) && !expanded" class="empty-slot-options">
+              <h4 class="empty-slot-title">Choose slot type:</h4>
+
+              <div class="slot-type-options">
+                <button
+                  class="slot-type-option single-item-option"
+                  @click="openItemSelector(index, 'single')"
+                >
+                  <div class="option-content">
+                    <div class="option-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="5" y="5" width="14" height="14" rx="2" ry="2"></rect>
+                      </svg>
+                    </div>
+                    <div class="option-text">
+                      <strong>Single Item Slot</strong>
+                      <small>One item only</small>
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  class="slot-type-option multi-item-option"
+                  @click="openItemSelector(index, 'multi')"
+                >
+                  <div class="option-content">
+                    <div class="option-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="8" height="8" rx="1" ry="1"></rect>
+                        <rect x="13" y="3" width="8" height="8" rx="1" ry="1"></rect>
+                        <rect x="3" y="13" width="8" height="8" rx="1" ry="1"></rect>
+                      </svg>
+                    </div>
+                    <div class="option-text">
+                      <strong>Multi-Item Slot</strong>
+                      <small>Up to 3 items</small>
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
 
             <IconSlotGrid
+              v-if="hasAnyItems(mindslot)"
               :initialIcons="mindslot.slotIcons || [null, null, null]"
               :iconItems="mindslot.iconItems || [null, null, null]"
               :customIcons="mindslot.customIcons || [null, null, null]"
@@ -67,6 +113,7 @@
               @icon-clicked="(iconIndex) => handleDirectIconClick(index, iconIndex)"
               @icon-right-click="(iconIndex, event) => !isViewOnly && openIconSelector(event, index, iconIndex)"
               @custom-icon-changed="(customIcons) => !isViewOnly && handleCustomIconsChanged({ index, customIcons })"
+              @empty-slot-clicked="(iconIndex) => !isViewOnly && openItemSelector(index, 'multi')"
             />
           </div>
         </div>
@@ -157,6 +204,16 @@
       @close="closeIconSelector"
       @select-icon="handleIconSelection"
     />
+
+    <!-- Item Selection Grid -->
+    <ItemSelectionGrid
+      :isVisible="showItemSelector"
+      :slotIndex="itemSelectorSlotIndex"
+      :slotType="itemSelectorSlotType"
+      :screenPosition="'left'"
+      @close="closeItemSelector"
+      @select-item="handleItemSelection"
+    />
   </div>
 
   <!-- Toast popup for when mindslots are full-->
@@ -175,6 +232,7 @@
   import emitter from '@/eventBus'
   import IconSlotGrid from '@/./components/ItemWindow/iconSlotGrid.vue'
   import IconSelector from '@/./components/ItemWindow/IconSelector.vue'
+  import ItemSelectionGrid from '@/./components/ItemWindow/ItemSelectionGrid.vue'
 
   const store = useStore()
   const currentUser = computed(() => store.state.user?.user?.uid)
@@ -183,7 +241,7 @@
   // Check if in view-only mode (shared view without edit permissions)
   const isSharedView = computed(() => store.state.mindspace?.isSharedView || false)
   const isEditMode = computed(() => store.state.mindspace?.isEditMode || false)
-  
+
   // 1. Add the currentShareData getter from the sharing module
   const currentShareData = computed(() => store.state.sharing?.currentShareData)
   const isSharedAccess = computed(() => !!currentShareData.value?.mindspaceId)
@@ -193,6 +251,9 @@
     if (currentShareData.value?.access) {
       return currentShareData.value.access === 'view'
     }
+
+    // Fallback to original logic if no share data
+    // View-only if in shared view AND not in edit mode
     return isSharedView.value && !isEditMode.value
   })
 
@@ -282,7 +343,7 @@
   // Open icon selector
   const openIconSelector = (event, slotIndex, iconIndex) => {
     if (isViewOnly.value) return
-    
+
     currentSlotIndex.value = slotIndex
     currentIconIndex.value = iconIndex
 
@@ -322,7 +383,7 @@
   // Handle icon selection
   const handleIconSelection = async (selectedIcon) => {
     if (isViewOnly.value) return
-    
+
     if (currentSlotIndex.value >= 0) {
       const mindslot = mindspace.value.mindslot[currentSlotIndex.value]
 
@@ -399,15 +460,17 @@
     const mindslot = mindspace.value.mindslot[index]
     console.log('🎯 Slot clicked, opening unified window for:', mindslot.name)
 
-    emitter.emit('openUnifiedItemWindow', {
-      mindslot,
-      index,
-      expanded: true,
-      initialFlipped: false,
-      openedFromMindslot: true,
-      directIconIndex: -1,
-      expandedSlotIndex: null
-    })
+    if (hasAnyItems(mindslot)) {
+      emitter.emit('openUnifiedItemWindow', {
+        mindslot,
+        index,
+        expanded: true,
+        initialFlipped: false,
+        openedFromMindslot: true,
+        directIconIndex: -1,
+        expandedSlotIndex: null
+      })
+    }
   }
 
   // Handle direct icon click - emit to unified system
@@ -437,7 +500,7 @@
   // Name editing
   const startEditingName = (index) => {
     if (isViewOnly.value) return
-    
+
     editingSlotIndex.value = index
     editingName.value = mindspace.value.mindslot[index].name || 'New Slot'
     nextTick(() => {
@@ -447,11 +510,77 @@
 
   const saveSlotName = (index) => {
     if (isViewOnly.value) return
-    
+
     editingSlotIndex.value = null
     if (editingName.value.trim() !== mindspace.value.mindslot[index].name) {
       mindspace.value.mindslot[index].name = editingName.value.trim()
       updateMindspace()
+    }
+  }
+
+  // Add Item Via Empty Slot
+
+  const showItemSelector = ref(false)
+  const itemSelectorSlotIndex = ref(-1)
+  const itemSelectorSlotType = ref('single')
+
+  // Open item selector for empty slots
+  const openItemSelector = (slotIndex, slotType = 'single') => {
+    if (isViewOnly.value) return
+
+    itemSelectorSlotIndex.value = slotIndex
+    itemSelectorSlotType.value = slotType
+    showItemSelector.value = true
+  }
+
+  // Close item selector
+  const closeItemSelector = () => {
+    showItemSelector.value = false
+    itemSelectorSlotIndex.value = -1
+    itemSelectorSlotType.value = 'single'
+  }
+
+  // Handle item selection from the grid
+  const handleItemSelection = async ({ itemIds, slotIndex, slotType }) => {
+    if (isViewOnly.value) return
+
+    try {
+      const slot = mindspace.value.mindslot[slotIndex]
+
+      if (slotType === 'single') {
+        // Set as single item slot (use first item only)
+        mindspace.value.mindslot[slotIndex] = {
+          ...slot,
+          item: itemIds[0],
+          iconItems: [null, null, null],
+          slotIcons: [null, null, null],
+          customIcons: [null, null, null]
+        }
+      } else {
+        // Set as multi-item slot
+        const iconItems = [null, null, null]
+
+        // Fill slots with selected items in order
+        itemIds.forEach((itemId, index) => {
+          if (index < 3) { // Max 3 items
+            iconItems[index] = itemId
+          }
+        })
+
+        mindspace.value.mindslot[slotIndex] = {
+          ...slot,
+          item: null,
+          iconItems,
+          slotIcons: slot.slotIcons || [null, null, null],
+          customIcons: slot.customIcons || [null, null, null]
+        }
+      }
+
+      await updateMindspace()
+      console.log('✅ Item added to slot:', { itemIds, slotIndex, slotType })
+
+    } catch (error) {
+      console.error('❌ Error adding item to slot:', error)
     }
   }
 
@@ -477,7 +606,7 @@
   // Handle icons
   const handleSlotIconsChanged = async ({ index, icons }) => {
     if (isViewOnly.value) return
-    
+
     mindspace.value.mindslot[index] = {
       ...mindspace.value.mindslot[index],
       slotIcons: icons
@@ -487,7 +616,7 @@
 
   const handleCustomIconsChanged = async ({ index, customIcons }) => {
     if (isViewOnly.value) return
-    
+
     const safeCustomIcons = customIcons.map(icon => icon === undefined ? null : icon)
 
     mindspace.value.mindslot[index] = {
@@ -500,7 +629,7 @@
   // Delete slot
   const deleteSlot = async (index) => {
     if (isViewOnly.value) return
-    
+
     mindspace.value.mindslot.splice(index, 1)
     await updateMindspace()
   }
@@ -509,7 +638,7 @@
   // Update the updateMindspace function to use activeMindSpaceId
   const updateMindspace = async () => {
     if (isViewOnly.value) return
-    
+
     try {
       // Use activeMindSpaceId instead of currentMindSpaceId
       if (!activeMindSpaceId.value) {
@@ -601,7 +730,7 @@
 
   const addToExistingSlot = async (slot) => {
     if (isViewOnly.value) return
-    
+
     const slotData = mindspace.value.mindslot[slot.slotIndex]
 
     if (slot.type === 'empty') {
@@ -629,7 +758,7 @@
 
   const createNewSlot = async (slotType) => {
     if (isViewOnly.value) return
-    
+
     // Check total slots count, not full slots count, since we're creating a new slot
     if (mindspace.value.mindslot.length >= 5) {
       alert('Maximum of 5 mind slots reached. Cannot add more slots.')
@@ -647,7 +776,7 @@
       showToastMessage('Cannot edit mindslots in view-only mode')
       return
     }
-    
+
     const currentSlots = mindspace.value.mindslot || []
 
     // Count only FULL slots, not all slots
@@ -688,7 +817,7 @@
 
   const handleRemoveMindslot = ({ slotIndex, iconIndex }) => {
     if (isViewOnly.value) return
-    
+
     const slot = mindspace.value.mindslot[slotIndex]
 
     if (iconIndex !== undefined) {
