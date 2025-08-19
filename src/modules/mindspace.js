@@ -335,7 +335,7 @@ export default {
       SET_IS_SHARED_VIEW(state, isShared) {
         state.isSharedView = isShared;
       },
-      
+
       CLEAR_SHARED_STATE(state) {
         state.currentThemeId = null;
         state.currentThemeName = null;
@@ -402,7 +402,7 @@ export default {
           await updateViewThemeHistory(state.userId, state.currentThemeId);
           await dispatch('setThemeData');
           await dispatch('setMindSpaceId');
-          
+
           console.log("[mindspace.js] Theme selected:", state.currentThemeId);
         } catch (error) {
           console.error("[mindspace.js] Error setting theme:", error);
@@ -448,14 +448,14 @@ export default {
           }
 
           const defaultMindSpaceId = await mindspaceService.getDefaultMindSpaceId(state.currentThemeId, state.userId);
-          
+
           if (!defaultMindSpaceId) {
             throw new Error('No default mindSpaceId found from mindspaceService');
           }
 
           commit('SET_MINDSPACE_ID', defaultMindSpaceId);
           console.log("✅ MindSpaceId set:", state.currentMindSpaceId);
-          
+
           if (state.userId && state.currentMindSpaceId) {
             await updateViewMindspaceHistory(state.userId, state.currentMindSpaceId);
           }
@@ -511,7 +511,7 @@ export default {
           commit('SET_MINDSPACE_NAME', name);
           commit('SET_MINDSPACE_PAGES', pages);
           commit('SET_TOTAL_PAGES', totalPages);
-          
+
           console.log("✅ Pages loaded:", {
             name: state.currentMindSpaceName,
             totalPages: state.totalPages,
@@ -530,21 +530,21 @@ export default {
           // Update both ID and name immediately
           commit('SET_MINDSPACE_ID', mindSpace.id);
           commit('SET_MINDSPACE_NAME', mindSpace.name);
-          
+
           // Update the mindspace list to reflect the new default
           await dispatch('setMindSpacePages');
           await dispatch('setMindSpaceList');
-          
+
           // Update view history if you have this function
           if (state.userId && mindSpace.id) {
             // await updateViewMindspaceHistory(state.userId, mindSpace.id);
           }
-          
+
           console.log("✅ Default MindSpace updated:", {
             id: mindSpace.id,
             name: mindSpace.name
           });
-          
+
         } catch (error) {
           console.error('❌ Error updating default mindspace:', error);
           commit('SET_ERROR', error.message);
@@ -626,30 +626,32 @@ export default {
 
         commit('MOVE_ITEM_BETWEEN_PAGES', payload);
       },
-      async addItemToPage({ commit, state, dispatch }, { pageIndex, index, item }) {
-        try {
-          const { itemId, itemData } = await mindspaceService.addNewItemToMindspace(
-            state.userId,
-            state.currentMindSpaceId,
-            pageIndex,
-            index,
-            item
-          );
+    async addItemToPage({ commit, state, dispatch }, { pageIndex, index, item }) {
+      try {
+        const { itemId, itemData } = await mindspaceService.addNewItemToMindspace(
+          state.userId,
+          state.currentMindSpaceId,
+          pageIndex,
+          index,
+          item
+        );
 
-          commit('ADD_ITEM_TO_PAGE', {
-            pageIndex,
-            index,
-            item: itemData
-          });
+        commit('ADD_ITEM_TO_PAGE', {
+          pageIndex,
+          index,
+          item: itemData
+        });
 
-          console.log('[mindspace.js] Item added:', itemId);
-          await dispatch('setMindSpacePages');
-          return itemId;
-        } catch (error) {
-          console.error('Error adding item:', error);
-          throw error;
-        }
-      },
+        console.log('[mindspace.js] Item added:', itemId);
+        await dispatch('setMindSpacePages');
+
+        // IMPORTANT: Make sure to return the itemId
+        return itemId;
+      } catch (error) {
+        console.error('Error adding item:', error);
+        throw error;
+      }
+    },
       addItemsToPage({ commit }, payload) {
         commit('ADD_ITEMS_TO_PAGE', payload);
       },
@@ -725,9 +727,23 @@ export default {
             folderId,
             item: itemData
           });
+
           await dispatch('setMindSpacePages');
 
-          console.log('[mindspace.js] Item added to folder:', itemId);
+          // Set default custom icon for the new folder item
+          if (itemId) {
+            const defaultIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgb(255, 86, 56)" stroke-width="2">
+                                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                  <circle cx="12" cy="12" r="1.5" fill="rgb(255, 86, 56)"/>
+                                </svg>`;
+
+            await dispatch('user/setItemCustomIcon', {
+              itemId,
+              customIcon: defaultIcon
+            }, { root: true });
+          }
+
+          console.log('[mindspace.js] Item added to folder with default icon:', itemId);
           return itemId;
         } catch (error) {
           console.error('Error adding item to folder:', error);
@@ -1005,15 +1021,15 @@ export default {
         try {
           commit('SET_LOADING', true);
           commit('SET_IS_SHARED_VIEW', true);
-          
+
           commit('SET_USER_ID', ownerId);
           commit('SET_THEME_ID', themeId);
           await dispatch('setThemeData');
-          
+
           commit('SET_MINDSPACE_ID', mindspaceId);
           await dispatch('setMindSpacePages');
           await dispatch('setMindSpaceList');
-          
+
           console.log('[mindspace.js] Shared mindspace loaded');
         } catch (error) {
           console.error('Error loading shared mindspace:', error);
@@ -1023,10 +1039,32 @@ export default {
           commit('SET_LOADING', false);
         }
       },
-      
+
       clearSharedState({ commit }) {
         commit('CLEAR_SHARED_STATE');
-      }
+      },
+
+      async refreshCurrentThemeData({ dispatch, state }) {
+        try {
+          if (!state.currentThemeId || !state.userId) {
+            console.log('[mindspace.js] Missing theme ID or user ID for refresh')
+            return
+          }
+
+          console.log('[mindspace.js] Refreshing current theme data...')
+
+          // Refresh mindspace pages to get latest items
+          await dispatch('setMindSpacePages')
+
+          // Refresh user items to get latest data
+          await dispatch('user/fetchItems', state.userId, { root: true })
+
+          console.log('[mindspace.js] Current theme data refreshed')
+        } catch (error) {
+          console.error('[mindspace.js] Error refreshing theme data:', error)
+          throw error
+        }
+      },
     },
 
     getters: {

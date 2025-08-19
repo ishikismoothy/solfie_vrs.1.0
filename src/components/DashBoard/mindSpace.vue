@@ -449,7 +449,7 @@
       const addNewItemImpl = async (target, pageIndex) => {
         const newItem = {
           name: 'New Item',
-          shape: squareSvg,
+          shape: squareSvg, // Keep original shape as fallback
         };
 
         console.log('[addNewItemImpl] Adding new item:', { target, pageIndex, newItem });
@@ -457,25 +457,40 @@
         if (target === 'mindSpace') {
           const currentPageItems = store.getters['mindspace/getPageItems'](pageIndex);
           try {
-            const newItem = {
-              name: 'New Item',
-              shape: squareSvg,
-            };
+            let itemId;
 
             if (currentPageItems.length < ITEMS_PER_PAGE) {
-              await store.dispatch('mindspace/addItemToPage', {
+              itemId = await store.dispatch('mindspace/addItemToPage', {
                 pageIndex,
                 index: currentPageItems.length,
                 item: newItem
               });
             } else {
-              await store.dispatch('mindspace/addItemToPage', {
+              itemId = await store.dispatch('mindspace/addItemToPage', {
                 pageIndex: pageIndex + 1,
                 index: 0,
                 item: newItem
               });
               store.dispatch('mindspace/setCurrentPage', pageIndex + 1);
             }
+
+            // Set default custom icon for the new item
+            if (itemId) {
+              console.log('[addNewItemImpl] Setting default custom icon for item:', itemId);
+
+              const defaultIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgb(255, 86, 56)" stroke-width="2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                    <circle cx="12" cy="12" r="1.5" fill="rgb(255, 86, 56)"/>
+                                  </svg>`;
+
+              await store.dispatch('user/setItemCustomIcon', {
+                itemId,
+                customIcon: defaultIcon
+              });
+
+              console.log('[addNewItemImpl] Default custom icon set successfully');
+            }
+
           } catch (error) {
             console.error('Error adding new item:', error);
           }
@@ -483,6 +498,7 @@
           // DISABLED: Folder functionality
           console.log('Folder functionality disabled');
         }
+
         console.log(`[addNewItemImpl] Added new item to ${target}:`, newItem);
       };
 
@@ -1050,10 +1066,10 @@
       const refreshMindGridAfterOperation = async () => {
         try {
           console.log('[refreshMindGridAfterOperation] Refreshing mind grid data');
-          
+
           // Check if we have a currentMindSpaceId first
           const currentMindSpaceId = store.state.mindspace.currentMindSpaceId;
-          
+
           if (!currentMindSpaceId) {
             console.log('[refreshMindGridAfterOperation] No currentMindSpaceId yet, initializing mindspace...');
             // If no mindSpaceId, we need to initialize first
@@ -1063,7 +1079,7 @@
             // Only refresh if we already have a mindSpaceId (e.g., after edit operations)
             await store.dispatch('mindspace/setMindSpacePages');
           }
-          
+
           await nextTick();
           console.log('[refreshMindGridAfterOperation] Mind grid refreshed successfully');
         } catch (error) {
@@ -1087,12 +1103,12 @@
           // Check if mindspace data is already loaded
           const currentMindSpaceId = store.state.mindspace.currentMindSpaceId;
           const mindSpacePages = store.state.mindspace.mindSpacePages;
-          
+
           if (!currentMindSpaceId) {
             console.log('[onMounted] Waiting for parent component to initialize mindspace...');
             // The parent component (DashboardView) handles the initialization
             // We'll wait for it to be ready
-            
+
             const unwatch = watch(
               () => store.state.mindspace.currentMindSpaceId,
               async (newId) => {
