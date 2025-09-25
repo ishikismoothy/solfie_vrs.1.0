@@ -4,12 +4,13 @@
     <main>
 
       <section class="overview-block">
-        <!--<div class="image-placeholder"></div>-->
         <h2>{{themeName}}</h2>
         <div class="sat-icon-container">
           <h4 class="sat-title">今日も実感してる？</h4>
-          <button class="sat-button"
-            @click="triggerSatisfaction"
+          <button 
+            class="sat-button"
+            :class="{ 'disabled': isSharedAccess }"
+            @click="!isSharedAccess && triggerSatisfaction()"
           >
             {{ result() }}
           </button>
@@ -181,6 +182,10 @@
       //Activated Widget Check
       const currentThemeId = computed(() => store.state.mindspace.currentThemeId || "");
       const allUsersWidgets = computed(() => store.state.user.userWidgets || {});
+      
+      //Detect Share view or not
+      const currentShareData = computed(() => store.state.sharing?.currentShareData)
+      const isSharedAccess = computed(() => !!currentShareData.value?.mindspaceId)
 
       // Helper function to check if a widget exists in current theme
       const hasWidget = (widgetId) => {
@@ -288,6 +293,9 @@
         themeName,
         result,
         triggerSatisfaction,
+
+        //SHARE VIEW DETECTOR
+        isSharedAccess,
 
         //TODO FUNCTION
         todos,

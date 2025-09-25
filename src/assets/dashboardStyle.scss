@@ -104,22 +104,34 @@ main {
     margin-bottom: 10px;
   }
 
-  .sat-icon-container{
-    .sat-title{
+  .sat-icon-container {
+    .sat-title {
       color: #767676;
     }
-    .sat-button{
+    
+    .sat-button {
       border: none;
       background: none;
       font-size: 48px;
-      transition: scale 0.2s;;
-      @media (hover: hover) {
-        &:hover {
-          scale: (1.05);
+      transition: scale 0.2s;
+      
+      // Only apply hover and active states when not disabled
+      &:not(.disabled) {
+        @media (hover: hover) {
+          &:hover {
+            scale: 1.05;
+          }
+        }
+        
+        &:active {
+          scale: 1.05;
         }
       }
-      &:active{
-        scale: (1.05);
+      
+      // Optional: Add visual feedback for disabled state
+      &.disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
       }
     }
   }

@@ -244,18 +244,27 @@
 
   // 1. Add the currentShareData getter from the sharing module
   const currentShareData = computed(() => store.state.sharing?.currentShareData)
+  const isSharedAccess = computed(() => !!currentShareData.value?.mindspaceId)
   // 2. Update the isViewOnly computed property
+  // Update the isViewOnly computed property (as you already have)
   const isViewOnly = computed(() => {
-    // If there's share data, check the access level
     if (currentShareData.value?.access) {
-      // Only 'view' access should be view-only
-      // 'editor' and 'co-creator' can edit
       return currentShareData.value.access === 'view'
     }
 
     // Fallback to original logic if no share data
     // View-only if in shared view AND not in edit mode
     return isSharedView.value && !isEditMode.value
+  })
+
+  // Add a new computed property to get the correct mindspace ID
+  const activeMindSpaceId = computed(() => {
+    // If accessing via share link, use the mindspaceId from shareData
+    if (isSharedAccess.value && currentShareData.value?.mindspaceId) {
+      return currentShareData.value.mindspaceId
+    }
+    // Otherwise use the regular mindspaceId
+    return currentMindSpaceId.value
   })
 
   // Reactive state
@@ -412,13 +421,17 @@
 
   // Fetch mindspace slots
   const fetchMindspaceSlots = async () => {
+    console.log('[fetchMindspaceSlots] TRIGGERED')
     try {
-      if (!currentMindSpaceId.value) {
+      // Use activeMindSpaceId instead of currentMindSpaceId
+      if (!activeMindSpaceId.value) {
         console.warn('[fetchMindspaceSlots] No mindspace ID available')
         return
       }
 
-      const data = await mindspaceService.fetchMindspaceSlots(currentMindSpaceId.value)
+      console.log('[fetchMindspaceSlots] Fetching with ID:', activeMindSpaceId.value, 'isShared:', isSharedAccess.value)
+      
+      const data = await mindspaceService.fetchMindspaceSlots(activeMindSpaceId.value)
 
       const cleanedData = {
         ...data,
@@ -432,7 +445,7 @@
       }
 
       mindspace.value = cleanedData
-      console.log("[mindSlot.vue/fetchMindspaceSlots] Slots: ", [...mindspace.value.mindslot])
+      console.log("[mindSlot.vue/fetchMindspaceSlots] Slots loaded: ", [...mindspace.value.mindslot])
     } catch (error) {
       console.error('[fetchMindspaceSlots] Error fetching mindspace slots:', error)
       mindspace.value = {
@@ -622,10 +635,19 @@
   }
 
   // Update mindspace
+  // Update the updateMindspace function to use activeMindSpaceId
   const updateMindspace = async () => {
     if (isViewOnly.value) return
 
     try {
+      // Use activeMindSpaceId instead of currentMindSpaceId
+      if (!activeMindSpaceId.value) {
+        console.error('[updateMindspace] No mindspace ID available')
+        return
+      }
+
+      console.log('[updateMindspace] Updating with ID:', activeMindSpaceId.value, 'isShared:', isSharedAccess.value)
+
       const cleanMindslots = (mindspace.value.mindslot || []).map(slot => ({
         name: slot.name || 'New Slot',
         item: slot.item || null,
@@ -639,11 +661,33 @@
         mindslot: cleanMindslots
       }
 
-      await mindspaceService.updateMindspaceSlots(currentMindSpaceId.value, updatedData)
+      await mindspaceService.updateMindspaceSlots(activeMindSpaceId.value, updatedData)
+      console.log('[updateMindspace] Update successful')
     } catch (error) {
       console.error('Error updating mindspace:', error)
+      // Show error to user
+      showToastMessage('Failed to update mindslot. Please check your permissions.')
     }
   }
+
+  // Update the watchers to use activeMindSpaceId
+  watch(() => activeMindSpaceId.value, async (newMindSpaceId) => {
+    if (newMindSpaceId) {
+      console.log('[Watcher] MindSpace ID changed:', newMindSpaceId)
+      await fetchMindspaceSlots()
+      if (currentUser.value) {
+        await store.dispatch('user/fetchItems', currentUser.value)
+      }
+    }
+  })
+
+  // Also watch for shareData changes
+  watch(() => currentShareData.value, async (newShareData) => {
+    if (newShareData?.mindspaceId) {
+      console.log('[Watcher] Share data changed, fetching mindspace slots')
+      await fetchMindspaceSlots()
+    }
+  }, { deep: true })
 
   // Helper function to determine slot availability
   const getSlotAvailability = (slot, slotIndex) => {
