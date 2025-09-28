@@ -88,6 +88,14 @@ body > .folder-item.dragging {
   transition: none !important;
 }
 
+.mindspace-view.scroll-disabled {
+  .mindspace-container {
+    overflow: hidden !important;
+    touch-action: none;
+    -webkit-overflow-scrolling: none;
+  }
+}
+
 .mindspace-container {
   display: flex;
   flex-direction: column;
@@ -95,7 +103,7 @@ body > .folder-item.dragging {
   padding: 0 20px;
   height: 100%;
   margin: 0;
-  background-color: $background-color;
+  //background-color: $background-color;
   position: relative;
   overflow: hidden;
   background-size: cover;

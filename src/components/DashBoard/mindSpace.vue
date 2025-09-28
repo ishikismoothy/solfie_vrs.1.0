@@ -1,6 +1,6 @@
 <!-- Updated mindSpace.vue with unified icon styling and global sync -->
 <template>
-    <div class="mindspace-container" :style="containerStyle">
+    <div class="mindspace-container">
 
       <!-- Mind-Grid container -->
       <div
@@ -274,7 +274,6 @@
   import { defineComponent, ref, computed, onMounted, watch, nextTick } from 'vue';
   import { useStore } from 'vuex';
   import { formatDate } from '@/utility/dateUtils';
-  import backgroundImage from '@/assets/bg_img.jpg';
   import squareSvg from '@/assets/shapes/square.svg';
   import DeleteButton from './deleteButton.vue';
   import AddItemModal from './addItemModal.vue';
@@ -317,13 +316,6 @@
       // Touch handling for icon selection
       let iconTouchTimer = null
       const longPressDelay = 500
-
-      //[BACKGROUND]
-      const background = ref({
-        type: 'image',
-        value1: '#f0f0f0',
-        value2: backgroundImage
-      });
 
       //[MIND-GRID-CONTAINER] MIND-GRID-PAGE
       const getBadgeIcon = (badge) => {
@@ -1101,14 +1093,6 @@
         }
       };
 
-      const containerStyle = computed(() => {
-        if (background.value.type === 'color') {
-          return { backgroundColor: background.value.value1 };
-        } else {
-          return { backgroundImage: `url(${background.value.value2})` };
-        }
-      });
-
       onMounted(async () => {
         updateTime();
         setInterval(updateTime, 60000);
@@ -1184,8 +1168,6 @@
       return {
         // General UI elements
         currentTime,
-        background,
-        containerStyle,
         isViewOnly,
         isSharedAccess,
 

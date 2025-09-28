@@ -1,0 +1,45 @@
+// src/assets/styles/main.scss
+// Main SCSS file that imports all global styles
+
+// ===================================
+// 1. Variables & Functions
+// ===================================
+@import './colors';        // Color variables
+@import './variables';     // Other variables (spacing, breakpoints, etc.)
+@import './mixins';        // Reusable mixins
+
+// ===================================
+// 2. Base Styles
+// ===================================
+// @import './base/reset';    // CSS reset/normalize
+// @import './base/typography'; // Typography styles
+@import './base/global';   // Global styles
+
+// ===================================
+// 3. Components (if you want global component styles)
+// ===================================
+@import './components/buttons';
+// @import './components/forms';
+// @import './components/cards';
+
+// ===================================
+// Example of how to structure your styles folder:
+// ===================================
+// src/
+//   assets/
+//     styles/
+//       _colors.scss          // Color variables (created above)
+//       _variables.scss       // Other variables
+//       _mixins.scss         // Mixins
+//       main.scss           // This file
+//       base/
+//         _reset.scss
+//         _typography.scss
+//         _global.scss
+//       components/
+//         _buttons.scss
+//         _forms.scss
+//         _cards.scss
+//       views/              // View-specific styles
+//         _loginView.scss
+//         _dashboard.scss

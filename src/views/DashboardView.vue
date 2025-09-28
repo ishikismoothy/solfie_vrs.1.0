@@ -35,7 +35,9 @@
       </div>
 
       <!-- MindSpace view -->
-      <div class="view mindspace-view">
+      <div class="view mindspace-view" 
+        :style="containerStyle"
+        :class="{ 'scroll-disabled': isMindSpaceView }">
         <mindSpace />
       </div>
     </div>
@@ -119,7 +121,7 @@
 </template>
 
 <script>
-import { defineComponent, computed, ref, onMounted, watch } from 'vue';
+import { defineComponent, computed, ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import DockNav from '@/components/dockNav.vue';
@@ -132,8 +134,9 @@ import MoveItemModal from '@/components/ItemWindow/moveItemModal.vue';
 import LoadingScreen from '@/components/loadingScreen.vue';
 import satSlider from '@/components/DashBoard/satisfactionSlider.vue';
 import MindUniverse from '@/components/Universe/widgetGallary.vue';
-import { disableBodyScroll } from 'body-scroll-lock';
+import { disableBodyScroll, enableBodyScroll } from 'body-scroll-lock';
 import emitter from '@/eventBus'
+import backgroundImage from '@/assets/bg_img.jpg';
 
 export default defineComponent({
   name: 'DashboardView',
@@ -186,6 +189,21 @@ export default defineComponent({
     // Use Vuex store for items
     const mindspaceItems = computed(() => store.getters['user/getItems'])
 
+    //[BACKGROUND]
+    const background = ref({
+      type: 'image',
+      value1: '#f0f0f0',
+      value2: backgroundImage
+    });
+  
+    const containerStyle = computed(() => {
+      if (background.value.type === 'color') {
+        return { backgroundColor: background.value.value1 };
+      } else {
+        return { backgroundImage: `url(${background.value.value2})` };
+      }
+    });
+    
     // Fetch items using Vuex store
     const fetchMindspaceItems = async () => {
       if (!userId.value) {
@@ -269,6 +287,7 @@ export default defineComponent({
 
     //[MONITOR] MODAL AND EDIT TOGGLE
     const showMindUniverseModal = computed(() => store.state.user.modalControl.showMindUniverseWindow);
+   
     watch(
       () => showMindUniverseModal.value, (newValue) => {
         console.log('[DashboardView.vue] showMindUniverseModal changed:', { new: newValue })
@@ -385,6 +404,10 @@ export default defineComponent({
       }
     };
 
+    const updateMindSpace = async () => {
+      await store.dispatch('mindspace/setMindSpacePages');
+    };
+
     // Watch for edit mode changes to hide nav
     watch(() => isEditMode.value, (newValue) => {
       if (newValue) {
@@ -419,6 +442,27 @@ export default defineComponent({
         await fetchMindspaceItems()
       }
     })
+
+    // Add a watcher for isMindSpaceView
+    watch(isMindSpaceView, async (newValue) => {
+      // Wait for DOM update
+      await nextTick();
+      
+      // Get the mindspace container element
+      const mindspaceContainer = document.querySelector('.mindspace-container');
+      
+      if (mindspaceContainer) {
+        if (newValue) {
+          // Disable scrolling when in mindspace view
+          disableBodyScroll(mindspaceContainer);
+          console.log('[DashboardView] Scrolling disabled for mindspace-container');
+        } else {
+          // Re-enable scrolling when switching to dashboard view
+          enableBodyScroll(mindspaceContainer);
+          console.log('[DashboardView] Scrolling enabled for mindspace-container');
+        }
+      }
+    }, { immediate: true }); 
 
     onMounted(async () => {
       const dashboardView = document.querySelector('.view.dashboard-view');
@@ -490,9 +534,13 @@ export default defineComponent({
       }
     });
 
-    const updateMindSpace = async () => {
-      await store.dispatch('mindspace/setMindSpacePages');
-    };
+    // Don't forget to clean up on unmount
+    onUnmounted(() => {
+      const mindspaceContainer = document.querySelector('.mindspace-container');
+      if (mindspaceContainer) {
+        enableBodyScroll(mindspaceContainer);
+      }
+    });
 
     return {
       isLoading,
@@ -504,6 +552,8 @@ export default defineComponent({
       handleTouchMove,
       handleTouchEnd,
       isEditMode,
+      background,
+      containerStyle,
 
       currentMindSpaceId,
       currentItemId,

@@ -40,7 +40,7 @@
   flex: 0 0 50%; // Each view takes exactly half of the wrapper width
   width: 50%;
   height: 100vh;
-  overflow-y: auto;
+  overflow-y: hidden;
 
   &.dashboard-view {
     position: relative;
@@ -48,6 +48,7 @@
 
   &.mindspace-view {
     position: relative;
+    background-size: cover;
   }
 }
 
