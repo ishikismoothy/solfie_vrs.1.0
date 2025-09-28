@@ -323,8 +323,21 @@ export default {
     },
 
     // Add items actions
-    async fetchItems({ commit, state }, userId = null) {
-      const targetUserId = userId || state.user.uid;
+    async fetchItems({ commit, state, rootState }, userId = null) {
+      // Check if accessing via share link first
+      const shareData = rootState.sharing?.currentShareData;
+
+      let targetUserId;
+
+      if (shareData?.ownerId) {
+        // If accessing shared content, use the owner's ID
+        targetUserId = shareData.ownerId;
+        console.log('[user.js/fetchItems] Using owner ID from share:', targetUserId);
+      } else {
+        // Otherwise use provided userId or current user
+        targetUserId = userId || state.user?.uid;
+      }
+      
       if (!targetUserId) {
         console.log('[user.js/fetchItems] No user ID available');
         return;
@@ -340,7 +353,7 @@ export default {
         console.log('🌍 [user.js/fetchItems] Fetching items for user:', targetUserId);
         const items = await mindspaceService.fetchItemsForSlots(targetUserId);
         commit('SET_ITEMS_DATA', items);
-        console.log('🌍 [user.js/fetchItems] Items updated:', Object.keys(items).length, 'items');
+        console.log('🌍 [user.js/fetchItems] Items updated:', Object.keys(items).length, 'items',items );
 
         // Log any items with images for debugging
         const itemsWithImages = Object.values(items).filter(item => item.img);

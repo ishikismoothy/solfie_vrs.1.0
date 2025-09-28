@@ -59,7 +59,7 @@
 
           <!-- Multi-Item or Empty Slot Display -->
           <div v-else class="empty-slot-wrapper">
-            <div v-if="!hasAnyItems(mindslot) && !expanded" class="empty-slot-options">
+            <div v-if="!hasAnyItems(mindslot) && !expanded && !isViewOnly" class="empty-slot-options">
               <h4 class="empty-slot-title">Choose slot type:</h4>
 
               <div class="slot-type-options">
@@ -100,6 +100,7 @@
                 </button>
               </div>
             </div>
+            <div v-else class="empty-slot-options"> no data</div>
 
             <IconSlotGrid
               v-if="hasAnyItems(mindslot)"
@@ -637,7 +638,10 @@
   // Update mindspace
   // Update the updateMindspace function to use activeMindSpaceId
   const updateMindspace = async () => {
-    if (isViewOnly.value) return
+    if (isViewOnly.value) {
+      console.log('❌ Update blocked: View-only mode');
+      return;
+    }
 
     try {
       // Use activeMindSpaceId instead of currentMindSpaceId
@@ -646,7 +650,12 @@
         return
       }
 
-      console.log('[updateMindspace] Updating with ID:', activeMindSpaceId.value, 'isShared:', isSharedAccess.value)
+      console.log('🔍 Update attempt:', {
+        mindspaceId: activeMindSpaceId.value,
+        isSharedAccess: isSharedAccess.value,
+        shareData: currentShareData.value,
+        access: currentShareData.value?.access
+      });
 
       const cleanMindslots = (mindspace.value.mindslot || []).map(slot => ({
         name: slot.name || 'New Slot',
@@ -664,9 +673,18 @@
       await mindspaceService.updateMindspaceSlots(activeMindSpaceId.value, updatedData)
       console.log('[updateMindspace] Update successful')
     } catch (error) {
-      console.error('Error updating mindspace:', error)
-      // Show error to user
-      showToastMessage('Failed to update mindslot. Please check your permissions.')
+      console.error('❌ Update failed:', {
+        error: error.message,
+        code: error.code,
+        details: error
+      });
+
+      // Show user-friendly error
+      if (error.code === 'permission-denied') {
+        showToastMessage('You don\'t have permission to edit this mindspace.');
+      } else {
+        showToastMessage('Failed to save changes. Please try again.');
+      }
     }
   }
 
@@ -675,7 +693,13 @@
     if (newMindSpaceId) {
       console.log('[Watcher] MindSpace ID changed:', newMindSpaceId)
       await fetchMindspaceSlots()
-      if (currentUser.value) {
+      
+      // Check if this is shared access or regular access
+      if (currentShareData.value?.ownerId) {
+        // Shared access - use owner's ID
+        await store.dispatch('user/fetchItems', currentShareData.value.ownerId)
+      } else if (currentUser.value) {
+        // Regular access - use current user's ID
         await store.dispatch('user/fetchItems', currentUser.value)
       }
     }
@@ -686,6 +710,11 @@
     if (newShareData?.mindspaceId) {
       console.log('[Watcher] Share data changed, fetching mindspace slots')
       await fetchMindspaceSlots()
+      
+      // Fetch items using the owner's ID from shareData
+      if (newShareData.ownerId) {
+        await store.dispatch('user/fetchItems', newShareData.ownerId)
+      }
     }
   }, { deep: true })
 
@@ -861,11 +890,28 @@
     console.log('🎯 mindSlot: Vuex store items changed:', Object.keys(newItems).length, 'items')
   }, { deep: true })
 
+  // Add this computed property for debugging
+  const debugInfo = computed(() => ({
+    shareData: currentShareData.value,
+    access: currentShareData.value?.access,
+    isViewOnly: isViewOnly.value,
+    isSharedAccess: isSharedAccess.value,
+    mindspaceId: activeMindSpaceId.value
+  }))
+
+  // Watch for changes
+  watch(debugInfo, (newVal) => {
+    console.log('Debug info changed:', newVal)
+  }, { deep: true })
+
   // Lifecycle hooks
   onMounted(async () => {
     emitter.on('showMindslotModal', handleShowMindslotModal)
     emitter.on('removeMindslot', handleRemoveMindslot)
+    console.log('Component mounted with:', debugInfo.value)
+    fetchMindspaceSlots()
 
+    console.log('mindslot data:', mindspace.value.mindslot)
     // Fetch items using Vuex store if needed
     if (currentUser.value && Object.keys(store.getters['user/getItems']).length === 0) {
       await store.dispatch('user/fetchItems', currentUser.value)

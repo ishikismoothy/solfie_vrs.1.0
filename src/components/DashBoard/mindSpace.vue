@@ -294,6 +294,20 @@
       const store = useStore();
       const currentTime = ref('');
 
+      //Detect Share view or not
+      const isSharedView = computed(() => store.state.mindspace?.isSharedView || false)
+      const currentShareData = computed(() => store.state.sharing?.currentShareData)
+      const isSharedAccess = computed(() => !!currentShareData.value?.mindspaceId)
+      const isViewOnly = computed(() => {
+        if (currentShareData.value?.access) {
+          return currentShareData.value.access === 'view'
+        }
+
+        // Fallback to original logic if no share data
+        // View-only if in shared view AND not in edit mode
+        return isSharedView.value && !isEditMode.value
+      })
+      
       // Icon selector state
       const showIconSelector = ref(false)
       const selectorPosition = ref({ x: 0, y: 0 })
@@ -1156,6 +1170,8 @@
         currentTime,
         background,
         containerStyle,
+        isViewOnly,
+        isSharedAccess,
 
         // Mind-Grid related
         mindSpacePages,

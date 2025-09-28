@@ -64,6 +64,7 @@
       <!-- Analysis Section -->
       <SatisfactionDataView/>
 
+      <!--
       <h2 style="color: white;" class="title">ステータス</h2>
       <section class="stats-section">
         <div class="stat-item">
@@ -79,7 +80,8 @@
           <span class="stat-value">{{ stats.averageScore }}</span>
         </div>
       </section>
-
+      -->
+      
       <!-- 
       <section class="todo-section">
         <h2>今月の選択</h2>

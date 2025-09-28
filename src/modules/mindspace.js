@@ -434,7 +434,7 @@ export default {
           throw error;
         } finally {
           commit('SET_LOADING', false);
-          console.log(`❤️‍🔥 Mindspace ready \nTheme: ${state.currentThemeName}, \nMindSpace: ${state.currentMindSpaceName}, \nPages: ${state.totalPages}`);
+          console.log(`❤️‍🔥 Mindspace ready \nTheme: ${state.currentThemeName}, \nMindSpace: ${state.currentMindSpaceName}, \nMindSpaceId: ${state.currentMindSpaceId}, \nPages: ${state.totalPages}`);
         }
       },
 

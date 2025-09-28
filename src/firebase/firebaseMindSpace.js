@@ -1130,7 +1130,7 @@ export const mindspaceService = {
     }
   },
 
-  // update MindSpaceData
+  // update MindSpaceData for items order
   async updateMindSpaceData (mindSpaceId, mindSpacePages) {
     try {
       console.log('[updateMindSpaceInFirestore] Starting update...');

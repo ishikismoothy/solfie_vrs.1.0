@@ -134,7 +134,7 @@
       <div class="card-face back">
         <div class="item-window-content">
           <!-- Button Container -->
-          <div class="block-option-container">
+          <div v-if="!isViewOnly" class="block-option-container">
             <template v-if="!currentItemId">
               <button @click.stop="handleClose" class="icon-button close-button">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -417,6 +417,20 @@
   ])
 
   const store = useStore()
+
+  //Detect Share view or not
+  const isEditMode = computed(() => store.state.mindspace?.isEditMode || false)
+  const isSharedView = computed(() => store.state.mindspace?.isSharedView || false)
+  const currentShareData = computed(() => store.state.sharing?.currentShareData)
+  //const isSharedAccess = computed(() => !!currentShareData.value?.mindspaceId)
+  const isViewOnly = computed(() => {
+    if (currentShareData.value?.access) {
+      return currentShareData.value.access === 'view'
+    }
+
+    // [Fallback] View-only if in shared view AND not in edit mode
+    return isSharedView.value && !isEditMode.value
+  })
 
   // Reactive state
   const isFlipped = ref(props.initialFlipped)
