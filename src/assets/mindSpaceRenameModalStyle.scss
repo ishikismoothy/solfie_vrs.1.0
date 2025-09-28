@@ -4,7 +4,7 @@
     justify-content: center;
     align-items: center;
   }
-  
+
   @mixin transition($property: all) {
     transition: $property 0.2s ease;
   }
@@ -35,13 +35,13 @@
       align-items: center;
       margin-bottom: 2rem;
     }
-  
+
     &-fade {
       &-enter-active,
       &-leave-active {
         transition: opacity 0.3s ease;
       }
-  
+
       &-enter-from,
       &-leave-to {
         opacity: 0;
@@ -57,43 +57,48 @@
         background: none;
         cursor: pointer;
         @include flex-center; // Add this line to center the icon
-    
+
+        @media (hover: hover) {
+            &:hover {
+                background-color: rgba(0, 0, 0, 0.05);
+            }
+        }
         &:hover {
             background-color: rgba(0, 0, 0, 0.05);
         }
     }
-    
+
 }
-  
+
   .form-group {
     margin-bottom: 20px;
   }
-  
+
   .form-group label {
     display: block;
     margin-bottom: 8px;
     font-size: 14px;
   }
-  
+
   .name-input {
     padding: 8px 12px;
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 14px;
   }
-  
+
   .name-input:focus {
     outline: none;
     border-color: #4f46e5;
     box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
   }
-  
+
   .button-group {
     display: flex;
     justify-content: flex-end;
     gap: 8px;
   }
-  
+
   .cancel-button {
     padding: 8px 16px;
     border: none;
@@ -101,7 +106,7 @@
     background-color: #f3f4f6;
     cursor: pointer;
   }
-  
+
   .submit-button {
     padding: 8px 16px;
     border: none;
@@ -110,21 +115,21 @@
     color: white;
     cursor: pointer;
   }
-  
+
   .submit-button:hover {
     background-color: #4338ca;
   }
-  
+
   .cancel-button:hover {
     background-color: #e5e7eb;
   }
-  
+
   /* Transition animations */
   .modal-enter-active,
   .modal-leave-active {
     transition: opacity 0.2s ease;
   }
-  
+
   .modal-enter-from,
   .modal-leave-to {
     opacity: 0;

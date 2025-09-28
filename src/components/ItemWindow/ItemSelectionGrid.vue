@@ -1,4 +1,4 @@
-<!-- ItemSelectionGrid.vue - Enhanced with multi-select and confirmation -->
+<!-- ItemSelectionGrid.vue - Enhanced with theme filtering and proper refresh -->
 <template>
   <div
     v-if="isVisible"
@@ -52,7 +52,7 @@
             </svg>
           </div>
           <h4>No Items Available</h4>
-          <p>Create some items in your mindspace first, then come back to fill your slots.</p>
+          <p>Create some items in your current theme first, then come back to fill your slots.</p>
         </div>
 
         <template v-else>
@@ -157,18 +157,58 @@ const screenPositionClass = computed(() => {
   return '' // center (default)
 })
 
-// Computed properties
-const items = computed(() => store.getters['user/getItems'])
-const availableItems = computed(() => {
-  // Convert items object to array and filter out items that are already in slots
-  const itemsArray = Object.entries(items.value).map(([id, item]) => ({
-    id,
-    ...item
-  }))
+// Get current theme ID to filter items
+const currentThemeId = computed(() => store.getters['mindspace/getThemeId'])
 
-  // You can add filtering logic here to exclude items already in slots
-  // For now, return all items
-  return itemsArray
+// Computed properties - FIXED: Filter by current theme and refresh properly
+const items = computed(() => store.getters['user/getItems'])
+const mindspacePages = computed(() => store.getters['mindspace/getMindSpacePages'])
+
+const availableItems = computed(() => {
+  console.log('🔍 [ItemSelectionGrid] Computing available items...')
+  console.log('🔍 Current theme ID:', currentThemeId.value)
+  console.log('🔍 All items count:', Object.keys(items.value).length)
+  console.log('🔍 Mindspace pages:', mindspacePages.value?.length)
+
+  if (!currentThemeId.value || !mindspacePages.value) {
+    console.log('🔍 Missing theme ID or mindspace pages')
+    return []
+  }
+
+  // Get all item IDs that exist in the current theme's mindspace
+  const currentThemeItemIds = new Set()
+
+  mindspacePages.value.forEach(page => {
+    if (page?.items) {
+      page.items.forEach(item => {
+        if (item?.id) {
+          currentThemeItemIds.add(item.id)
+          // Also add items from folders if they exist
+          if (item.items && Array.isArray(item.items)) {
+            item.items.forEach(folderItem => {
+              if (folderItem?.id) {
+                currentThemeItemIds.add(folderItem.id)
+              }
+            })
+          }
+        }
+      })
+    }
+  })
+
+  console.log('🔍 Current theme item IDs:', Array.from(currentThemeItemIds))
+
+  // Filter items to only include those in current theme
+  const filteredItems = Object.entries(items.value)
+    .filter(([itemId]) => currentThemeItemIds.has(itemId))
+    .map(([id, item]) => ({
+      id,
+      ...item
+    }))
+
+  console.log('🔍 Filtered items for current theme:', filteredItems.length)
+
+  return filteredItems
 })
 
 const headerTitle = computed(() => {
@@ -252,21 +292,40 @@ const closeSelector = () => {
   emit('close')
 }
 
-// Load items when component becomes visible
+// FIXED: Load and refresh items properly
+const refreshItems = async () => {
+  isLoading.value = true
+  try {
+    const userId = store.state.user?.user?.uid
+    if (userId) {
+      console.log('🔄 [ItemSelectionGrid] Refreshing items for user:', userId)
+      await store.dispatch('user/fetchItems', userId)
+
+      // Also refresh mindspace pages to ensure we have the latest data
+      if (currentThemeId.value) {
+        await store.dispatch('mindspace/setMindSpacePages')
+      }
+    }
+  } catch (error) {
+    console.error('❌ [ItemSelectionGrid] Error refreshing items:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Watch for visibility changes and refresh data
 watch(() => props.isVisible, async (newValue) => {
   if (newValue) {
-    isLoading.value = true
     selectedItems.value = [] // Reset selection when opening
-    try {
-      const userId = store.state.user?.user?.uid
-      if (userId && Object.keys(items.value).length === 0) {
-        await store.dispatch('user/fetchItems', userId)
-      }
-    } catch (error) {
-      console.error('Error loading items:', error)
-    } finally {
-      isLoading.value = false
-    }
+    await refreshItems()
+  }
+})
+
+// Watch for theme changes and refresh
+watch(currentThemeId, async (newThemeId, oldThemeId) => {
+  if (newThemeId && newThemeId !== oldThemeId && props.isVisible) {
+    console.log('🔄 [ItemSelectionGrid] Theme changed, refreshing items')
+    await refreshItems()
   }
 })
 
