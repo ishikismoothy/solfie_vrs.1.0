@@ -106,35 +106,36 @@ export const mindspaceService = {
 
   },
   async getMindSpaceData (mindSpaceId) {
-      const mindspaceRef = doc(db, 'mindspace', mindSpaceId);
-      const mindspaceDoc = await getDoc(mindspaceRef);
+    const mindspaceRef = doc(db, 'mindspace', mindSpaceId);
+    const mindspaceDoc = await getDoc(mindspaceRef);
 
-      if (!mindspaceDoc.exists()) {
-        throw new Error('Mindspace not found');
-      }
+    if (!mindspaceDoc.exists()) {
+      throw new Error('Mindspace not found');
+    }
 
-      const mindspaceData = mindspaceDoc.data();
+    const mindspaceData = mindspaceDoc.data();
 
-      // Check if pages exist, if not create and save it
-      if (!mindspaceData.pages || !Array.isArray(mindspaceData.pages)) {
-        // Create default pages structure with explicit empty items array
-        const defaultPages = [{items: []}];
+    // Check if pages exist, if not create and save it
+    if (!mindspaceData.pages || !Array.isArray(mindspaceData.pages)) {
+      // Create default pages structure with explicit empty items array
+      const defaultPages = [{items: []}];
 
-        // Update the document with default pages
-        await updateDoc(mindspaceRef, {
-          pages: defaultPages
-        });
+      // Update the document with default pages
+      await updateDoc(mindspaceRef, {
+        pages: defaultPages
+      });
 
-        // Update local mindspaceData
-        mindspaceData.pages = defaultPages;
-      }
+      // Update local mindspaceData
+      mindspaceData.pages = defaultPages;
+    }
 
-      // 2. Transform the pages data
-      const transformedPages = await Promise.all(
-        mindspaceData.pages.map(async (page) => {
-          // We can now be more confident about the structure, though keeping the fallback for safety
-          const pageItems = await Promise.all(
-            (page.items || []).map(async (itemId) => {
+    // 2. Transform the pages data
+    const transformedPages = await Promise.all(
+      mindspaceData.pages.map(async (page) => {
+        // Process each item, filtering out invalid ones
+        const pageItems = await Promise.all(
+          (page.items || []).map(async (itemId) => {
+            try {
               // Check if this is a folder ID
               const folderData = mindspaceData.folders?.find(f => f.id === itemId);
 
@@ -143,48 +144,112 @@ export const mindspaceService = {
                 const folderItems = await Promise.all(
                   (folderData.items || []).map(async (fItemId) => {
                     const itemDoc = await getDoc(doc(db, 'items', fItemId));
+                    
+                    // CHECK IF ITEM EXISTS
+                    if (!itemDoc.exists()) {
+                      console.warn(`Item ${fItemId} not found in folder ${folderData.name}`);
+                      return null; // Return null for non-existent items
+                    }
+                    
                     const itemData = itemDoc.data();
-
+                    
                     return {
                       id: fItemId,
-                      name: itemData.name,
+                      name: itemData.name || 'Unnamed Item', // Fallback name
                       shape: itemData.icon || squareSvg,
                       badge: itemData.badge || null
                     };
                   })
                 );
 
+                // Filter out null items
+                const validFolderItems = folderItems.filter(item => item !== null);
+
                 return {
                   id: folderData.id,
                   name: folderData.name,
                   shape: folderData.icon || folderSvg,
-                  items: folderItems
+                  items: validFolderItems
                 };
               } else {
                 // This is a regular item
                 const itemDoc = await getDoc(doc(db, 'items', itemId));
+                
+                // CHECK IF ITEM EXISTS
+                if (!itemDoc.exists()) {
+                  console.warn(`Item ${itemId} not found`);
+                  return null; // Return null for non-existent items
+                }
+                
                 const itemData = itemDoc.data();
 
                 return {
                   id: itemId,
-                  name: itemData.name,
+                  name: itemData.name || 'Unnamed Item', // Fallback name
                   shape: itemData.icon || squareSvg,
                   badge: itemData.badge || null
                 };
               }
-            })
-          );
+            } catch (error) {
+              console.error(`Error processing item ${itemId}:`, error);
+              return null; // Return null for any errors
+            }
+          })
+        );
 
-          return { items: pageItems };
-        })
-      );
+        // Filter out null items (non-existent or errored items)
+        const validPageItems = pageItems.filter(item => item !== null);
 
-      return {
-        name: mindspaceData.name,
-        pages: transformedPages,
-        totalPages: transformedPages.length
-      };
-  },
+        return { items: validPageItems };
+      })
+    );
+
+    return {
+      name: mindspaceData.name,
+      pages: transformedPages,
+      totalPages: transformedPages.length
+    };
+},
+
+async cleanupInvalidReferences(mindSpaceId) {
+    const mindspaceRef = doc(db, 'mindspace', mindSpaceId);
+    const mindspaceDoc = await getDoc(mindspaceRef);
+    
+    if (!mindspaceDoc.exists()) return;
+    
+    const mindspaceData = mindspaceDoc.data();
+    const cleanedPages = [];
+    
+    for (const page of (mindspaceData.pages || [])) {
+        const validItems = [];
+        
+        for (const itemId of (page.items || [])) {
+            // Check if it's a folder
+            const isFolder = mindspaceData.folders?.find(f => f.id === itemId);
+            
+            if (!isFolder) {
+                // Check if item exists
+                const itemDoc = await getDoc(doc(db, 'items', itemId));
+                if (itemDoc.exists()) {
+                    validItems.push(itemId);
+                } else {
+                    console.log(`Removing invalid item reference: ${itemId}`);
+                }
+            } else {
+                validItems.push(itemId); // Keep folders
+            }
+        }
+        
+        cleanedPages.push({ items: validItems });
+    }
+    
+    // Update with cleaned pages
+    await updateDoc(mindspaceRef, {
+        pages: cleanedPages
+    });
+    
+    console.log('Cleanup completed');
+},
 
   async createMindspace ({
     uid,

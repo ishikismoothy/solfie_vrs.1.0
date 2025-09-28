@@ -520,6 +520,24 @@ export default {
 
         } catch (error) {
           console.error('❌ Error loading pages:', error);
+        
+          // If it's the "reading 'name'" error, trigger cleanup
+          if (error.message?.includes("Cannot read properties of undefined")) {
+              console.log('🔧 Attempting to clean up invalid references...');
+              try {
+                  await mindspaceService.cleanupInvalidReferences(state.currentMindSpaceId);
+                  // Retry loading after cleanup
+                  const result = await mindspaceService.getMindSpaceData(state.currentMindSpaceId);
+                  commit('SET_MINDSPACE_NAME', result.name);
+                  commit('SET_MINDSPACE_PAGES', result.pages);
+                  commit('SET_TOTAL_PAGES', result.totalPages);
+                  console.log('✅ Cleanup successful, pages loaded');
+                  return;
+              } catch (cleanupError) {
+                  console.error('Failed to cleanup:', cleanupError);
+              }
+          }
+          
           commit('SET_ERROR', error.message);
         } finally {
           await new Promise(resolve => setTimeout(resolve, 500));
@@ -880,6 +898,8 @@ export default {
         } catch (error) {
           console.error('Error deleting item:', error);
           throw error;
+        }finally{
+          await this.cleanupInvalidReferences(state.currentMindSpaceId);
         }
       },
       async setItemId({ commit, dispatch, state }, itemId) {
