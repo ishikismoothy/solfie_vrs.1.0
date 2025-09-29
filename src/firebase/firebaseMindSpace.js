@@ -105,6 +105,7 @@ export const mindspaceService = {
     }
 
   },
+
   async getMindSpaceData (mindSpaceId) {
     const mindspaceRef = doc(db, 'mindspace', mindSpaceId);
     const mindspaceDoc = await getDoc(mindspaceRef);
@@ -209,47 +210,47 @@ export const mindspaceService = {
       pages: transformedPages,
       totalPages: transformedPages.length
     };
-},
+  },
 
-async cleanupInvalidReferences(mindSpaceId) {
-    const mindspaceRef = doc(db, 'mindspace', mindSpaceId);
-    const mindspaceDoc = await getDoc(mindspaceRef);
-    
-    if (!mindspaceDoc.exists()) return;
-    
-    const mindspaceData = mindspaceDoc.data();
-    const cleanedPages = [];
-    
-    for (const page of (mindspaceData.pages || [])) {
-        const validItems = [];
-        
-        for (const itemId of (page.items || [])) {
-            // Check if it's a folder
-            const isFolder = mindspaceData.folders?.find(f => f.id === itemId);
-            
-            if (!isFolder) {
-                // Check if item exists
-                const itemDoc = await getDoc(doc(db, 'items', itemId));
-                if (itemDoc.exists()) {
-                    validItems.push(itemId);
-                } else {
-                    console.log(`Removing invalid item reference: ${itemId}`);
-                }
-            } else {
-                validItems.push(itemId); // Keep folders
-            }
-        }
-        
-        cleanedPages.push({ items: validItems });
-    }
-    
-    // Update with cleaned pages
-    await updateDoc(mindspaceRef, {
-        pages: cleanedPages
-    });
-    
-    console.log('Cleanup completed');
-},
+  async cleanupInvalidReferences(mindSpaceId) {
+      const mindspaceRef = doc(db, 'mindspace', mindSpaceId);
+      const mindspaceDoc = await getDoc(mindspaceRef);
+      
+      if (!mindspaceDoc.exists()) return;
+      
+      const mindspaceData = mindspaceDoc.data();
+      const cleanedPages = [];
+      
+      for (const page of (mindspaceData.pages || [])) {
+          const validItems = [];
+          
+          for (const itemId of (page.items || [])) {
+              // Check if it's a folder
+              const isFolder = mindspaceData.folders?.find(f => f.id === itemId);
+              
+              if (!isFolder) {
+                  // Check if item exists
+                  const itemDoc = await getDoc(doc(db, 'items', itemId));
+                  if (itemDoc.exists()) {
+                      validItems.push(itemId);
+                  } else {
+                      console.log(`Removing invalid item reference: ${itemId}`);
+                  }
+              } else {
+                  validItems.push(itemId); // Keep folders
+              }
+          }
+          
+          cleanedPages.push({ items: validItems });
+      }
+      
+      // Update with cleaned pages
+      await updateDoc(mindspaceRef, {
+          pages: cleanedPages
+      });
+      
+      console.log('Cleanup completed');
+  },
 
   async createMindspace ({
     uid,
@@ -578,27 +579,29 @@ async cleanupInvalidReferences(mindSpaceId) {
   // Update mindspace slots
   async updateMindspaceSlots(mindspaceId, mindspaceData) {
     try {
-        if (!mindspaceId) {
-            throw new Error('Mindspace ID is required');
-        }
+      if (!mindspaceId) {
+        throw new Error('Mindspace ID is required');
+      }
 
-        const docRef = doc(db, 'mindspace', mindspaceId);
-
-        // Get existing data first
-        const docSnap = await getDoc(docRef);
-        const existingData = docSnap.exists() ? docSnap.data() : {};
-
-        // Merge existing data with new data
-        const updatedData = {
-            ...existingData,
-            ...mindspaceData,
-            mindslot: mindspaceData.mindslot || existingData.mindslot || []
-        };
-
-        await updateDoc(docRef, updatedData);
+      const docRef = doc(db, 'mindspace', mindspaceId);
+      
+      // Only update the fields that are actually changing
+      const updateFields = {};
+      
+      if (mindspaceData.name !== undefined) {
+        updateFields.name = mindspaceData.name;
+      }
+      
+      if (mindspaceData.mindslot !== undefined) {
+        updateFields.mindslot = mindspaceData.mindslot;
+      }
+      
+      // Don't touch 'pages' or other fields not explicitly provided
+      await updateDoc(docRef, updateFields);
+      
     } catch (error) {
-        console.error('Error updating mindspace:', error);
-        throw error;
+      console.error('Error updating mindspace:', error);
+      throw error;
     }
   },
 
