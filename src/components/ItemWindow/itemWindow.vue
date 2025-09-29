@@ -1,4 +1,4 @@
-<!-- Updated itemWindow.vue with unified icon system -->
+<!-- Updated itemWindow.vue with iOS-compatible image upload -->
 <template>
   <div
     class="mind-slot-card"
@@ -31,12 +31,11 @@
             @click.stop="handleClose"
             class="icon-button close-button"
           >
-        <button @click.stop="handleClose" class="icon-button close-button">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button></button>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
 
           <button
             v-else
@@ -50,21 +49,104 @@
           </button>
         </div>
 
-        <div class="slot-content"
+        <!-- iOS-friendly label wrapper for touch devices -->
+        <label
+          v-if="canUploadImage && isTouchDevice && showUploadPrompt"
+          :for="`slot-image-input-${index}`"
+          class="slot-content-label"
+          @click.stop="handleLabelClick"
+        >
+          <div class="upload-prompt-overlay">
+            <div class="upload-prompt-content">
+              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                <polyline points="21 15 16 10 5 21"></polyline>
+              </svg>
+              <p>Tap to upload cover image</p>
+            </div>
+          </div>
+          <div
+            class="slot-content"
+            :class="{ 'long-pressing': isLongPressing }"
+            :style="expanded && (isSingleItemSlot || isFromMindGrid) && getCurrentItemImage() ?
+                    { backgroundImage: `url(${getCurrentItemImage()})` } : {}"
+          >
+            <!-- Existing slot content -->
+            <div v-if="isSingleItemSlot && items[mindslot.item]" class="single-item-content">
+              <!-- Content remains the same -->
+              <div v-if="expanded" class="single-item-name-overlay">
+                {{ items[mindslot.item]?.name || items[mindslot.item]?.title || 'Unnamed Item' }}
+              </div>
+              <template v-else>
+                <div
+                  class="icon-slot has-item clickable single-item-icon"
+                  @contextmenu.prevent="handleSingleItemRightClick($event)"
+                  @touchstart="handleSingleItemTouchStart($event)"
+                  @touchend="handleSingleItemTouchEnd"
+                >
+                  <div v-if="getSingleItemCustomIcon()" class="custom-icon" v-html="getSingleItemCustomIcon()"></div>
+                  <div v-else class="icon-item-name">
+                    {{ items[mindslot.item]?.name || items[mindslot.item]?.title || 'Unnamed Item' }}
+                  </div>
+                </div>
+                <div class="single-item-name">
+                  {{ items[mindslot.item]?.name || items[mindslot.item]?.title || 'Unnamed Item' }}
+                </div>
+              </template>
+            </div>
+
+            <div v-else-if="isFromMindGrid && currentItemId" class="single-item-content">
+              <div v-if="expanded" class="single-item-name-overlay">
+                {{ currentItemName }}
+              </div>
+              <template v-else>
+                <div class="icon-slot has-item clickable single-item-icon">
+                  <div class="icon-item-name">
+                    {{ currentItemName }}
+                  </div>
+                </div>
+                <div class="single-item-name">
+                  {{ currentItemName }}
+                </div>
+              </template>
+            </div>
+
+            <div v-else class="empty-slot-wrapper">
+              <div v-if="!hasAnyItems" class="empty-slot-text">Empty slot</div>
+              <IconSlotGrid
+                :initialIcons="mindslot.slotIcons || [null, null, null]"
+                :iconItems="mindslot.iconItems || [null, null, null]"
+                :customIcons="mindslot.customIcons || [null, null, null]"
+                :items="items"
+                :clickable="expanded"
+                :expanded="expanded"
+                @icons-changed="handleIconsChanged"
+                @icon-clicked="handleIconClick"
+                @icon-right-click="openIconSelector"
+                @custom-icon-changed="handleCustomIconsChanged"
+              />
+            </div>
+          </div>
+        </label>
+
+        <!-- Regular slot content for non-touch devices -->
+        <div
+          v-else
+          class="slot-content"
+          :class="{ 'long-pressing': isLongPressing }"
           :style="expanded && (isSingleItemSlot || isFromMindGrid) && getCurrentItemImage() ?
                   { backgroundImage: `url(${getCurrentItemImage()})` } : {}"
           @contextmenu.prevent="handleSlotRightClick"
           @touchstart="handleSlotTouchStart"
-          @touchend="handleSlotTouchEnd">
-
-          <!-- Single Item Display -->
+          @touchend="handleSlotTouchEnd"
+          @touchcancel="handleSlotTouchCancel"
+        >
+          <!-- Same content as above (repeated for non-touch devices) -->
           <div v-if="isSingleItemSlot && items[mindslot.item]" class="single-item-content">
-            <!-- For expanded slots, just show the name in top-left -->
             <div v-if="expanded" class="single-item-name-overlay">
               {{ items[mindslot.item]?.name || items[mindslot.item]?.title || 'Unnamed Item' }}
             </div>
-
-            <!-- For unexpanded slots, show the normal icon + name layout -->
             <template v-else>
               <div
                 class="icon-slot has-item clickable single-item-icon"
@@ -72,7 +154,6 @@
                 @touchstart="handleSingleItemTouchStart($event)"
                 @touchend="handleSingleItemTouchEnd"
               >
-                <!-- Show custom icon if set, otherwise show item name -->
                 <div v-if="getSingleItemCustomIcon()" class="custom-icon" v-html="getSingleItemCustomIcon()"></div>
                 <div v-else class="icon-item-name">
                   {{ items[mindslot.item]?.name || items[mindslot.item]?.title || 'Unnamed Item' }}
@@ -84,14 +165,10 @@
             </template>
           </div>
 
-          <!-- Mind Grid Item Display -->
           <div v-else-if="isFromMindGrid && currentItemId" class="single-item-content">
-            <!-- For expanded slots, just show the name in top-left -->
             <div v-if="expanded" class="single-item-name-overlay">
               {{ currentItemName }}
             </div>
-
-            <!-- For unexpanded slots, show the normal icon + name layout -->
             <template v-else>
               <div class="icon-slot has-item clickable single-item-icon">
                 <div class="icon-item-name">
@@ -104,10 +181,8 @@
             </template>
           </div>
 
-          <!-- Multi-Item or Empty Slot Display -->
           <div v-else class="empty-slot-wrapper">
             <div v-if="!hasAnyItems" class="empty-slot-text">Empty slot</div>
-
             <IconSlotGrid
               :initialIcons="mindslot.slotIcons || [null, null, null]"
               :iconItems="mindslot.iconItems || [null, null, null]"
@@ -123,17 +198,31 @@
           </div>
         </div>
 
+        <!-- Mobile upload button (alternative approach) -->
+        <button 
+          v-if="canUploadImage && isTouchDevice && !showUploadPrompt"
+          @click.stop="handleMobileUploadClick"
+          class="mobile-upload-button"
+          aria-label="Upload cover image"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <polyline points="21 15 16 10 5 21"></polyline>
+          </svg>
+        </button>
+
         <!-- Flip indicator when expanded -->
         <div v-if="expanded && (hasAnyItems || isFromMindGrid)" class="flip-indicator">
-          <span v-if="isSingleItemSlot || isFromMindGrid">Click to view item details →</span>
+          <span v-if="isSingleItemSlot || isFromMindGrid">裏返す↩︎</span>
           <span v-else>Click icons to view items →</span>
         </div>
       </div>
 
-      <!-- Card Back: Item Details -->
+      <!-- Card Back: Item Details (remains the same) -->
       <div class="card-face back">
+        <!-- Content remains unchanged -->
         <div class="item-window-content">
-          <!-- Button Container -->
           <div v-if="!isViewOnly" class="block-option-container">
             <template v-if="!currentItemId">
               <button @click.stop="handleClose" class="icon-button close-button">
@@ -202,7 +291,6 @@
             </template>
           </div>
 
-          <!-- Empty Slot View -->
           <div v-if="viewMode === 'slot' || !currentItemId" class="empty-slot-view">
             <div class="empty-slot-header">
               <h3 class="empty-slot-title">Empty Slot</h3>
@@ -216,12 +304,9 @@
                   <line x1="3" y1="10" x2="21" y2="10"></line>
                 </svg>
               </div>
-              <!-- <h4>This slot is empty</h4>
-              <p>Select items from your mindspace to fill this slot, or close this window and choose a different slot.</p> -->
             </div>
           </div>
 
-          <!-- Icon Grid View -->
           <div v-else-if="viewMode === 'iconGrid'" class="icon-grid-view">
             <div class="icon-grid-header">
               <h3>Choose an item to view</h3>
@@ -238,13 +323,10 @@
                   @touchstart="handleLargeIconTouchStart($event, iconIndex)"
                   @touchend="handleLargeIconTouchEnd"
                 >
-                  <!-- Show custom icon if set -->
                   <div v-if="getLargeCustomIcon(iconIndex)" class="large-custom-icon" v-html="getLargeCustomIcon(iconIndex)"></div>
-                  <!-- Show item name if available and no custom icon -->
                   <div v-else-if="item && getItemName" class="large-icon-item-name">
                     {{ getItemName(item) }}
                   </div>
-                  <!-- Empty placeholder -->
                   <div v-else class="large-icon-placeholder">
                     <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
                       <circle cx="12" cy="12" r="10"></circle>
@@ -257,7 +339,6 @@
             </div>
           </div>
 
-          <!-- Item Content View -->
           <div v-else-if="viewMode === 'itemContent'" class="regular-item-view">
             <div class="item-header">
               <div class="item-title-section">
@@ -303,7 +384,7 @@
             </div>
           </div>
         </div>
-        <!-- Multi-item navigation -->
+
         <div v-if="!isSingleItemSlot && !isFromMindGrid && hasMultipleItems" class="multi-item-nav">
           <template v-for="(item, iconIndex) in mindslot.iconItems" :key="iconIndex">
             <button
@@ -319,8 +400,9 @@
     </div>
   </div>
 
-  <!-- Hidden file input for slot image upload -->
+  <!-- Hidden file input with unique ID for label connection -->
   <input
+    :id="`slot-image-input-${index}`"
     ref="slotImageUploadInput"
     type="file"
     accept="image/*"
@@ -349,7 +431,7 @@
   import IconSlotGrid from '@/./components/ItemWindow/iconSlotGrid.vue'
   import IconSelector from '@/./components/ItemWindow/IconSelector.vue'
 
-  // Props
+  // Props (same as before)
   const props = defineProps({
     mindslot: {
       type: Object,
@@ -403,7 +485,7 @@
     }
   })
 
-  // Emits
+  // Emits (same as before)
   const emit = defineEmits([
     'delete',
     'name-change',
@@ -418,40 +500,48 @@
 
   const store = useStore()
 
-  //Detect Share view or not
+  // Share view detection (same as before)
   const isEditMode = computed(() => store.state.mindspace?.isEditMode || false)
   const isSharedView = computed(() => store.state.mindspace?.isSharedView || false)
   const currentShareData = computed(() => store.state.sharing?.currentShareData)
-  //const isSharedAccess = computed(() => !!currentShareData.value?.mindspaceId)
   const isViewOnly = computed(() => {
     if (currentShareData.value?.access) {
       return currentShareData.value.access === 'view'
     }
-
-    // [Fallback] View-only if in shared view AND not in edit mode
     return isSharedView.value && !isEditMode.value
   })
 
-  // Reactive state
+  // Reactive state (same as before)
   const isFlipped = ref(props.initialFlipped)
   const isEditingName = ref(false)
   const editingName = ref(props.mindslot.name || 'New Slot')
   const nameInput = ref(null)
   const currentIconIndex = ref(0)
-  const viewMode = ref('slot') // 'slot', 'iconGrid', 'itemContent'
+  const viewMode = ref('slot')
 
-  // Item editing state
+  // Item editing state (same as before)
   const isEditingItemName = ref(false)
   const editedItemName = ref('')
   const itemNameInput = ref(null)
 
-  // Icon selector state
+  // Icon selector state (same as before)
   const showIconSelector = ref(false)
   const selectorPosition = ref({ x: 0, y: 0 })
   const currentSlotIconIndex = ref(-1)
   const hasCurrentIcon = ref(false)
 
-  // Computed properties
+  // NEW: Touch device detection and upload prompt
+  const isTouchDevice = ref(false)
+  const showUploadPrompt = ref(false)
+  
+  // Check if device supports touch on mount
+  if (typeof window !== 'undefined') {
+    isTouchDevice.value = 'ontouchstart' in window || 
+                          navigator.maxTouchPoints > 0 ||
+                          /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+  }
+
+  // Computed properties (same as before)
   const currentItemId = computed(() => store.getters['mindspace/getItemId'])
   const currentItemName = computed(() => store.getters['mindspace/getItemName'] || 'Loading...')
   const currentUid = computed(() => store.getters['mindspace/getUserId'])
@@ -466,9 +556,16 @@
     return props.fromMindGrid && !!currentItemId.value
   })
 
+  // NEW: Check if image upload is available for this slot
+  const canUploadImage = computed(() => {
+    return (isSingleItemSlot.value && props.mindslot.item) ||
+           (isFromMindGrid.value && currentItemId.value)
+  })
+
   const slotImageUploadInput = ref(null)
   let touchTimer = null
   const longPressDelay = 500
+  const isLongPressing = ref(false)
 
   const hasIconItems = computed(() => {
     const iconItems = props.mindslot.iconItems || [null, null, null]
@@ -484,7 +581,7 @@
     return iconItems.filter(item => item !== null && item !== undefined).length > 1
   })
 
-  // Helper functions
+  // Helper functions (same as before)
   const getCurrentItemImage = () => {
     if (isSingleItemSlot.value && props.mindslot.item) {
       const item = props.items[props.mindslot.item]
@@ -508,16 +605,13 @@
     return itemId ? store.getters['user/getItemCustomIcon'](itemId) : null
   }
 
-  // Icon selector functions
+  // Icon selector functions (same as before)
   const openIconSelector = (event, iconIndex) => {
     currentSlotIconIndex.value = iconIndex
 
-    // Check if current position has a custom icon
     if (iconIndex === -1) {
-      // Single item - check first position
       hasCurrentIcon.value = !!(props.mindslot.customIcons?.[0])
     } else {
-      // Multi-item - check specific position
       hasCurrentIcon.value = !!(props.mindslot.customIcons?.[iconIndex])
     }
 
@@ -533,13 +627,10 @@
 
   const handleIconSelection = async (selectedIcon) => {
     if (currentSlotIconIndex.value >= -1) {
-      // Get the actual item ID for the icon
       let targetItemId = null
       if (currentSlotIconIndex.value === -1) {
-        // Single item
         targetItemId = props.mindslot.item
       } else {
-        // Multi-item - get item ID from iconItems array
         const iconItems = props.mindslot.iconItems || [null, null, null]
         targetItemId = iconItems[currentSlotIconIndex.value]
       }
@@ -550,7 +641,6 @@
         return
       }
 
-      // Update the global icon store
       try {
         await store.dispatch('user/setItemCustomIcon', {
           itemId: targetItemId,
@@ -565,10 +655,10 @@
     closeIconSelector()
   }
 
-  // Single item icon selection handlers
+  // Icon handlers (same as before)
   const handleSingleItemRightClick = (event) => {
     event.preventDefault()
-    openIconSelector(event, -1) // -1 indicates single item
+    openIconSelector(event, -1)
   }
 
   const handleSingleItemTouchStart = (event) => {
@@ -584,7 +674,6 @@
     }
   }
 
-  // Large icon touch handlers
   const handleLargeIconTouchStart = (event, iconIndex) => {
     touchTimer = setTimeout(() => {
       openIconSelector(event.touches[0], iconIndex)
@@ -612,11 +701,10 @@
     })
   }
 
-  // Card interaction methods
+  // Card interaction methods (same as before)
   async function handleCardClick() {
     console.log('🎮 handleCardClick called - props.expanded:', props.expanded)
-    console.log('🎮 expandedSlotIndex:', props.expandedSlotIndex)
-
+    
     if (!props.expanded && props.expandedSlotIndex !== null) {
       console.log('🎮 Another slot is expanded - ignoring click on unexpanded card')
       return
@@ -646,32 +734,33 @@
     }
   }
 
+  // NEW: Handle label click to prevent card flip on upload
+  const handleLabelClick = (event) => {
+    // Don't flip the card when clicking the label for upload
+    event.stopPropagation()
+  }
+
+  // NEW: Mobile upload button handler
+  const handleMobileUploadClick = () => {
+    slotImageUploadInput.value?.click()
+  }
+
+  // Icon click handler (same as before)
   async function handleIconClick(iconIndex) {
     const iconItems = props.mindslot.iconItems || [null, null, null]
     const itemId = iconItems[iconIndex]
 
-    console.log('=== DEBUG START ===')
-    console.log('iconIndex:', iconIndex)
-    console.log('itemId:', itemId)
-    console.log('props.expanded:', props.expanded)
-
     if (!itemId) {
-      console.log('EARLY RETURN: No item found')
       return
     }
 
     const isExpanded = props.expanded
-    console.log('isExpanded variable:', isExpanded)
 
     if (!isExpanded) {
-      console.log('ENTERING UNEXPANDED BRANCH')
-      console.log('About to emit icon-direct-click with:', props.index, iconIndex)
       emit('icon-direct-click', props.index, iconIndex)
-      console.log('Emit completed, returning')
       return
     }
 
-    console.log('ENTERING EXPANDED BRANCH')
     currentIconIndex.value = iconIndex
     viewMode.value = 'itemContent'
 
@@ -679,8 +768,6 @@
     await nextTick()
 
     isFlipped.value = true
-
-    console.log('=== DEBUG END ===')
   }
 
   async function switchToIconItem(iconIndex) {
@@ -695,33 +782,71 @@
     }
   }
 
+  // Desktop right-click handler (same as before)
   const handleSlotRightClick = (event) => {
-    if ((isSingleItemSlot.value && props.mindslot.item) ||
-        (isFromMindGrid.value && currentItemId.value)) {
-      event.preventDefault()
+    event.preventDefault()
+    if (canUploadImage.value && !isTouchDevice.value) {
       slotImageUploadInput.value?.click()
     }
   }
 
+  // UPDATED: Touch handlers for non-iOS or fallback
   const handleSlotTouchStart = () => {
-    if ((isSingleItemSlot.value && props.mindslot.item) ||
-        (isFromMindGrid.value && currentItemId.value)) {
+    if (!canUploadImage.value) return
+    
+    // For iOS: Show upload prompt overlay
+    if (isTouchDevice.value && /iPhone|iPad|iPod/.test(navigator.userAgent)) {
+      isLongPressing.value = true
+      
       touchTimer = setTimeout(() => {
+        isLongPressing.value = false
+        showUploadPrompt.value = true
+        if (navigator.vibrate) navigator.vibrate(10)
+        
+        // Hide prompt after 3 seconds
+        setTimeout(() => {
+          showUploadPrompt.value = false
+        }, 3000)
+      }, longPressDelay)
+    } 
+    // For other devices: Try direct approach
+    else {
+      isLongPressing.value = true
+      
+      touchTimer = setTimeout(() => {
+        isLongPressing.value = false
+        if (navigator.vibrate) navigator.vibrate(10)
         slotImageUploadInput.value?.click()
       }, longPressDelay)
     }
   }
 
   const handleSlotTouchEnd = () => {
+    isLongPressing.value = false
+    
     if (touchTimer) {
       clearTimeout(touchTimer)
       touchTimer = null
     }
   }
 
+  const handleSlotTouchCancel = () => {
+    isLongPressing.value = false
+    showUploadPrompt.value = false
+    
+    if (touchTimer) {
+      clearTimeout(touchTimer)
+      touchTimer = null
+    }
+  }
+
+  // Image upload handler (same as before)
   const handleSlotImageUpload = async (event) => {
     const file = event.target.files[0]
     console.log('🖼️ File selected:', file?.name)
+    
+    // Hide upload prompt if shown
+    showUploadPrompt.value = false
 
     let targetItemId = null
 
@@ -754,6 +879,7 @@
     }
   }
 
+  // Rest of the functions remain the same...
   async function loadItemAndFlip(itemId) {
     await store.dispatch('mindspace/setItemId', itemId)
     await nextTick()
@@ -923,7 +1049,7 @@
     }
   }
 
-  // Watchers
+  // Watchers (same as before)
   watch(() => props.mindslot?.name, (newName) => {
     if (newName) editingName.value = newName
   })
@@ -936,7 +1062,6 @@
     console.log('[ItemWindow] Item name changed:', { oldName, newName, itemId: currentItemId.value })
   })
 
-  // Watch for direct icon access
   watch(() => props.directIconIndex, async (newIconIndex) => {
     console.log('*** WATCHER TRIGGERED ***', { newIconIndex, expanded: props.expanded, initialFlipped: props.initialFlipped })
 
@@ -994,6 +1119,109 @@
     svg {
       stroke: rgb(255, 86, 56);
       fill: none;
+    }
+  }
+
+  .slot-content {
+    /* Prevent all text selection and touch defaults */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    touch-action: manipulation;
+    
+    /* Prevent highlighting on tap */
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .slot-content.long-pressing {
+    transform: scale(1.02) translateZ(0);
+    filter: brightness(0.95);
+    box-shadow: 
+      0 4px 12px rgba(0,0,0,0.08),
+      inset 0 2px 4px rgba(0,0,0,0.06);
+    transition: all 0.15s cubic-bezier(0.2, 0.0, 0.6, 1);
+    opacity: 0.9;
+  }
+
+  // Label wrapper for iOS compatibility
+  .slot-content-label {
+    display: block;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    cursor: pointer;
+  }
+
+  // Upload prompt overlay
+  .upload-prompt-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .upload-prompt-content {
+    text-align: center;
+    padding: 20px;
+    
+    svg {
+      color: rgb(255, 86, 56);
+      margin-bottom: 12px;
+    }
+    
+    p {
+      color: #333;
+      font-size: 16px;
+      font-weight: 500;
+      margin: 0;
+    }
+  }
+
+  // Mobile upload button (alternative approach)
+  .mobile-upload-button {
+    position: absolute;
+    top: 60px;
+    right: 12px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgb(50, 50, 50);
+    opacity: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 5;
+    
+    &:hover {
+      background: #f8f8f8;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    svg {
+      color: rgb(255, 255, 255);
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
     }
   }
 </style>

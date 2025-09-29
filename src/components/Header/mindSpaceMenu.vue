@@ -9,7 +9,7 @@
             class="back-button"
             >
             <span class="back-icon">&#8249;</span>
-             Back to Theme
+             テーマへ戻る
           </button>
         </div>
         <div class="header-right">

@@ -60,7 +60,7 @@
           <!-- Multi-Item or Empty Slot Display -->
           <div v-else class="empty-slot-wrapper">
             <div v-if="!hasAnyItems(mindslot) && !expanded && !isViewOnly" class="empty-slot-options">
-              <h4 class="empty-slot-title">Choose slot type:</h4>
+              <h4 class="empty-slot-title">スロットタイプの選択</h4>
 
               <div class="slot-type-options">
                 <button
@@ -74,8 +74,8 @@
                       </svg>
                     </div>
                     <div class="option-text">
-                      <strong>Single Item Slot</strong>
-                      <small>One item only</small>
+                      <strong>スロット</strong>
+                      <small>１つのアイテムを挿入</small>
                     </div>
                   </div>
                 </button>
@@ -93,8 +93,8 @@
                       </svg>
                     </div>
                     <div class="option-text">
-                      <strong>Multi-Item Slot</strong>
-                      <small>Up to 3 items</small>
+                      <strong>複数スロット</strong>
+                      <small>３つのアイテムを挿入</small>
                     </div>
                   </div>
                 </button>
@@ -127,18 +127,18 @@
       @click="addSlot('New Slot')"
       class="add-slot-btn"
     >
-      Add New Slot
+      スロットの追加
     </button>
 
     <!-- Slot Selection Modal -->
     <Teleport to="body">
       <div v-if="showSlotSelectionModal" class="slot-selection-overlay" @click="closeSlotSelection">
         <div class="slot-selection-modal" @click.stop>
-          <h3>Add "{{ pendingItem.title }}" to Mind Slots</h3>
+          <h3>"{{ pendingItem.title }}" をマインドスロットへ追加</h3>
 
           <!-- Show available slots if they exist -->
           <div v-if="pendingItem.availableSlots && pendingItem.availableSlots.length > 0" class="available-slots-section">
-            <h4>Add to existing slot:</h4>
+            <h4>既存のスロットに追加</h4>
             <div class="available-slots-list">
               <button
                 v-for="slot in pendingItem.availableSlots"
@@ -148,7 +148,7 @@
                 :class="slot.type"
               >
                 <div class="slot-info">
-                  <strong>Slot {{ slot.slotIndex + 1 }}: "{{ slot.name }}"</strong>
+                  <strong>スロット {{ slot.slotIndex + 1 }}: "{{ slot.name }}"</strong>
                   <span class="slot-type">{{ slot.typeLabel }}</span>
                 </div>
               </button>
@@ -158,7 +158,7 @@
 
           <!-- Option to create new slot -->
           <div class="new-slot-section">
-            <h4>Create new slot:</h4>
+            <h4>新しいスロットの追加</h4>
             <div class="new-slot-options">
               <button
                 @click="createNewSlot('single')"
@@ -166,8 +166,8 @@
                 :disabled="pendingItem.totalSlots >= 5"
               >
                 <div class="option-content">
-                  <strong>Single Item Slot</strong>
-                  <small>This item only</small>
+                  <strong>スロット</strong>
+                  <small>１つのアイテムを挿入</small>
                 </div>
               </button>
 
@@ -177,21 +177,21 @@
                 :disabled="pendingItem.totalSlots >= 5"
               >
                 <div class="option-content">
-                  <strong>Multi-Item Slot</strong>
-                  <small>Up to 3 items</small>
+                  <strong>複数スロット</strong>
+                  <small>３つのアイテムを挿入</small>
                 </div>
               </button>
             </div>
 
             <div v-if="pendingItem.totalSlots >= 5" class="max-slots-warning">
-              Maximum slots reached (5/5)
+              最大スロット数になりました (5/5)
             </div>
             <div v-else class="slots-remaining">
-              {{ 5 - pendingItem.totalSlots }} slot(s) remaining
+              残り{{ 5 - pendingItem.totalSlots }} スロット
             </div>
           </div>
 
-          <button @click="closeSlotSelection" class="cancel-btn">Cancel</button>
+          <button @click="closeSlotSelection" class="cancel-btn">キャンセル</button>
         </div>
       </div>
     </Teleport>

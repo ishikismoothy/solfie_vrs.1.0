@@ -36,7 +36,7 @@
         </div>
 
         <button class="create-button" @click="showCreateThemeModal">
-          New Wish
+          新しいテーマ
         </button>
       </div>
 
