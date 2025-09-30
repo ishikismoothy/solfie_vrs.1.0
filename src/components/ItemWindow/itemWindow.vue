@@ -199,7 +199,7 @@
         </div>
 
         <!-- Mobile upload button (alternative approach) -->
-        <button 
+        <button
           v-if="canUploadImage && isTouchDevice && !showUploadPrompt"
           @click.stop="handleMobileUploadClick"
           class="mobile-upload-button"
@@ -533,10 +533,10 @@
   // NEW: Touch device detection and upload prompt
   const isTouchDevice = ref(false)
   const showUploadPrompt = ref(false)
-  
+
   // Check if device supports touch on mount
   if (typeof window !== 'undefined') {
-    isTouchDevice.value = 'ontouchstart' in window || 
+    isTouchDevice.value = 'ontouchstart' in window ||
                           navigator.maxTouchPoints > 0 ||
                           /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
   }
@@ -704,7 +704,7 @@
   // Card interaction methods (same as before)
   async function handleCardClick() {
     console.log('🎮 handleCardClick called - props.expanded:', props.expanded)
-    
+
     if (!props.expanded && props.expandedSlotIndex !== null) {
       console.log('🎮 Another slot is expanded - ignoring click on unexpanded card')
       return
@@ -793,26 +793,26 @@
   // UPDATED: Touch handlers for non-iOS or fallback
   const handleSlotTouchStart = () => {
     if (!canUploadImage.value) return
-    
+
     // For iOS: Show upload prompt overlay
     if (isTouchDevice.value && /iPhone|iPad|iPod/.test(navigator.userAgent)) {
       isLongPressing.value = true
-      
+
       touchTimer = setTimeout(() => {
         isLongPressing.value = false
         showUploadPrompt.value = true
         if (navigator.vibrate) navigator.vibrate(10)
-        
+
         // Hide prompt after 3 seconds
         setTimeout(() => {
           showUploadPrompt.value = false
         }, 3000)
       }, longPressDelay)
-    } 
+    }
     // For other devices: Try direct approach
     else {
       isLongPressing.value = true
-      
+
       touchTimer = setTimeout(() => {
         isLongPressing.value = false
         if (navigator.vibrate) navigator.vibrate(10)
@@ -823,7 +823,7 @@
 
   const handleSlotTouchEnd = () => {
     isLongPressing.value = false
-    
+
     if (touchTimer) {
       clearTimeout(touchTimer)
       touchTimer = null
@@ -833,7 +833,7 @@
   const handleSlotTouchCancel = () => {
     isLongPressing.value = false
     showUploadPrompt.value = false
-    
+
     if (touchTimer) {
       clearTimeout(touchTimer)
       touchTimer = null
@@ -844,7 +844,7 @@
   const handleSlotImageUpload = async (event) => {
     const file = event.target.files[0]
     console.log('🖼️ File selected:', file?.name)
-    
+
     // Hide upload prompt if shown
     showUploadPrompt.value = false
 
@@ -1130,7 +1130,7 @@
     user-select: none;
     -webkit-touch-callout: none;
     touch-action: manipulation;
-    
+
     /* Prevent highlighting on tap */
     -webkit-tap-highlight-color: transparent;
   }
@@ -1138,7 +1138,7 @@
   .slot-content.long-pressing {
     transform: scale(1.02) translateZ(0);
     filter: brightness(0.95);
-    box-shadow: 
+    box-shadow:
       0 4px 12px rgba(0,0,0,0.08),
       inset 0 2px 4px rgba(0,0,0,0.06);
     transition: all 0.15s cubic-bezier(0.2, 0.0, 0.6, 1);
@@ -1173,12 +1173,12 @@
   .upload-prompt-content {
     text-align: center;
     padding: 20px;
-    
+
     svg {
       color: rgb(255, 86, 56);
       margin-bottom: 12px;
     }
-    
+
     p {
       color: #333;
       font-size: 16px;
@@ -1205,12 +1205,12 @@
     cursor: pointer;
     transition: all 0.2s ease;
     z-index: 5;
-    
+
     &:hover {
       background: #f8f8f8;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
-    
+
     svg {
       color: rgb(255, 255, 255);
     }

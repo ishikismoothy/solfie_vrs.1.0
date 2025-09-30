@@ -52,12 +52,16 @@
               </div>
 
               <!-- Main content wrapper -->
+
+              <!-- Removed redundant touchstart.prevent to allow drag initiation -->
+              <!-- @touchstart.prevent="handleTouchStart($event, item, pageIndex, index)"
+               @touchend.prevent="handleTouchEnd" -->
               <div
                 class="content-wrapper"
                 @click="handleItemClick(item)"
                 @mousedown.prevent="handleMouseDown($event, item, pageIndex, index)"
-                @touchstart.prevent="handleTouchStart($event, item, pageIndex, index)"
-                @touchend.prevent="handleTouchEnd"
+                @touchstart="handleTouchStart($event, item, pageIndex, index)"
+                @touchend="handleTouchEnd"
                 @mouseover="handleItemHover(item)"
                 @mouseleave="handleItemLeave()"
               >
@@ -306,7 +310,7 @@
         // View-only if in shared view AND not in edit mode
         return isSharedView.value && !isEditMode.value
       })
-      
+
       // Icon selector state
       const showIconSelector = ref(false)
       const selectorPosition = ref({ x: 0, y: 0 })
@@ -743,8 +747,8 @@
       const touchStartTime = ref(0);
       const touchStartX = ref(0);
       const touchStartY = ref(0);
-      const TAP_THRESHOLD = 200;
-      const MOVE_THRESHOLD = 10;
+      // const TAP_THRESHOLD = 200;
+      // const MOVE_THRESHOLD = 10;
 
       const handleTouchStart = (event, item, pageIndex, index) => {
         console.log('[handleTouchStart] TRIGGERED');
@@ -754,6 +758,8 @@
         touchStartY.value = event.touches[0].clientY;
 
         if (isEditMode.value) {
+          // Added preventDefault to avoid triggering click after drag
+          event.preventDefault();
           isMouseDown.value = true;
           dragStartX.value = event.touches[0].clientX;
           dragStartY.value = event.touches[0].clientY;
@@ -796,52 +802,72 @@
         }
       };
 
+      // Simplified handleTouchEnd due to changes to click handling
+      // const handleTouchEnd = (event) => {
+      //   console.log('[handleTouchEnd] TRIGGERED');
+
+      //   const touchDuration = Date.now() - touchStartTime.value;
+      //   const touchEndX = event.changedTouches[0].clientX;
+      //   const touchEndY = event.changedTouches[0].clientY;
+      //   const moveDistance = Math.sqrt(
+      //     Math.pow(touchEndX - touchStartX.value, 2) +
+      //     Math.pow(touchEndY - touchStartY.value, 2)
+      //   );
+
+      //   if (touchDuration < TAP_THRESHOLD && moveDistance < MOVE_THRESHOLD) {
+      //     const itemElement = event.target.closest('.mind-Item');
+      //     if (itemElement) {
+      //       const itemId = itemElement.getAttribute('data-id');
+      //       const item = findItemById(itemId);
+
+      //       if (item) {
+      //         console.log('[handleTouchEnd] Tap detected, triggering click for item:', item);
+      //         handleItemClick(item);
+      //       }
+      //     }
+      //   }
+
+      //   isMouseDown.value = false;
+      //   if (isDragging.value) {
+      //     endDrag(event);
+      //   }
+      //   document.removeEventListener('touchmove', handleTouchMove);
+      //   document.removeEventListener('touchend', handleTouchEnd);
+
+      //   touchStartTime.value = 0;
+      //   touchStartX.value = 0;
+      //   touchStartY.value = 0;
+      // };
+
       const handleTouchEnd = (event) => {
         console.log('[handleTouchEnd] TRIGGERED');
 
-        const touchDuration = Date.now() - touchStartTime.value;
-        const touchEndX = event.changedTouches[0].clientX;
-        const touchEndY = event.changedTouches[0].clientY;
-        const moveDistance = Math.sqrt(
-          Math.pow(touchEndX - touchStartX.value, 2) +
-          Math.pow(touchEndY - touchStartY.value, 2)
-        );
-
-        if (touchDuration < TAP_THRESHOLD && moveDistance < MOVE_THRESHOLD) {
-          const itemElement = event.target.closest('.mind-Item');
-          if (itemElement) {
-            const itemId = itemElement.getAttribute('data-id');
-            const item = findItemById(itemId);
-
-            if (item) {
-              console.log('[handleTouchEnd] Tap detected, triggering click for item:', item);
-              handleItemClick(item);
-            }
+        if (isEditMode.value) {
+          // Only handle drag end in edit mode
+          isMouseDown.value = false;
+          if (isDragging.value) {
+            endDrag(event);
           }
+          document.removeEventListener('touchmove', handleTouchMove);
+          document.removeEventListener('touchend', handleTouchEnd);
         }
 
-        isMouseDown.value = false;
-        if (isDragging.value) {
-          endDrag(event);
-        }
-        document.removeEventListener('touchmove', handleTouchMove);
-        document.removeEventListener('touchend', handleTouchEnd);
-
+        // Reset touch tracking
         touchStartTime.value = 0;
         touchStartX.value = 0;
         touchStartY.value = 0;
       };
 
-      const findItemById = (id) => {
-        for (const page of mindSpacePages.value) {
-          for (const item of page.items) {
-            if (item.id === id) {
-              return item;
-            }
-          }
-        }
-        return null;
-      };
+      // const findItemById = (id) => {
+      //   for (const page of mindSpacePages.value) {
+      //     for (const item of page.items) {
+      //       if (item.id === id) {
+      //         return item;
+      //       }
+      //     }
+      //   }
+      //   return null;
+      // };
 
       const startDrag = () => {
         console.log('[startDrag] TRIGGERED');
