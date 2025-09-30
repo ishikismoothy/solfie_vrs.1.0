@@ -100,7 +100,7 @@
                 </button>
               </div>
             </div>
-            <div v-else class="empty-slot-options"> no data</div>
+            <!-- Delete this part <div v-else class="empty-slot-options"> no data</div> -->
 
             <IconSlotGrid
               v-if="hasAnyItems(mindslot)"

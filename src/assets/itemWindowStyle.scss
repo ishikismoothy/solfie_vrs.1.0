@@ -1,5 +1,8 @@
 // src/assets/itemWindowStyle.scss
 
+// Import global styles
+@import '@/assets/styles/main';
+
 // Brand Colors
 $primary-color: #ff5638;
 $primary-light: #fdbca2;
@@ -229,10 +232,6 @@ $icon-color: $primary-color;
 // MIND SLOT COMPONENTS
 // ===========================
 
-// ===========================
-// MIND SLOT COMPONENTS
-// ===========================
-
 // Main mind slot container
 .return-to-myself {
   padding: 20px;
@@ -290,17 +289,19 @@ $icon-color: $primary-color;
 .mind-slot-card {
   position: relative;
   width: 100%;
-  min-height: 180px;
   margin: 0.5rem;
   cursor: pointer;
-  transition: all 0.3s ease;
-  // background-color: rgb(231, 231, 231);
+  @include transition(all, 0.4s, cubic-bezier(0.175, 0.885, 0.32, 1.275));
+  border-radius: $radius-base;
+  // Modern hover lift effect using mixin
+  &:not(.expanded) {
+    @include card-lift(-4px, 0 12px 40px $shadow-dark);
+    @include pulse-glow($primary-color, 20px);
+  }
 
   &.expanded {
     position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    @include center(fixed);
     z-index: 2000;
     width: 90%;
     max-width: 800px;
@@ -308,6 +309,19 @@ $icon-color: $primary-color;
     margin: 0;
     cursor: default;
     perspective: 1000px;
+    
+    // Backdrop blur when expanded
+    &::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: $background-overlay;
+      @include backdrop-blur(8px);
+      z-index: -1;
+    }
   }
 
   &.full-screen {
@@ -321,11 +335,11 @@ $icon-color: $primary-color;
     width: 100%;
     height: 100%;
     transform-style: preserve-3d;
-    transition: transform 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
+    @include transition(transform, 0.6s, cubic-bezier(0.4, 0.0, 0.2, 1));
   }
 
   &.flipped .card-flip-container {
-    transform: rotateY(180deg);
+    @include transform(rotateY(180deg));
   }
 }
 
@@ -334,21 +348,23 @@ $icon-color: $primary-color;
   width: 100%;
   height: 100%;
   backface-visibility: hidden;
-  transition: transform 0.6s;
-  border-radius: 8px;
-  background: $bg-primary;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  @include transition(all, 0.6s, cubic-bezier(0.4, 0.0, 0.2, 1));
+  border-radius: $radius-lg;
+  background: linear-gradient(135deg, $background-white 0%, $background-light 100%);
+  @include box-shadow($card-shadow);
   overflow: hidden;
   box-sizing: border-box;
+  border: 1px solid rgba($border-light, 0.7);
 }
 
 .card-face.front {
-  transform: rotateY(0deg);
+  @include transform(rotateY(0deg));
 }
 
 .card-face.back {
-  transform: rotateY(180deg);
+  @include transform(rotateY(180deg));
   overflow-y: auto;
+  @include custom-scrollbar($primary-color, $background-light, 6px);
 }
 
 // ===========================
@@ -356,42 +372,91 @@ $icon-color: $primary-color;
 // ===========================
 
 .slot-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px;
-  background: rgba(0, 0, 0, 0.05);
-  border-bottom: 1px solid $border-light;
-  background-color: $primary-light;
+  @include flex(space-between, center, $spacing-sm);
+  padding: 14px 16px;
+  @include gradient($gradient-primary);
+  position: relative;
+  @include shine-effect(rgba(255, 255, 255, 0.2));
+  border-radius: $radius-base $radius-base 0 0;
 }
 
 .slot-name {
   margin: 0;
-  font-size: 16px;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: $text-white;
   cursor: pointer;
   flex: 1;
+  letter-spacing: 0.3px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  @include transition(opacity);
+  
+  @include hover() {
+    opacity: 0.9;
+  }
 }
 
 .slot-name-input {
   border: none;
-  border-radius: 4px;
-  padding: 4px 8px;
+  border-radius: $radius-md;
+  padding: 6px 10px;
   width: 80%;
-  font-size: 16px;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  @include glassmorphism(10px, 0.95);
+  @include box-shadow(0 2px 8px $shadow-medium);
+  @include transition();
+  
+  &:focus {
+    outline: none;
+    @include box-shadow(0 0 0 3px $primary-light);
+  }
+}
+
+// Delete button styling
+.delete-btn {
+  @include reset-button();
+  background: rgba($white, 0.2);
+  border: 1px solid rgba($white, 0.3);
+  border-radius: $radius-md;
+  padding: 6px;
+  color: $text-white;
+  @include transition();
+  
+  @include hover() {
+    background: rgba($white, 0.3);
+    @include transform(scale(1.1));
+  }
+  
+  svg {
+    display: block;
+  }
 }
 
 .slot-content {
   height: calc(100% - 60px);
+  background: linear-gradient(135deg, $background-light 0%, $gray-100 100%);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
+  @include flex(flex-start, center, 20px);
   position: relative;
-  padding: 15px;
-  gap: 15px;
-  background-color: rgb(231, 231, 231);
+  padding: 20px;
+  border-radius: 0 0 $radius-base $radius-base;
+  
+  // Subtle pattern overlay
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+      radial-gradient(circle at 20% 80%, $primary-lighter 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba($primary-sub-color, 0.05) 0%, transparent 50%);
+    pointer-events: none;
+  }
 }
 
 // ===========================
@@ -399,40 +464,80 @@ $icon-color: $primary-color;
 // ===========================
 
 .single-item-content {
-  display: flex;
-  align-items: center;
-  gap: 15px;
+  @include flex(flex-start, center, 30px); // Increased gap for better spacing
   width: 100%;
-  padding-left: 5%;
+  padding: 0 5%; // Adjusted padding
+  position: relative;
+  z-index: 1;
+  flex-direction: row; // Explicitly set to row to ensure horizontal layout
 
   .single-item-icon {
     flex-shrink: 0;
     position: relative;
-    max-height: 100px;
+    width: 80px; // Fixed width for consistency
+    height: 80px; // Fixed height for consistency
+    background: linear-gradient(135deg, $background-white 0%, $background-light 100%);
+    border-radius: $radius-lg;
+    @include flex(center, center); // Center content inside icon
+    @include box-shadow(0 4px 15px $shadow-medium);
+    @include transition();
+    
+    // Hover effect for icon
+    @include hover() {
+      @include transform(scale(1.05));
+      @include box-shadow(0 6px 20px $shadow-primary);
+    }
+    
+    // Custom icon styling
+    .custom-icon {
+      font-size: 36px; // Slightly larger
+      background: $gradient-primary;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .icon-item-name {
+      font-size: $font-size-xs; // Smaller text in icon
+      font-weight: $font-weight-semibold;
+      color: $text-secondary;
+      text-align: center;
+      @include line-clamp(2); // Limit to 2 lines
+    }
   }
 
   .single-item-name {
     flex: 1;
-    font-size: 18px;
-    font-weight: 500;
-    color: #333;
+    font-size: $font-size-base; // Much larger font (24px)
+    font-weight: $font-weight-regular; // Bolder weight
+    color: $text-dark; // Solid color for better readability
     text-align: left;
-    padding-left: 5%;
+    letter-spacing: 0.5px;
+    line-height: $line-height-tight;
+    
+    // Add gradient on hover for visual interest
+    @include transition();
+    
+    @include hover() {
+      background: $gradient-primary;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
   }
 }
 
 .single-item-name-overlay {
   position: absolute;
-  top: 15px;
-  left: 15px;
-  background: rgba(255, 255, 255, 0.9);
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  color: $text-primary;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(4px);
+  top: 20px;
+  left: 20px;
+  @include glassmorphism(10px, 0.95);
+  padding: 10px 16px;
+  border-radius: $radius-lg;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: $text-dark;
+  @include box-shadow(0 4px 15px $shadow-medium);
 }
 
 // ===========================
@@ -440,20 +545,126 @@ $icon-color: $primary-color;
 // ===========================
 
 .empty-slot-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  @include flex(center, center, 16px, column);
   height: 100%;
   width: 100%;
-  padding: 8px;
-  gap: 10px;
+  padding: 12px;
+  position: relative;
+  z-index: 1;
 }
 
 .empty-slot-text {
   color: $text-secondary;
-  font-size: 12px;
+  font-size: 13px;
   text-align: center;
+  font-weight: $font-weight-medium;
+  letter-spacing: 0.3px;
+}
+
+// Empty slot options styling
+.empty-slot-options {
+  text-align: center;
+  
+  .empty-slot-title {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $text-color;
+    margin-bottom: 20px;
+    letter-spacing: 0.5px;
+  }
+}
+
+.slot-type-options {
+  @include flex(center, center, 16px);
+  flex-wrap: wrap;
+}
+
+.slot-type-option {
+  background: linear-gradient(135deg, $background-white 0%, $background-light 100%);
+  border: 2px solid transparent;
+  border-radius: $radius-lg;
+  padding: 16px 20px;
+  cursor: pointer;
+  @include transition(all, 0.3s, cubic-bezier(0.175, 0.885, 0.32, 1.275));
+  @include box-shadow(0 2px 10px $shadow-light);
+  position: relative;
+  overflow: hidden;
+  
+  // Gradient border on hover
+  @include hover() {
+    @include transform(translateY(-2px));
+    @include box-shadow(0 6px 20px rgba($primary-color, 0.15));
+    
+    &::before {
+      opacity: 1;
+    }
+    
+    .option-icon {
+      @include transform(rotate(5deg) scale(1.1));
+    }
+  }
+  
+  // Animated gradient border
+  &::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: $gradient-primary;
+    border-radius: $radius-lg;
+    opacity: 0;
+    z-index: -1;
+    @include transition(opacity);
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, $background-white 0%, $background-light 100%);
+    border-radius: calc(#{$radius-lg} - 2px);
+    z-index: -1;
+  }
+  
+  &.single-item-option .option-icon svg {
+    stroke: $primary-color;
+  }
+  
+  &.multi-item-option .option-icon svg {
+    stroke: $primary-sub-color;
+  }
+}
+
+.option-content {
+  @include flex(center, center, 12px);
+  position: relative;
+  z-index: 1;
+  
+  .option-icon {
+    @include transition(transform);
+  }
+  
+  .option-text {
+    text-align: left;
+    
+    strong {
+      display: block;
+      font-size: $font-size-sm;
+      color: $text-dark;
+      margin-bottom: 4px;
+    }
+    
+    small {
+      font-size: 11px;
+      color: $text-secondary;
+      font-weight: $font-weight-medium;
+    }
+  }
 }
 
 // ===========================
@@ -464,7 +675,7 @@ $icon-color: $primary-color;
   display: flex;
   align-items: center;
   justify-content: space-around;
-  width: 80%;
+  gap: 10px;
 
   &.expanded {
     padding: 20px;
