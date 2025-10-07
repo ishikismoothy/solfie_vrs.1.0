@@ -1,5 +1,5 @@
 <template>
-  <div 
+  <div
     class="body-block"
     @click="isEditable && !isEditing && handleClick()"
   >
@@ -9,6 +9,7 @@
     <template v-else>
       <textarea
         @click.stop
+        @input="autoResize"
         v-model="editedContent"
         class="edit-textarea"
         @blur="saveChanges"
@@ -39,12 +40,13 @@ export default {
     const isEditable = ref(true);
     const editTextarea = ref(null);
     const isFocused = ref(false);
-    
+
     const handleClick = async () => {
       isEditing.value = true;
       editedContent.value = props.block.content;
       await nextTick();
       editTextarea.value.focus();
+      autoResize();
     };
 
     const handleFocus = async () => {
@@ -52,6 +54,14 @@ export default {
       isFocused.value = true;
       await nextTick();
       editTextarea.value.select();
+    };
+
+    const autoResize = () => {
+      const textarea = editTextarea.value;
+      if (textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = Math.max(textarea.scrollHeight, 12 * 24) + 'px'; // 12 lines minimum (assuming ~24px line height)
+      }
     };
 
     const saveChanges = () => {
@@ -72,7 +82,8 @@ export default {
       saveChanges,
       editTextarea,
       isFocused,
-      handleFocus
+      handleFocus,
+      autoResize
     };
   }
 };
