@@ -31,10 +31,7 @@
             @click.stop="handleClose"
             class="icon-button close-button"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
+            <HeroIcon name="x-mark" class="w-4 h-4" />
           </button>
 
           <button
@@ -42,10 +39,7 @@
             @click.stop="$emit('delete', index)"
             class="delete-btn"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
+            <HeroIcon name="trash" class="w-4 h-4" />
           </button>
         </div>
 
@@ -226,22 +220,39 @@
           <div v-if="!isViewOnly" class="block-option-container">
             <template v-if="!currentItemId">
               <button @click.stop="handleClose" class="icon-button close-button">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
+                <HeroIcon name="x-mark" class="w-4 h-4" />
               </button>
             </template>
 
             <template v-else>
               <button class="icon-button editBlock-button" @click.stop="toggleEditBlock">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75 1.84-1.83z"/>
-                  <path d="M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/>
-                </svg>
+                <HeroIcon name="pencil" class="w-4 h-4" />
               </button>
 
               <template v-if="!openedFromMindslot">
+                <button class="icon-button moveItem-button" @click.stop="openMoveItemModal">
+                  <HeroIcon name="arrows-up-down" class="w-4 h-4" />
+                </button>
+
+                <button class="icon-button duplicateBlock-button" @click.stop="openDuplicateDialog">
+                  <HeroIcon name="document-duplicate" class="w-4 h-4" />
+                </button>
+
+                <button class="icon-button" @click.stop="openDeleteDialog">
+                  <HeroIcon name="trash" class="w-4 h-4" />
+                </button>
+
+                <button class="icon-button" @click.stop="triggerAddMindslot">
+                  +MIND
+                </button>
+              </template>
+
+              <button v-if="openedFromMindslot" class="icon-button" @click.stop="triggerRemoveMindslot">
+                -MIND
+              </button>
+
+              <!-- The old icons -->
+              <!-- <template v-if="!openedFromMindslot">
                 <button class="icon-button moveItem-button" @click.stop="openMoveItemModal">
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M3 6h18v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6z"/>
@@ -270,23 +281,14 @@
                 <button class="icon-button" @click.stop="triggerAddMindslot">
                   +MIND
                 </button>
-              </template>
-
-              <button v-if="openedFromMindslot" class="icon-button" @click.stop="triggerRemoveMindslot">
-                -MIND
-              </button>
+              </template> -->
 
               <button @click.stop="flipToSlot" class="icon-button back-button">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M4 10L3.29289 10.7071L2.58579 10L3.29289 9.29289L4 10ZM21 18C21 18.5523 20.5523 19 20 19C19.4477 19 19 18.5523 19 18L21 18ZM8.29289 15.7071L3.29289 10.7071L4.70711 9.29289L9.70711 14.2929L8.29289 15.7071ZM3.29289 9.29289L8.29289 4.29289L9.70711 5.70711L4.70711 10.7071L3.29289 9.29289ZM4 9L14 9L14 11L4 11L4 9ZM21 16L21 18L19 18L19 16L21 16ZM14 9C17.866 9 21 12.134 21 16L19 16C19 13.2386 16.7614 11 14 11L14 9Z" fill="#33363F"/>
-                </svg>
+                <HeroIcon name="arrow-uturn-left" class="w-6 h-6" />
               </button>
 
               <button @click.stop="handleClose" class="icon-button close-button">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
+                <HeroIcon name="x-mark" class="w-4 h-4" />
               </button>
             </template>
           </div>
