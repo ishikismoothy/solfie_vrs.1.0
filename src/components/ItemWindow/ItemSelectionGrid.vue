@@ -346,8 +346,7 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss">
-@import '@/assets/itemWindowStyle.scss';
-
+@import "../../assets/styles/colors";
 // Additional styles specific to item selection (using existing classes as base)
 .icon-selector-overlay {
   // Ensure item selection modal appears above other modals
@@ -356,7 +355,7 @@ onUnmounted(() => {
 
 .selection-summary {
   padding: 12px 16px;
-  background: $bg-secondary;
+  background: $background-white;
   border-radius: 8px;
   margin-bottom: 16px;
   // border: 1px solid $border-light;
@@ -365,7 +364,7 @@ onUnmounted(() => {
 .selection-count {
   font-size: 14px;
   font-weight: 600;
-  color: $text-primary;
+  color: $text-color;
   margin-bottom: 8px;
 }
 
@@ -379,7 +378,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 4px;
-  background: $primary-light;
+  background: $primary-sub-color;
   color: $white;
   padding: 4px 8px;
   border-radius: 12px;
@@ -431,8 +430,8 @@ onUnmounted(() => {
   position: relative;
 
   &.selected {
-    background: $success-light !important;
-    border-color: $success !important;
+    background: $success-bg !important;
+    border-color: $success-border !important;
     transform: translateY(1px);
     box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
   }
@@ -449,8 +448,8 @@ onUnmounted(() => {
   }
 
   &:hover:not(.disabled) {
-    background: $success-light !important;
-    border-color: $success !important;
+    background: $success-bg !important;
+    border-color: $success-border !important;
     transform: translateY(1px);
   }
 }
@@ -461,7 +460,7 @@ onUnmounted(() => {
   right: -4px;
   width: 20px;
   height: 20px;
-  background: $success;
+  background: $success-bg;
   color: $white;
   border-radius: 50%;
   display: flex;
@@ -470,7 +469,7 @@ onUnmounted(() => {
   font-size: 10px;
   font-weight: bold;
   z-index: 10;
-  border: 2px solid $success;
+  border: 2px solid $success-border;
 }
 
 .selection-actions {
@@ -497,7 +496,7 @@ onUnmounted(() => {
   }
 
   &.primary {
-    background: $success;
+    background: $success-bg;
     color: $white;
 
     &:hover:not(:disabled) {
@@ -507,13 +506,13 @@ onUnmounted(() => {
   }
 
   &.secondary {
-    background: $bg-tertiary;
+    background: $gray-100;
     color: $text-secondary;
-    border: 1px solid $border-medium;
+    border: 1px solid $border-color;
 
     &:hover:not(:disabled) {
       background: $gray-200;
-      color: $text-primary;
+      color: $text-color;
     }
   }
 }
@@ -555,7 +554,7 @@ onUnmounted(() => {
 
   h4 {
     margin: 16px 0 8px 0;
-    color: $text-primary;
+    color: $text-color;
     font-size: 18px;
   }
 

@@ -614,7 +614,6 @@ export default defineComponent({
 @import '../assets/widgetStyle.scss';
 @import '../assets/satisfactionDataViewStyle.scss';
 @import '../assets/todosStyle.scss';
-@import '../assets/dockStyle.scss';
 
 .dashboard-actions {
   display: flex;
