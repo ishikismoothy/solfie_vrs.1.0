@@ -4,6 +4,7 @@ import router from './router'
 import VScrollLock from 'v-scroll-lock'
 import store from './store'
 import { firebaseApp } from '@/firebase/firebaseInit'
+import Icon from './components/HeroIcon.vue'
 
 // Ensure Firebase is initialized
 if (!firebaseApp) {
@@ -15,5 +16,6 @@ store.dispatch('auth/initAuth').then(() => {
         .use(store)
         .use(router)
         .use(VScrollLock)
+        .component('HeroIcon', Icon)
         .mount('#app')
 })

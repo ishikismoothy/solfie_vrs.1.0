@@ -6,19 +6,24 @@
       'onBlockEdit':isBlockEdit
     }"
   >
-    <div
-      class="block-content"
-    >
+    <div class="block-content">
         <div class="block-controls" v-if="isBlockEdit">
-          <button @click="moveBlock('up')" class="control-btn" :disabled="isFirst">↑</button>
-          <button @click="moveBlock('down')" class="control-btn" :disabled="isLast">↓</button>
+          <button @click="moveBlock('up')" class="control-btn" :disabled="isFirst">
+            <HeroIcon name="arrow-up" class="w-6 h-6" />
+          </button>
+          <button @click="moveBlock('down')" class="control-btn" :disabled="isLast">
+            <HeroIcon name="arrow-down" class="w-6 h-6" />
+          </button>
           <button class="control-btn" @click="DuplicateBlock(block)">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <HeroIcon name="document-duplicate" class="w-6 h-6" />
+              <!-- <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-              </svg>
+              </svg> -->
           </button>
-          <button @click="deleteBlock(block.type)" class="control-btn text-red-500">×</button>
+          <button @click="deleteBlock(block.type)" class="control-btn text-red-500">
+            <HeroIcon name="trash" class="w-4 h-4"/>
+          </button>
         </div>
         <component
             :is="getBlockComponent"
