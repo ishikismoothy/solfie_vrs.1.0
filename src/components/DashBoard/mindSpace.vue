@@ -45,12 +45,13 @@
             >
               <!-- Separate container for delete button -->
               <div class="delete-button-container" v-if="isEditMode && !isDragging">
-                <DeleteButton
-                  @delete="handleItemDelete(item)"
-                  @touchstart.stop="void 0"
-                />
+                <button
+                  class="delete-button"
+                  @click.stop="handleItemDelete(item)"
+                >
+                  <HeroIcon name="x-mark" class="background-circle" />
+                </button>
               </div>
-
               <!-- Main content wrapper -->
 
               <!-- Removed redundant touchstart.prevent to allow drag initiation -->
@@ -160,10 +161,13 @@
                   @touchstart="handleFolderTouchStart($event, item, pageIndex, index)"
                 >
                   <!-- Add delete button -->
-                  <DeleteButton
-                      v-if="isEditMode"
-                      @delete="handleItemDelete(item)"
-                  />
+                  <button
+                    v-if="isEditMode"
+                    class="delete-button"
+                    @click.stop="handleItemDelete(item)"
+                  >
+                    <HeroIcon name="x-mark" class="w-4 h-4" />
+                  </button>
 
                   <!-- Unified icon display for folder items -->
                   <div class="icon-display-container"
@@ -274,12 +278,12 @@
 <script>
   // Clean mindSpace.vue with folders properly disabled
   // Replace the script section with this:
-  
+
   import { defineComponent, ref, computed, onMounted, watch, nextTick } from 'vue';
   import { useStore } from 'vuex';
   import { formatDate } from '@/utility/dateUtils';
   import squareSvg from '@/assets/shapes/square.svg';
-  import DeleteButton from './deleteButton.vue';
+  // import DeleteButton from './deleteButton.vue';
   import AddItemModal from './addItemModal.vue';
   import TruncateText from '../TruncateText/truncateSpanItemText.vue';
   import IconSelector from '@/./components/ItemWindow/IconSelector.vue';
@@ -290,7 +294,7 @@
     components: {
       AddItemModal,
       TruncateText,
-      DeleteButton,
+      // DeleteButton,
       IconSelector,
     },
     setup() {

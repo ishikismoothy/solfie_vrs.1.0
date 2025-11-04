@@ -16,7 +16,7 @@
     -webkit-touch-callout: none;
     touch-action: manipulation;
     touch-action: none; // Prevent any default touch actions
-  
+
     .delete-icon {
       width: 20px;
       height: 20px;
@@ -42,7 +42,7 @@
         left: -10px;
       }
     }
-  
+
     .touch-ripple {
       position: absolute;
       width: 25px;
@@ -53,14 +53,14 @@
       opacity: 0;
       pointer-events: none;
       transition: all 0.3s ease;
-  
+
       &.active {
         transform: scale(1.5);
         opacity: 0;
         transition: 0s;
       }
     }
-  
+
     @media (hover: hover) {
       &:hover {
         .delete-icon {
@@ -68,7 +68,7 @@
         }
       }
     }
-  
+
     &:active {
       .delete-icon {
         opacity: 0.8;
