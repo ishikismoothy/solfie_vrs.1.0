@@ -12,3 +12,6 @@ npm install nanoid
 
 For generating QR code
 npm install qrcode
+
+For heroicons
+npm install @heroicons/vue

@@ -40,6 +40,7 @@
   flex: 0 0 50%; // Each view takes exactly half of the wrapper width
   width: 50%;
   height: 100vh;
+  height: 100dvh;
   overflow-y: hidden;
 
   &.dashboard-view {
