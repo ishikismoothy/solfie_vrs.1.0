@@ -292,11 +292,17 @@ $icon-color: $primary-color;
   margin: 0.5rem;
   cursor: pointer;
   @include transition(all, 0.4s, cubic-bezier(0.175, 0.885, 0.32, 1.275));
-  border-radius: $radius-base;
-  // Modern hover lift effect using mixin
+  // Border-radius removed to fix 3D transform clipping issues
+
+  // Explicitly remove any pseudo-elements that might create blur/shadow effects
+  &::before,
+  &::after {
+    display: none !important;
+  }
+
   &:not(.expanded) {
-    @include card-lift(-4px, 0 12px 40px $shadow-dark);
-    @include pulse-glow($primary-color, 20px);
+    // Shadow mixins removed - they create artifacts during flip animation
+    // card-lift and pulse-glow mixins were creating blur/shadow effects
   }
 
   &.expanded {
@@ -335,7 +341,22 @@ $icon-color: $primary-color;
     width: 100%;
     height: 100%;
     transform-style: preserve-3d;
+    -webkit-transform-style: preserve-3d;
     @include transition(transform, 0.6s, cubic-bezier(0.4, 0.0, 0.2, 1));
+
+    // Explicitly remove any shadows or filters
+    box-shadow: none !important;
+    filter: none !important;
+
+    // Remove any pseudo-elements
+    &::before,
+    &::after {
+      display: none !important;
+    }
+
+    // Force hardware acceleration for smooth 3D transforms
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
   }
 
   &.flipped .card-flip-container {
@@ -348,13 +369,19 @@ $icon-color: $primary-color;
   width: 100%;
   height: 100%;
   backface-visibility: hidden;
-  @include transition(all, 0.6s, cubic-bezier(0.4, 0.0, 0.2, 1));
+  -webkit-backface-visibility: hidden;
+  // Only transition opacity to avoid artifacts during 3D rotation
+  @include transition(opacity, 0.6s, cubic-bezier(0.4, 0.0, 0.2, 1));
   border-radius: $radius-lg;
   background: linear-gradient(135deg, $background-white 0%, $background-light 100%);
-  @include box-shadow($card-shadow);
+  // Box shadow removed - causes artifacts during flip
   overflow: hidden;
   box-sizing: border-box;
-  border: 1px solid rgba($border-light, 0.7);
+  border: 1px solid rgba($border-light, 0.5);
+
+  // Explicitly remove any filters or shadows
+  box-shadow: none !important;
+  filter: none !important;
 }
 
 .card-face.front {
@@ -528,18 +555,18 @@ $icon-color: $primary-color;
   }
 }
 
-.single-item-name-overlay {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  @include glassmorphism(10px, 0.95);
-  padding: 10px 16px;
-  border-radius: $radius-lg;
-  font-size: $font-size-base;
-  font-weight: $font-weight-semibold;
-  color: $text-dark;
-  @include box-shadow(0 4px 15px $shadow-medium);
-}
+// .single-item-name-overlay {
+//   position: absolute;
+//   top: 20px;
+//   left: 20px;
+//   @include glassmorphism(10px, 0.95);
+//   padding: 10px 16px;
+//   border-radius: $radius-lg;
+//   font-size: $font-size-base;
+//   font-weight: $font-weight-semibold;
+//   color: $text-dark;
+//   @include box-shadow(0 4px 15px $shadow-medium);
+// }
 
 // ===========================
 // EMPTY SLOT STYLING

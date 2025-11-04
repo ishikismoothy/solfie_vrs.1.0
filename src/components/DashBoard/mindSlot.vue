@@ -114,7 +114,7 @@
               @icon-clicked="(iconIndex) => handleDirectIconClick(index, iconIndex)"
               @icon-right-click="(iconIndex, event) => !isViewOnly && openIconSelector(event, index, iconIndex)"
               @custom-icon-changed="(customIcons) => !isViewOnly && handleCustomIconsChanged({ index, customIcons })"
-              @empty-slot-clicked="(iconIndex) => !isViewOnly && openItemSelector(index, 'multi')"
+              @empty-slot-clicked="(iconIndex) => !isViewOnly && openItemSelector(index, 'single', iconIndex)"
             />
           </div>
         </div>
@@ -431,7 +431,7 @@
       }
 
       console.log('[fetchMindspaceSlots] Fetching with ID:', activeMindSpaceId.value, 'isShared:', isSharedAccess.value)
-      
+
       const data = await mindspaceService.fetchMindspaceSlots(activeMindSpaceId.value)
 
       const cleanedData = {
@@ -524,13 +524,15 @@
   const showItemSelector = ref(false)
   const itemSelectorSlotIndex = ref(-1)
   const itemSelectorSlotType = ref('single')
+  const itemSelectorIconIndex = ref(-1) // Track which position in multi-slot to fill
 
   // Open item selector for empty slots
-  const openItemSelector = (slotIndex, slotType = 'single') => {
+  const openItemSelector = (slotIndex, slotType = 'single', iconIndex = -1) => {
     if (isViewOnly.value) return
 
     itemSelectorSlotIndex.value = slotIndex
     itemSelectorSlotType.value = slotType
+    itemSelectorIconIndex.value = iconIndex
     showItemSelector.value = true
   }
 
@@ -539,6 +541,7 @@
     showItemSelector.value = false
     itemSelectorSlotIndex.value = -1
     itemSelectorSlotType.value = 'single'
+    itemSelectorIconIndex.value = -1
   }
 
   // Handle item selection from the grid
@@ -549,13 +552,28 @@
       const slot = mindspace.value.mindslot[slotIndex]
 
       if (slotType === 'single') {
-        // Set as single item slot (use first item only)
-        mindspace.value.mindslot[slotIndex] = {
-          ...slot,
-          item: itemIds[0],
-          iconItems: [null, null, null],
-          slotIcons: [null, null, null],
-          customIcons: [null, null, null]
+        // Check if we're adding to a specific position in a multi-slot
+        if (itemSelectorIconIndex.value !== -1) {
+          // Adding to a specific position in an existing multi-slot
+          const iconItems = [...(slot.iconItems || [null, null, null])]
+          iconItems[itemSelectorIconIndex.value] = itemIds[0]
+
+          mindspace.value.mindslot[slotIndex] = {
+            ...slot,
+            item: null,
+            iconItems,
+            slotIcons: slot.slotIcons || [null, null, null],
+            customIcons: slot.customIcons || [null, null, null]
+          }
+        } else {
+          // Set as single item slot (use first item only)
+          mindspace.value.mindslot[slotIndex] = {
+            ...slot,
+            item: itemIds[0],
+            iconItems: [null, null, null],
+            slotIcons: [null, null, null],
+            customIcons: [null, null, null]
+          }
         }
       } else {
         // Set as multi-item slot
@@ -693,7 +711,7 @@
     if (newMindSpaceId) {
       console.log('[Watcher] MindSpace ID changed:', newMindSpaceId)
       await fetchMindspaceSlots()
-      
+
       // Check if this is shared access or regular access
       if (currentShareData.value?.ownerId) {
         // Shared access - use owner's ID
@@ -710,7 +728,7 @@
     if (newShareData?.mindspaceId) {
       console.log('[Watcher] Share data changed, fetching mindspace slots')
       await fetchMindspaceSlots()
-      
+
       // Fetch items using the owner's ID from shareData
       if (newShareData.ownerId) {
         await store.dispatch('user/fetchItems', newShareData.ownerId)

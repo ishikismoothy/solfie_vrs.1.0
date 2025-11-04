@@ -1,6 +1,6 @@
 // utility/analysisProcessor.js
 import { widgetService } from '@/firebase/firebaseWidget';
-import { recordService } from '@/firebase/firebaseRecrods';
+import { recordService } from '@/firebase/firebaseRecords';
 import { getAvailableWidgets } from '@/config/widgetConfig';
 
 export const analysisService = {
@@ -13,13 +13,13 @@ export const analysisService = {
 
       // Get only widgets that are available in current theme
       const availableWidgets = getAvailableWidgets(currentThemeId, usersWidgets, false);
-      
+
       const results = {};
-      
+
       for (const [key, widgetId] of Object.entries(availableWidgets)) {
         results[key] = await this.processWidgetAnalysis(userId, currentThemeId, widgetId);
       }
-      
+
       // Fill in empty results for unavailable widgets
       const allKeys = ['data_A', 'data_B', 'data_C'];
       allKeys.forEach(key => {
@@ -27,7 +27,7 @@ export const analysisService = {
           results[key] = { '今日': { percentage: 0, items: {} } };
         }
       });
-      
+
       console.log('✅ Analysis data loaded:', results);
       return results;
     } catch (error) {
@@ -45,13 +45,13 @@ export const analysisService = {
 
       // Get only advice widgets that are available in current theme
       const availableAdviceWidgets = getAvailableWidgets(currentThemeId, usersWidgets, true);
-      
+
       const results = {};
-      
+
       for (const [key, widgetId] of Object.entries(availableAdviceWidgets)) {
         results[key] = await this.processAdviceData(userId, currentThemeId, widgetId);
       }
-      
+
       // Fill in empty results for unavailable advice widgets
       const allKeys = ['advice_A', 'advice_B', 'advice_C'];
       allKeys.forEach(key => {
@@ -59,7 +59,7 @@ export const analysisService = {
           results[key] = [];
         }
       });
-      
+
       console.log('✅ Advice data loaded:', results);
       return results;
     } catch (error) {
@@ -82,7 +82,7 @@ export const analysisService = {
 
       // Group records by time periods
       const timeGroups = this.groupRecordsByTime(records);
-      
+
       // Process each time group
       const result = {};
       for (const [period, periodRecords] of Object.entries(timeGroups)) {
@@ -113,18 +113,18 @@ export const analysisService = {
 
       // Get the most recent record for advice
       const latestRecord = records[0];
-      
+
       if (!latestRecord.values || !Array.isArray(latestRecord.values)) {
         return [];
       }
 
       // Process the advice data from the object format
       const adviceData = [];
-      
+
       latestRecord.values.forEach((valueObject, index) => {
         if (widget.entries[index]) {
           const entry = widget.entries[index];
-          
+
           if (valueObject && typeof valueObject === 'object' && valueObject.contents !== undefined) {
             // Handle the object format: { contents: "...", description: "..." }
             adviceData.push({
@@ -174,14 +174,14 @@ export const analysisService = {
     return {
       '今日': records.slice(0, 1), // Most recent
       '6ヶ月': records.filter(record => {
-        const recordDate = record.createdAt?.toDate ? 
-          record.createdAt.toDate() : 
+        const recordDate = record.createdAt?.toDate ?
+          record.createdAt.toDate() :
           new Date(record.createdAt);
         return recordDate >= sixMonthsAgo;
       }),
       '1年': records.filter(record => {
-        const recordDate = record.createdAt?.toDate ? 
-          record.createdAt.toDate() : 
+        const recordDate = record.createdAt?.toDate ?
+          record.createdAt.toDate() :
           new Date(record.createdAt);
         return recordDate >= oneYearAgo;
       })
@@ -212,7 +212,7 @@ export const analysisService = {
               // If the object has a numeric 'value' property
               numericValue = value.value;
             }
-            
+
             totals[entries[index].name] += numericValue;
           }
         });
@@ -249,13 +249,13 @@ export const analysisService = {
 
       // Get only text widgets that are available in current theme
       const availableTextWidgets = getAvailableWidgets(currentThemeId, usersWidgets, false, true);
-      
+
       const results = {};
-      
+
       for (const [key, widgetId] of Object.entries(availableTextWidgets)) {
         results[key] = await this.processTextData(userId, currentThemeId, widgetId);
       }
-      
+
       // Fill in empty results for unavailable text widgets
       const allKeys = ['text_A', 'text_B', 'text_C'];
       allKeys.forEach(key => {
@@ -263,7 +263,7 @@ export const analysisService = {
           results[key] = null;
         }
       });
-      
+
       console.log('✅ Text data loaded:', results);
       return results;
     } catch (error) {
@@ -286,7 +286,7 @@ export const analysisService = {
 
       // Get the most recent record
       const latestRecord = records[0];
-      
+
       // Check if this record has widget data
       if (!latestRecord || !latestRecord.values || !Array.isArray(latestRecord.values) || latestRecord.values.length === 0) {
         return null;
@@ -294,7 +294,7 @@ export const analysisService = {
 
       // Process the text data - expecting object format: { contents: "...", description: "..." }
       const valueObject = latestRecord.values[0]; // Text widgets typically have one entry
-      
+
       if (valueObject && typeof valueObject === 'object') {
         // Handle various possible property names
         const textData = {
@@ -303,7 +303,7 @@ export const analysisService = {
           // For the author/description: check for 'description', 'author', or 'name'
           description: valueObject.description || valueObject.author || valueObject.name || ''
         };
-        
+
         console.log('✅ Text data processed:', textData);
         return textData;
       } else if (typeof valueObject === 'string') {
@@ -319,7 +319,7 @@ export const analysisService = {
           description: ''
         };
       }
-      
+
       console.warn('⚠️ Unexpected text data format:', typeof valueObject, valueObject);
       return null;
     } catch (error) {

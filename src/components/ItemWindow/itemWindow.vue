@@ -69,10 +69,10 @@
             <!-- Existing slot content -->
             <div v-if="isSingleItemSlot && items[mindslot.item]" class="single-item-content">
               <!-- Content remains the same -->
-              <div v-if="expanded" class="single-item-name-overlay">
+              <!-- <div v-if="expanded" class="single-item-name-overlay">
                 {{ items[mindslot.item]?.name || items[mindslot.item]?.title || 'Unnamed Item' }}
-              </div>
-              <template v-else>
+              </div> -->
+              <template>
                 <div
                   class="icon-slot has-item clickable single-item-icon"
                   @contextmenu.prevent="handleSingleItemRightClick($event)"
@@ -91,10 +91,10 @@
             </div>
 
             <div v-else-if="isFromMindGrid && currentItemId" class="single-item-content">
-              <div v-if="expanded" class="single-item-name-overlay">
+              <!-- <div v-if="expanded" class="single-item-name-overlay">
                 {{ currentItemName }}
-              </div>
-              <template v-else>
+              </div> -->
+              <template>
                 <div class="icon-slot has-item clickable single-item-icon">
                   <div class="icon-item-name">
                     {{ currentItemName }}
@@ -138,10 +138,10 @@
         >
           <!-- Same content as above (repeated for non-touch devices) -->
           <div v-if="isSingleItemSlot && items[mindslot.item]" class="single-item-content">
-            <div v-if="expanded" class="single-item-name-overlay">
+            <!-- <div v-if="expanded" class="single-item-name-overlay">
               {{ items[mindslot.item]?.name || items[mindslot.item]?.title || 'Unnamed Item' }}
-            </div>
-            <template v-else>
+            </div> -->
+            <template>
               <div
                 class="icon-slot has-item clickable single-item-icon"
                 @contextmenu.prevent="handleSingleItemRightClick($event)"
@@ -160,10 +160,10 @@
           </div>
 
           <div v-else-if="isFromMindGrid && currentItemId" class="single-item-content">
-            <div v-if="expanded" class="single-item-name-overlay">
+            <!-- <div v-if="expanded" class="single-item-name-overlay">
               {{ currentItemName }}
-            </div>
-            <template v-else>
+            </div> -->
+            <template>
               <div class="icon-slot has-item clickable single-item-icon">
                 <div class="icon-item-name">
                   {{ currentItemName }}

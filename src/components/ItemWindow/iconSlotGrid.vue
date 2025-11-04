@@ -10,7 +10,7 @@
             'clickable': clickable,
             'expanded-view': expanded
           }]"
-          @click="handleIconClick(index-1)"
+          @click.stop="handleIconClick(index-1)"
           @contextmenu.prevent="handleRightClick($event, index-1)"
           @touchstart="handleTouchStart($event, index-1)"
           @touchend="handleTouchEnd"
@@ -36,7 +36,7 @@
         <div
           v-else
           :class="['icon-slot', 'empty-slot', 'mindspace-style']"
-
+          @click.stop="handleEmptySlotClick(index-1)"
           @contextmenu.prevent="handleRightClick($event, index-1)"
           @touchstart="handleTouchStart($event, index-1)"
           @touchend="handleTouchEnd"
@@ -150,6 +150,12 @@
 
     // Always emit the click - let parent decide what to do
     emit('icon-clicked', index)
+  }
+
+  // Handle empty slot click
+  const handleEmptySlotClick = (index) => {
+    console.log('IconSlotGrid: Empty slot clicked', index)
+    emit('empty-slot-clicked', index)
   }
 
   // Handle right click for icon selection

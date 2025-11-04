@@ -147,7 +147,7 @@
     filter: blur($blur);
     @include transition(opacity, 0.4s);
   }
-  
+
   &:hover::after {
     opacity: 0.3;
   }
@@ -157,7 +157,7 @@
 @mixin shine-effect($color: rgba(255, 255, 255, 0.3)) {
   position: relative;
   overflow: hidden;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -173,7 +173,7 @@
     );
     @include transition(left, 0.5s);
   }
-  
+
   &:hover::before {
     left: 100%;
   }
@@ -182,7 +182,7 @@
 // Card lift effect - Lifts element on hover with shadow
 @mixin card-lift($y: -4px, $shadow-hover: 0 12px 40px rgba(0, 0, 0, 0.15)) {
   @include transition(all, 0.4s, cubic-bezier(0.175, 0.885, 0.32, 1.275));
-  
+
   &:hover {
     transform: translateY($y);
     @include box-shadow($shadow-hover);
@@ -205,7 +205,7 @@
   cursor: pointer;
   @include transition();
   @include font-smoothing();
-  
+
   &:disabled {
     cursor: not-allowed;
     opacity: 0.6;
@@ -221,7 +221,7 @@
       @include box-shadow(0 5px 15px rgba($primary-color, 0.3));
     }
   }
-  
+
   &:active:not(:disabled) {
     transform: translateY(0);
     @include box-shadow(0 2px 5px rgba($primary-color, 0.2));
@@ -240,16 +240,16 @@
   color: $text-color;
   outline: none;
   @include transition();
-  
+
   &::placeholder {
     color: $input-placeholder;
   }
-  
+
   &:hover {
     background-color: $input-bg-hover;
     border-color: $input-border-hover;
   }
-  
+
   &:focus {
     background-color: $background-white;
     border-color: $input-border-focus;
@@ -261,7 +261,7 @@
 @mixin ripple-effect($color: rgba(255, 255, 255, 0.3)) {
   position: relative;
   overflow: hidden;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -274,7 +274,7 @@
     transform: translate(-50%, -50%);
     transition: width 0.6s ease, height 0.6s ease;
   }
-  
+
   &:hover::before {
     width: 300px;
     height: 300px;
@@ -369,13 +369,13 @@
 // Aspect ratio
 @mixin aspect-ratio($width: 16, $height: 9) {
   position: relative;
-  
+
   &::before {
     content: '';
     display: block;
     padding-bottom: percentage($height / $width);
   }
-  
+
   > * {
     position: absolute;
     top: 0;
@@ -391,16 +391,16 @@
     width: $width;
     height: $width;
   }
-  
+
   &::-webkit-scrollbar-track {
     background: $track-color;
     border-radius: $radius-full;
   }
-  
+
   &::-webkit-scrollbar-thumb {
     background: $thumb-color;
     border-radius: $radius-full;
-    
+
     &:hover {
       background: darken($thumb-color, 10%);
     }
