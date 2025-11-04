@@ -4,6 +4,7 @@ nav {
     justify-content: space-around;
     padding: 15px;
     background-color: white;
+    z-index:$z-index-modal;
   }
   
   nav button {
@@ -252,6 +253,46 @@ nav {
       border-bottom-left-radius: 4px;
     }
   }
+
+  .typing-indicator {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 0;
+  min-height: 20px; // Prevents layout shift
+  
+  .dot {
+    width: 6px;
+    height: 6px;
+    margin: 0 3px;
+    background: linear-gradient(90deg, #666 0%, #999 100%);
+    border-radius: 50%;
+    display: inline-block;
+    animation: smoothBounce 1.4s infinite cubic-bezier(0.4, 0, 0.6, 1);
+    
+    &:nth-child(1) {
+      animation-delay: 0s;
+    }
+    
+    &:nth-child(2) {
+      animation-delay: 0.15s;
+    }
+    
+    &:nth-child(3) {
+      animation-delay: 0.3s;
+    }
+  }
+}
+
+@keyframes smoothBounce {
+  0%, 44%, 88%, 100% {
+    transform: translateY(0) scale(0.8);
+    opacity: 0.5;
+  }
+  22%, 66% {
+    transform: translateY(-8px) scale(1);
+    opacity: 1;
+  }
+}
   
   .chat-messages-example {
     padding: 15px;
@@ -319,10 +360,6 @@ nav {
       }
     }
   }
-
-  
-  
-  
   
   .chat-actions {
     display: flex;

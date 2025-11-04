@@ -14,7 +14,6 @@
 @import './assets/layerStyle.scss';
 @import './assets/loadingScreenStyle.scss';
 @import './assets/globalIconStyle.scss';
-@import './assets/globalModalStyle.scss';
 
 #app {
   font-family: Helvetica, Avenir, Arial, sans-serif;

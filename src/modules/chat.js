@@ -51,7 +51,8 @@ export default {
       '今月は何を意識したらいいかな？'
     ],
     currentThreadId: null,
-    aiResponse: ''
+    aiResponse: '',
+    isRunning: false
   },
   mutations: {
     ADD_CHAT_MESSAGE(state, message) {
@@ -65,6 +66,9 @@ export default {
     },
     SET_AI_RESPONSE(state, response) {
       state.aiResponse = response;
+    },
+    SET_AI_RUNNING(state, value) {
+      state.isRunning = value;
     }
   },
   actions: {
@@ -96,7 +100,7 @@ export default {
     async startConversation({ commit, dispatch, state }, userMessage) {
       let aiResponse = '';
       commit('ADD_CHAT_MESSAGE', { text: userMessage, sender: 'user', timestamp: new Date().toISOString() });
-
+      commit('SET_AI_RUNNING', true);
       try {
         let threadId = state.currentThreadId;
 
@@ -213,8 +217,9 @@ export default {
 
       } catch (error) {
         console.error('Conversation Error:', error);
+      }finally{
+        commit('SET_AI_RUNNING', false);
       }
-
     },
 
 

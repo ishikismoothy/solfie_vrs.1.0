@@ -1,74 +1,86 @@
 <template>
-
-<nav class="sticky-nav-container" :class="{ expanded: isChatBoxExpanded }">
-      <div class="nav-icons" v-if="!isChatBoxExpanded">
-        <a href="#" class="nav-icon">
-          <img src="../assets/icons/journalIcon.svg" alt="Journal" />
-          <span class="icon-label">Mindspace</span>
-        </a>
-        <button href="#" class="nav-icon" @click = "toggleMindUniverseModal">
-          <img src="../assets/icons/eventIcon.svg" alt="Event" />
-          <span class="icon-label">Mind Universe</span>
-        </button>
-        <a href="#" class="nav-icon">
-          <img src="../assets/icons/squareIcon.svg" alt="Square" />
-          <span class="icon-label">Mind Square</span>
-        </a>
-        <a href="#" class="nav-icon">
-          <img src="../assets/icons/statusIcon.svg" alt="Status" />
-          <span class="icon-label">Settings</span>
-        </a>
-      </div>
-      <button class="chatbox-button" @click="toggleChatBox" v-if="!isChatBoxExpanded">
-        <span class="chat-text">Chat with Solfie AI</span>
-        <div class="icon-group">
-          <span class="clip-icon">📎</span>
-          <span class="paper-plane-icon">✈️</span>
-        </div>
+  <nav class="sticky-nav-container" :class="{ expanded: isChatBoxExpanded }">
+    <div class="nav-icons" v-if="!isChatBoxExpanded">
+      <a href="#" class="nav-icon">
+        <img src="../assets/icons/journalIcon.svg" alt="Journal" />
+        <span class="icon-label">Mindspace</span>
+      </a>
+      <button href="#" class="nav-icon" @click = "toggleMindUniverseModal">
+        <img src="../assets/icons/eventIcon.svg" alt="Event" />
+        <span class="icon-label">Mind Universe</span>
       </button>
-      <div class="expanded-chat-box" v-if="isChatBoxExpanded" >
-        <div class="header">
-          <div class="header-content">
-            <span class="solfie-ai-label">Solfie AI</span>
-            <button class="close-icon" @click="toggleChatBox">×</button>
-          </div>
+      <a href="#" class="nav-icon">
+        <img src="../assets/icons/squareIcon.svg" alt="Square" />
+        <span class="icon-label">Mind Square</span>
+      </a>
+      <a href="#" class="nav-icon">
+        <img src="../assets/icons/statusIcon.svg" alt="Status" />
+        <span class="icon-label">Settings</span>
+      </a>
+    </div>
+    <button class="chatbox-button" @click="toggleChatBox" v-if="!isChatBoxExpanded">
+      <span class="chat-text">Chat with Solfie AI</span>
+      <div class="icon-group">
+        <span class="clip-icon">📎</span>
+        <span class="paper-plane-icon">✈️</span>
+      </div>
+    </button>
+    <div class="expanded-chat-box" v-if="isChatBoxExpanded" >
+      <div class="header">
+        <div class="header-content">
+          <span class="solfie-ai-label">Solfie AI</span>
+          <button class="close-icon" @click="toggleChatBox">×</button>
         </div>
-        <div class="chat-messages" ref="chatMessagesContainer">
-          <div v-for="(message, index) in chatMessages" :key="index"
-              class="message-container"
-              :class="{ 'user-message': message.sender === 'user', 'ai-message': message.sender === 'ai' }">
-              <div class="sender-name">{{ message.sender === 'user' ? 'You' : 'Solfie AI' }}</div>
-            <div class="chat-bubble">
-              <p v-for="(line, lineIndex) in message.text.split('\n')" :key="lineIndex">
-                {{ line }}
-              </p>
+      </div>
+      <div class="chat-messages" ref="chatMessagesContainer">
+        <div v-for="(message, index) in chatMessages" :key="index"
+          class="message-container"
+          :class="{ 'user-message': message.sender === 'user', 'ai-message': message.sender === 'ai' }"
+        >
+          <div class="sender-name">{{ message.sender === 'user' ? 'You' : 'Solfie AI' }}</div>
+          <div class="chat-bubble">
+            <p v-for="(line, lineIndex) in message.text.split('\n')" :key="lineIndex">
+              {{ line }}
+            </p>
+          </div>
+          <div class="timestamp">{{ formatDate(message.timestamp) }}</div>
+        </div>
+        <div
+          v-if="isAiRunning"
+          class="message-container ai-message"
+        >
+          <div class="sender-name">Solfie AI</div>
+          <div class="chat-bubble">
+            <div class="typing-indicator">
+              <span class="dot"></span>
+              <span class="dot"></span>
+              <span class="dot"></span>
             </div>
-            <div class="timestamp">{{ formatDate(message.timestamp) }}</div>
-          </div>
-        </div>
-        <div class="chat-messages-example" v-if="!hasUserMessages">
-          <div
-            v-for="(messageExample, index) in chatMessagesExample"
-            :key="index"
-            class="messageExample"
-            @click="copyToTextarea(messageExample)"
-          >
-            {{ messageExample }}
-          </div>
-        </div>
-        <div class="chat-input-field">
-          <textarea v-model="chatInput" placeholder="Type a message..."></textarea>
-          <div class="chat-actions">
-            <button class="file-upload-button">
-              <span class="clip-icon">📎</span>
-            </button>
-            <button class="send-button" @click="sendMessage">✈️</button>
           </div>
         </div>
       </div>
-    </nav>
-
-
+      <div class="chat-messages-example" v-if="!hasUserMessages">
+        <div
+          v-for="(messageExample, index) in chatMessagesExample"
+          :key="index"
+          class="messageExample"
+          @click="copyToTextarea(messageExample)"
+        >
+          {{ messageExample }}
+        </div>
+      </div>
+      <div class="chat-input-field">
+        <textarea v-model="chatInput" placeholder="Type a message..."></textarea>
+        <div class="chat-actions">
+          <button class="file-upload-button">
+            <span class="clip-icon">📎</span>
+          </button>
+          <button class="send-button" @click="sendMessage">✈️</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+  <div class="modal-overlay" v-if="isChatBoxExpanded"></div>
 </template>
 
 <script>
@@ -81,6 +93,7 @@ export default defineComponent({
     const store = useStore();
     const user = computed(() => store.state.user.user || {});
     const stats = computed(() => store.state.user.stats || {});
+    const isAiRunning = computed(() => store.state.chat.isRunning);
     
     const toggleMindUniverseModal = async() => {
       store.dispatch('user/triggerMindUniverseWindow',true);
@@ -168,6 +181,7 @@ export default defineComponent({
       toggleMindUniverseModal,
 
       //CHAT FUNCTION
+      isAiRunning,
       isChatBoxExpanded,
       chatInput,
       chatMessagesExample,

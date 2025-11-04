@@ -271,10 +271,10 @@
 
   </template>
 
-// Clean mindSpace.vue with folders properly disabled
-// Replace the script section with this:
-
 <script>
+  // Clean mindSpace.vue with folders properly disabled
+  // Replace the script section with this:
+  
   import { defineComponent, ref, computed, onMounted, watch, nextTick } from 'vue';
   import { useStore } from 'vuex';
   import { formatDate } from '@/utility/dateUtils';
