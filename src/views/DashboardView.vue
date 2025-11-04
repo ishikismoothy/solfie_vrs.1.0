@@ -35,7 +35,7 @@
       </div>
 
       <!-- MindSpace view -->
-      <div class="view mindspace-view" 
+      <div class="view mindspace-view"
         :style="containerStyle"
         :class="{ 'scroll-disabled': isMindSpaceView }">
         <mindSpace />
@@ -195,7 +195,7 @@ export default defineComponent({
       value1: '#f0f0f0',
       value2: backgroundImage
     });
-  
+
     const containerStyle = computed(() => {
       if (background.value.type === 'color') {
         return { backgroundColor: background.value.value1 };
@@ -203,7 +203,7 @@ export default defineComponent({
         return { backgroundImage: `url(${background.value.value2})` };
       }
     });
-    
+
     // Fetch items using Vuex store
     const fetchMindspaceItems = async () => {
       if (!userId.value) {
@@ -287,7 +287,7 @@ export default defineComponent({
 
     //[MONITOR] MODAL AND EDIT TOGGLE
     const showMindUniverseModal = computed(() => store.state.user.modalControl.showMindUniverseWindow);
-   
+
     watch(
       () => showMindUniverseModal.value, (newValue) => {
         console.log('[DashboardView.vue] showMindUniverseModal changed:', { new: newValue })
@@ -447,10 +447,10 @@ export default defineComponent({
     watch(isMindSpaceView, async (newValue) => {
       // Wait for DOM update
       await nextTick();
-      
+
       // Get the mindspace container element
       const mindspaceContainer = document.querySelector('.mindspace-container');
-      
+
       if (mindspaceContainer) {
         if (newValue) {
           // Disable scrolling when in mindspace view
@@ -462,7 +462,7 @@ export default defineComponent({
           console.log('[DashboardView] Scrolling enabled for mindspace-container');
         }
       }
-    }, { immediate: true }); 
+    }, { immediate: true });
 
     onMounted(async () => {
       const dashboardView = document.querySelector('.view.dashboard-view');
@@ -610,7 +610,7 @@ export default defineComponent({
 
 @import '../assets/dashboardStyle.scss';
 @import '../assets/mindSpaceStyle.scss';
-@import '../assets/deleteButtonStyle.scss';
+// @import '../assets/deleteButtonStyle.scss';
 @import '../assets/widgetStyle.scss';
 @import '../assets/satisfactionDataViewStyle.scss';
 @import '../assets/todosStyle.scss';

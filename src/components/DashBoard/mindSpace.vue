@@ -166,7 +166,7 @@
                     class="delete-button"
                     @click.stop="handleItemDelete(item)"
                   >
-                    <HeroIcon name="x-mark" class="w-4 h-4" />
+                    <HeroIcon name="x-mark" class="background-circle" />
                   </button>
 
                   <!-- Unified icon display for folder items -->

@@ -34,7 +34,7 @@ export default {
     handleTouchEnd(event) {
       event.stopPropagation();
       this.isPressed = false;
-      
+
       // Only emit delete if the touch interaction started on this element
       if (this.touchStarted) {
         this.$emit('delete');
