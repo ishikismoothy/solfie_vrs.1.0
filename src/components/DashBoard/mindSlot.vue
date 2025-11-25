@@ -42,9 +42,10 @@
           <div v-if="isSingleItemSlot(mindslot) && items[mindslot.item]" class="single-item-content">
             <div
               class="icon-slot has-item clickable single-item-icon"
-              @contextmenu.prevent="!isViewOnly && handleSingleItemRightClick($event, index)"
-              @touchstart="!isViewOnly && handleSingleItemTouchStart($event, index)"
-              @touchend="!isViewOnly && handleSingleItemTouchEnd()"
+              @click.stop="handleSingleItemClick(index)"
+              @contextmenu.prevent="handleSingleItemRightClick($event, index)"
+              @touchstart="handleSingleItemTouchStart($event, index)"
+              @touchend="handleSingleItemTouchEnd()"
             >
               <!-- Show custom icon if set, otherwise show item name -->
               <div v-if="getSingleItemCustomIcon(mindslot)" class="custom-icon" v-html="getSingleItemCustomIcon(mindslot)"></div>
@@ -111,8 +112,8 @@
               :clickable="false"
               :expanded="false"
               @icons-changed="(icons) => !isViewOnly && handleSlotIconsChanged({ index, icons })"
-              @icon-clicked="(iconIndex) => handleDirectIconClick(index, iconIndex)"
-              @icon-right-click="(iconIndex, event) => !isViewOnly && openIconSelector(event, index, iconIndex)"
+              @icon-clicked="(iconIndex) => handleIconClickToCover(index, iconIndex)"
+              @icon-right-click="(iconIndex) => handleDirectIconClick(index, iconIndex)"
               @custom-icon-changed="(customIcons) => !isViewOnly && handleCustomIconsChanged({ index, customIcons })"
               @empty-slot-clicked="(iconIndex) => !isViewOnly && openItemSelector(index, 'single', iconIndex)"
             />
@@ -196,16 +197,6 @@
       </div>
     </Teleport>
 
-    <!-- Icon Selector Modal -->
-    <IconSelector
-      :isVisible="showIconSelector"
-      :position="selectorPosition"
-      :hasCurrentIcon="hasCurrentIcon"
-      :screenPosition="'left'"
-      @close="closeIconSelector"
-      @select-icon="handleIconSelection"
-    />
-
     <!-- Item Selection Grid -->
     <ItemSelectionGrid
       :isVisible="showItemSelector"
@@ -232,7 +223,6 @@
   import { mindspaceService } from '@/firebase/firebaseMindSpace'
   import emitter from '@/eventBus'
   import IconSlotGrid from '@/./components/ItemWindow/iconSlotGrid.vue'
-  import IconSelector from '@/./components/ItemWindow/IconSelector.vue'
   import ItemSelectionGrid from '@/./components/ItemWindow/ItemSelectionGrid.vue'
 
   const store = useStore()
@@ -285,13 +275,6 @@
   const showToast = ref(false)
   const toastMessage = ref('')
 
-  // Icon selector state
-  const showIconSelector = ref(false)
-  const selectorPosition = ref({ x: 0, y: 0 })
-  const currentSlotIndex = ref(-1)
-  const currentIconIndex = ref(-1) // -1 for single item, 0-2 for multi-item
-  const hasCurrentIcon = ref(false)
-
   // Touch handling for long press
   let touchTimer = null
   const longPressDelay = 500
@@ -320,17 +303,44 @@
     return itemId ? store.getters['user/getItemCustomIcon'](itemId) : null
   }
 
-  // Single-item icon selection handlers
+  // Helper function to open single item slots
+  const openSingleItem = (slotIndex, openToCover) => {
+    const slot = mindspace.value.mindslot[slotIndex]
+    const itemId = slot.item
+
+    if (!itemId) {
+      console.log('❌ NO ITEM ID FOUND!')
+      return
+    }
+
+    console.log(`✅ Single item opening to ${openToCover ? 'cover' : 'main page'} for item:`, itemId)
+
+    emitter.emit('openUnifiedItemWindow', {
+      mindslot: slot,
+      index: slotIndex,
+      expanded: true,
+      initialFlipped: !openToCover,  // false = cover, true = main page
+      openedFromMindslot: true,
+      directIconIndex: -1,
+      expandedSlotIndex: null
+    })
+  }
+
+  // Single-item click handlers
+  const handleSingleItemClick = (slotIndex) => {
+    openSingleItem(slotIndex, true)  // Open to cover
+  }
+
   const handleSingleItemRightClick = (event, slotIndex) => {
-    if (isViewOnly.value) return
     event.preventDefault()
-    openIconSelector(event, slotIndex, -1) // -1 indicates single item
+    // Open item selector to replace the item (instead of opening the item)
+    openItemSelector(slotIndex, 'single')
   }
 
   const handleSingleItemTouchStart = (event, slotIndex) => {
-    if (isViewOnly.value) return
     touchTimer = setTimeout(() => {
-      openIconSelector(event.touches[0], slotIndex, -1)
+      // Long press = open item selector to replace item
+      openItemSelector(slotIndex, 'single')
     }, longPressDelay)
   }
 
@@ -339,85 +349,6 @@
       clearTimeout(touchTimer)
       touchTimer = null
     }
-  }
-
-  // Open icon selector
-  const openIconSelector = (event, slotIndex, iconIndex) => {
-    if (isViewOnly.value) return
-
-    currentSlotIndex.value = slotIndex
-    currentIconIndex.value = iconIndex
-
-    // Get the actual item ID for the icon
-    const mindslot = mindspace.value.mindslot[slotIndex]
-    let targetItemId = null
-
-    if (iconIndex === -1) {
-      // Single item
-      targetItemId = mindslot.item
-    } else {
-      // Multi-item - get item ID from iconItems array
-      const iconItems = mindslot.iconItems || [null, null, null]
-      targetItemId = iconItems[iconIndex]
-    }
-
-    if (!targetItemId) {
-      console.warn('No item ID found for icon selection')
-      return
-    }
-
-    // Check if this item has a custom icon in global store
-    hasCurrentIcon.value = !!store.getters['user/getItemCustomIcon'](targetItemId)
-
-    selectorPosition.value = { x: 0, y: 0 }
-    showIconSelector.value = true
-  }
-
-  // Close icon selector
-  const closeIconSelector = () => {
-    showIconSelector.value = false
-    currentSlotIndex.value = -1
-    currentIconIndex.value = -1
-    hasCurrentIcon.value = false
-  }
-
-  // Handle icon selection
-  const handleIconSelection = async (selectedIcon) => {
-    if (isViewOnly.value) return
-
-    if (currentSlotIndex.value >= 0) {
-      const mindslot = mindspace.value.mindslot[currentSlotIndex.value]
-
-      // Get the actual item ID for the icon
-      let targetItemId = null
-      if (currentIconIndex.value === -1) {
-        // Single item
-        targetItemId = mindslot.item
-      } else {
-        // Multi-item - get item ID from iconItems array
-        const iconItems = mindslot.iconItems || [null, null, null]
-        targetItemId = iconItems[currentIconIndex.value]
-      }
-
-      if (!targetItemId) {
-        console.warn('No item ID found for icon update')
-        closeIconSelector()
-        return
-      }
-
-      // Update the global icon store
-      try {
-        await store.dispatch('user/setItemCustomIcon', {
-          itemId: targetItemId,
-          customIcon: selectedIcon?.svg || null
-        })
-        console.log('✅ Icon updated globally for item:', targetItemId)
-      } catch (error) {
-        console.error('❌ Error updating icon:', error)
-      }
-    }
-
-    closeIconSelector()
   }
 
   // Fetch mindspace slots
@@ -474,7 +405,7 @@
     }
   }
 
-  // Handle direct icon click - emit to unified system
+  // Handle direct icon click - open item selector to replace item
   const handleDirectIconClick = (slotIndex, iconIndex) => {
     const slot = mindspace.value.mindslot[slotIndex]
     const iconItems = slot.iconItems || [null, null, null]
@@ -485,13 +416,30 @@
       return
     }
 
-    console.log('✅ Icon clicked, opening unified window for item:', itemId)
+    console.log('✅ Icon right-clicked, opening item selector to replace item:', itemId)
+
+    // Open item selector to replace the item at this position
+    openItemSelector(slotIndex, 'single', iconIndex)
+  }
+
+  // Handle icon click to cover image (for left-click/tap)
+  const handleIconClickToCover = (slotIndex, iconIndex) => {
+    const slot = mindspace.value.mindslot[slotIndex]
+    const iconItems = slot.iconItems || [null, null, null]
+    const itemId = iconItems[iconIndex]
+
+    if (!itemId) {
+      console.log('❌ NO ITEM ID FOUND!')
+      return
+    }
+
+    console.log('✅ Icon clicked, opening to cover image for item:', itemId)
 
     emitter.emit('openUnifiedItemWindow', {
       mindslot: slot,
       index: slotIndex,
       expanded: true,
-      initialFlipped: true,
+      initialFlipped: false,  // Open to cover image instead of main window
       openedFromMindslot: true,
       directIconIndex: iconIndex,
       expandedSlotIndex: null

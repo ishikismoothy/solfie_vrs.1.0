@@ -133,7 +133,8 @@ body > .folder-item.dragging {
 
   @include responsive(iPhoneSE) {
     .mind-grid {
-      gap: 10px;
+      grid-template-columns: repeat(4, 60px);
+      row-gap: 12px;
       height: 90%;
 
       .mind-Item {
@@ -149,11 +150,12 @@ body > .folder-item.dragging {
 
   @include responsive(iPhonePro) {
     .mind-grid {
-      gap: 20px;
+      grid-template-columns: repeat(4, 70px);
+      row-gap: 15px;
       height: 100%;
 
       .mind-Item {
-        padding-top: 15px;
+        padding-top: 10px;
 
         .icon-wrapper {
           width: 50px;
@@ -165,11 +167,12 @@ body > .folder-item.dragging {
 
   @include responsive(tablet) {
     .mind-grid {
-      gap: 20px;
+      grid-template-columns: repeat(4, 80px);
+      row-gap: 18px;
       height: 100%;
 
       .mind-Item {
-        padding-top: 15px;
+        padding-top: 12px;
 
         .icon-wrapper {
           width: 60px;
@@ -181,11 +184,12 @@ body > .folder-item.dragging {
 
   @include responsive(desktop) {
     .mind-grid {
-      gap: 20px;
+      grid-template-columns: repeat(4, 85px);
+      row-gap: 20px;
       height: 100%;
 
       .mind-Item {
-        padding-top: 15px;
+        padding-top: 12px;
 
         .icon-wrapper {
           width: 60px;
@@ -197,16 +201,18 @@ body > .folder-item.dragging {
 
   .mind-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: repeat(5, 1fr);
+    grid-template-columns: repeat(4, 70px);
+    justify-content: space-evenly;
+    align-content: flex-start;
+    row-gap: 15px;
     width: 100%;
     position: absolute;
     top: 0;
     left: 0;
     transition: transform 0.3s ease;
     will-change: transform;
-    position: absolute;
     padding-top: 20px;
+    padding-bottom: 20px;
 
     .mind-Item {
       display: flex;
@@ -214,6 +220,11 @@ body > .folder-item.dragging {
       align-items: center;
       text-align: center;
       transition: transform 0.2s ease;
+
+      // Smooth reflow during drag operations
+      &:not(.is-dragging):not(.drag-preview) {
+        transition: transform 0.2s ease, opacity 0.2s ease;
+      }
 
       &:not(.empty):not(.add-item):hover {
         transform: scale(1.05);

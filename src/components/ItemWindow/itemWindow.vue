@@ -63,7 +63,7 @@
           <div
             class="slot-content"
             :class="{ 'long-pressing': isLongPressing }"
-            :style="expanded && (isSingleItemSlot || isFromMindGrid) && getCurrentItemImage() ?
+            :style="expanded && (isSingleItemSlot || isFromMindGrid || isDirectMultiItem) && getCurrentItemImage() ?
                     { backgroundImage: `url(${getCurrentItemImage()})` } : {}"
           >
             <!-- Existing slot content -->
@@ -106,6 +106,20 @@
               </template>
             </div>
 
+            <div v-else-if="isDirectMultiItem" class="single-item-content">
+              <!-- Direct multi-item: show the specific item's cover -->
+              <template>
+                <div class="icon-slot has-item clickable single-item-icon">
+                  <div class="icon-item-name">
+                    {{ currentItemName }}
+                  </div>
+                </div>
+                <div class="single-item-name">
+                  {{ currentItemName }}
+                </div>
+              </template>
+            </div>
+
             <div v-else class="empty-slot-wrapper">
               <div v-if="!hasAnyItems" class="empty-slot-text">Empty slot</div>
               <IconSlotGrid
@@ -129,7 +143,7 @@
           v-else
           class="slot-content"
           :class="{ 'long-pressing': isLongPressing }"
-          :style="expanded && (isSingleItemSlot || isFromMindGrid) && getCurrentItemImage() ?
+          :style="expanded && (isSingleItemSlot || isFromMindGrid || isDirectMultiItem) && getCurrentItemImage() ?
                   { backgroundImage: `url(${getCurrentItemImage()})` } : {}"
           @contextmenu.prevent="handleSlotRightClick"
           @touchstart="handleSlotTouchStart"
@@ -175,6 +189,20 @@
             </template>
           </div>
 
+          <div v-else-if="isDirectMultiItem" class="single-item-content">
+            <!-- Direct multi-item: show the specific item's cover -->
+            <template>
+              <div class="icon-slot has-item clickable single-item-icon">
+                <div class="icon-item-name">
+                  {{ currentItemName }}
+                </div>
+              </div>
+              <div class="single-item-name">
+                {{ currentItemName }}
+              </div>
+            </template>
+          </div>
+
           <div v-else class="empty-slot-wrapper">
             <div v-if="!hasAnyItems" class="empty-slot-text">Empty slot</div>
             <IconSlotGrid
@@ -206,9 +234,22 @@
           </svg>
         </button>
 
+        <!-- Multi-item navigation on front (for direct multi-item mode cover view) -->
+        <div v-if="isDirectMultiItem && !isFlipped" class="multi-item-nav">
+          <template v-for="(item, iconIndex) in mindslot.iconItems" :key="iconIndex">
+            <button
+              v-if="item"
+              @click.stop="switchToIconItem(iconIndex)"
+              :class="['icon-nav-btn', { active: currentIconIndex === iconIndex }]"
+            >
+              {{ iconIndex + 1 }}
+            </button>
+          </template>
+        </div>
+
         <!-- Flip indicator when expanded -->
-        <div v-if="expanded && (hasAnyItems || isFromMindGrid)" class="flip-indicator">
-          <span v-if="isSingleItemSlot || isFromMindGrid">裏返す↩︎</span>
+        <div v-if="expanded && (hasAnyItems || isFromMindGrid || isDirectMultiItem)" class="flip-indicator">
+          <span v-if="isSingleItemSlot || isFromMindGrid || isDirectMultiItem">裏返す↩︎</span>
           <span v-else>Click icons to view items →</span>
         </div>
       </div>
@@ -387,7 +428,7 @@
           </div>
         </div>
 
-        <div v-if="!isSingleItemSlot && !isFromMindGrid && hasMultipleItems" class="multi-item-nav">
+        <div v-if="(!isSingleItemSlot && !isFromMindGrid && hasMultipleItems) || isDirectMultiItem" class="multi-item-nav">
           <template v-for="(item, iconIndex) in mindslot.iconItems" :key="iconIndex">
             <button
               v-if="item"
@@ -518,8 +559,19 @@
   const isEditingName = ref(false)
   const editingName = ref(props.mindslot.name || 'New Slot')
   const nameInput = ref(null)
-  const currentIconIndex = ref(0)
-  const viewMode = ref('slot')
+  const currentIconIndex = ref(props.directIconIndex >= 0 ? props.directIconIndex : 0)
+
+  // DEBUG: Log props at initialization
+  console.log('🔍 [ItemWindow Init] Props:', {
+    directIconIndex: props.directIconIndex,
+    initialFlipped: props.initialFlipped,
+    expanded: props.expanded,
+    openedFromMindslot: props.openedFromMindslot
+  })
+
+  const viewMode = ref(props.directIconIndex >= 0 ? 'itemContent' : 'slot')
+
+  console.log('🔍 [ItemWindow Init] Initial viewMode:', viewMode.value)
 
   // Item editing state (same as before)
   const isEditingItemName = ref(false)
@@ -558,6 +610,18 @@
     return props.fromMindGrid && !!currentItemId.value
   })
 
+  // Check if opening directly to a specific item in a multi-slot
+  const isDirectMultiItem = computed(() => {
+    const result = props.directIconIndex >= 0 && hasIconItems.value && !!currentItemId.value
+    console.log('🔍 [isDirectMultiItem]', {
+      directIconIndex: props.directIconIndex,
+      hasIconItems: hasIconItems.value,
+      currentItemId: currentItemId.value,
+      result
+    })
+    return result
+  })
+
   // NEW: Check if image upload is available for this slot
   const canUploadImage = computed(() => {
     return (isSingleItemSlot.value && props.mindslot.item) ||
@@ -589,6 +653,9 @@
       const item = props.items[props.mindslot.item]
       return item?.img || null
     } else if (isFromMindGrid.value && currentItemId.value) {
+      const item = props.items[currentItemId.value]
+      return item?.img || null
+    } else if (isDirectMultiItem.value && currentItemId.value) {
       const item = props.items[currentItemId.value]
       return item?.img || null
     }
@@ -705,7 +772,16 @@
 
   // Card interaction methods (same as before)
   async function handleCardClick() {
-    console.log('🎮 handleCardClick called - props.expanded:', props.expanded)
+    console.log('🎮 [handleCardClick] Called with:', {
+      expanded: props.expanded,
+      expandedSlotIndex: props.expandedSlotIndex,
+      directIconIndex: props.directIconIndex,
+      openedFromMindslot: props.openedFromMindslot,
+      initialFlipped: props.initialFlipped,
+      currentViewMode: viewMode.value,
+      currentIsFlipped: isFlipped.value,
+      hasIconItems: hasIconItems.value
+    })
 
     if (!props.expanded && props.expandedSlotIndex !== null) {
       console.log('🎮 Another slot is expanded - ignoring click on unexpanded card')
@@ -717,7 +793,7 @@
       return
     }
 
-    if (props.expanded && hasIconItems.value) {
+    if (props.expanded && hasIconItems.value && !isDirectMultiItem.value) {
       console.log('🎮 This is an expanded multi-item card - ignoring background clicks')
       return
     }
@@ -727,10 +803,23 @@
       return
     }
 
+    // Skip iconGrid view if opening directly to a specific item (but allow flipping)
+    if (props.directIconIndex >= 0) {
+      console.log('🎮 Direct multi-item mode - allowing flip')
+      if (isDirectMultiItem.value) {
+        // Toggle flip state for direct multi-item
+        isFlipped.value = !isFlipped.value
+        console.log('🎮 Toggled flip to:', isFlipped.value)
+      }
+      return
+    }
+
     if (!isFlipped.value && hasIconItems.value && viewMode.value !== 'itemContent') {
+      console.log('🎮 Setting viewMode to iconGrid')
       viewMode.value = 'iconGrid'
       isFlipped.value = true
     } else if (!isFlipped.value && (isSingleItemSlot.value || isFromMindGrid.value)) {
+      console.log('🎮 Setting viewMode to itemContent')
       viewMode.value = 'itemContent'
       await flipToItem()
     }
@@ -905,7 +994,10 @@
 
   function flipToSlot() {
     isFlipped.value = false
-    viewMode.value = 'slot'
+    // For direct multi-item, keep viewMode as itemContent to maintain the item context
+    if (!isDirectMultiItem.value) {
+      viewMode.value = 'slot'
+    }
   }
 
   function handleClose() {
@@ -1065,7 +1157,12 @@
   })
 
   watch(() => props.directIconIndex, async (newIconIndex) => {
-    console.log('*** WATCHER TRIGGERED ***', { newIconIndex, expanded: props.expanded, initialFlipped: props.initialFlipped })
+    console.log('*** WATCHER TRIGGERED ***', {
+      newIconIndex,
+      expanded: props.expanded,
+      initialFlipped: props.initialFlipped,
+      currentViewMode: viewMode.value
+    })
 
     if (newIconIndex >= 0 && props.expanded) {
       console.log('*** WATCHER CONDITIONS MET ***')
@@ -1073,13 +1170,19 @@
       const itemId = iconItems[newIconIndex]
 
       if (itemId) {
-        console.log('*** WATCHER SETTING UP ITEM CONTENT ***')
+        console.log('*** WATCHER SETTING UP ITEM CONTENT ***', {
+          oldViewMode: viewMode.value,
+          willSetTo: 'itemContent'
+        })
         currentIconIndex.value = newIconIndex
         viewMode.value = 'itemContent'
         await store.dispatch('mindspace/setItemId', itemId)
         await nextTick()
-        isFlipped.value = true
-        console.log('*** WATCHER COMPLETED ***')
+        isFlipped.value = props.initialFlipped  // Respect the initialFlipped prop
+        console.log('*** WATCHER COMPLETED ***', {
+          finalViewMode: viewMode.value,
+          finalIsFlipped: isFlipped.value
+        })
       }
     }
   }, { immediate: true })

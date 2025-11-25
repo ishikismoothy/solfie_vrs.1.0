@@ -1,0 +1,343 @@
+/**
+ * Unified Drag and Drop Styles - FIXED VERSION
+ * Simplified and more reliable styling
+ */
+
+/* Base drag styles */
+.drag-container {
+  position: relative;
+}
+
+/* Item being dragged (original) - HIDE IT */
+.is-dragging {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Ghost element following cursor - Simple rounded square */
+.drag-ghost {
+  position: fixed !important;
+  pointer-events: none !important;
+  z-index: 999999 !important;
+  cursor: grabbing !important;
+
+  /* Simple rounded square appearance */
+  background: rgba(66, 153, 225, 0.4) !important;
+  border-radius: 12px !important;
+  opacity: 0.75 !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3) !important;
+
+  /* Prevent any transitions or transforms */
+  transition: none !important;
+  transform: none !important;
+  will-change: transform !important;
+
+  /* Ensure proper rendering */
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* Preview element showing drop position - SIMPLIFIED */
+.drag-preview {
+  pointer-events: none !important;
+  background: rgba(66, 153, 225, 0.15) !important;
+  border: 3px dashed rgba(66, 153, 225, 0.6) !important;
+  border-radius: 8px !important;
+  opacity: 0.4 !important;
+  transition: none !important; /* Remove transition for more responsive feel */
+
+  /* Ensure it takes up space properly */
+  box-sizing: border-box !important;
+  flex-shrink: 0 !important;
+}
+
+/* Drop zone highlights */
+.drop-target-active {
+  background: rgba(66, 153, 225, 0.05);
+  transition: background 0.2s ease;
+}
+
+.drop-target-valid {
+  border-color: rgba(72, 187, 120, 0.5);
+  background: rgba(72, 187, 120, 0.05);
+}
+
+.drop-target-invalid {
+  border-color: rgba(245, 101, 101, 0.5);
+  background: rgba(245, 101, 101, 0.05);
+}
+
+/* Cursor styles */
+.draggable-item {
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-touch-callout: none; /* Disable iOS callout */
+}
+
+.draggable-item:active {
+  cursor: grabbing;
+}
+
+/* Edit mode specific styles */
+.edit-mode .draggable-item {
+  cursor: grab;
+}
+
+.edit-mode .is-dragging {
+  cursor: grabbing;
+}
+
+/* Smooth transitions when not dragging - UPDATED for FLIP animations */
+.draggable-item:not(.is-dragging):not(.drag-preview) {
+  /* Only transition properties that won't interfere with FLIP */
+  transition: box-shadow 0.2s ease;
+  /* transform and opacity handled by FLIP animations during drag */
+}
+
+/* Hover effect for draggable items */
+.edit-mode .draggable-item:hover:not(.is-dragging) {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Page edge scroll indicators */
+.drag-scroll-indicator {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 50px;
+  pointer-events: none;
+  z-index: 9999;
+  transition: opacity 0.3s ease;
+}
+
+.drag-scroll-indicator-left {
+  left: 0;
+  background: linear-gradient(to right, rgba(66, 153, 225, 0.3), transparent);
+}
+
+.drag-scroll-indicator-right {
+  right: 0;
+  background: linear-gradient(to left, rgba(66, 153, 225, 0.3), transparent);
+}
+
+/* Touch-specific improvements */
+@media (hover: none) and (pointer: coarse) {
+  .draggable-item {
+    /* Slightly larger touch targets */
+    padding: 8px;
+  }
+
+  .drag-ghost {
+    /* More visible on touch devices */
+    opacity: 0.85 !important;
+    background: rgba(66, 153, 225, 0.5) !important;
+  }
+}
+
+/* Folder/container specific hover states */
+.folder-container.drag-hover {
+  background: rgba(66, 153, 225, 0.1);
+  border: 2px dashed rgba(66, 153, 225, 0.5);
+  transform: scale(1.05);
+  transition: all 0.2s ease;
+}
+
+/* Animation for dropping */
+@keyframes dropAnimation {
+  0% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.drag-drop-complete {
+  animation: dropAnimation 0.3s ease;
+}
+
+/* Prevent text selection during drag */
+.drag-active {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  -webkit-touch-callout: none !important;
+}
+
+/* Grid layout adjustments during drag */
+.grid-container.drag-active {
+  min-height: 100%;
+}
+
+/* Loading state during reorder */
+.drag-reordering {
+  pointer-events: none;
+  opacity: 0.6;
+  position: relative;
+}
+
+.drag-reordering::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Accessibility improvements */
+.draggable-item:focus-visible {
+  outline: 2px solid rgba(66, 153, 225, 0.8);
+  outline-offset: 2px;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .drag-ghost {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6) !important;
+  }
+
+  .drag-preview {
+    background: rgba(66, 153, 225, 0.25) !important;
+    border-color: rgba(66, 153, 225, 0.7) !important;
+  }
+
+  .drop-target-active {
+    background: rgba(66, 153, 225, 0.15);
+  }
+
+  .folder-container.drag-hover {
+    background: rgba(66, 153, 225, 0.2);
+  }
+
+  .drag-reordering::after {
+    background: rgba(0, 0, 0, 0.8);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .drag-ghost,
+  .drag-preview,
+  .draggable-item,
+  .drop-target-active,
+  .folder-container.drag-hover {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* =================================
+   DEBUG MODE - Uncomment to debug
+   ================================= */
+
+/* Uncomment this section to see ghost and preview boundaries */
+/*
+.drag-ghost {
+  border: 3px solid red !important;
+  background: rgba(255, 0, 0, 0.3) !important;
+}
+
+.drag-ghost::after {
+  content: 'GHOST';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: red;
+  color: white;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: bold;
+  border-radius: 4px;
+  z-index: 10000;
+}
+
+.drag-preview {
+  border: 3px solid blue !important;
+  background: rgba(0, 0, 255, 0.1) !important;
+}
+
+.drag-preview::before {
+  content: 'PREVIEW';
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: blue;
+  color: white;
+  padding: 2px 4px;
+  font-size: 10px;
+  z-index: 10000;
+}
+
+.is-dragging {
+  border: 3px solid green !important;
+}
+
+.is-dragging::before {
+  content: 'DRAGGING';
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: green;
+  color: white;
+  padding: 2px 4px;
+  font-size: 10px;
+  z-index: 10000;
+}
+*/
+
+/* =================================
+   Additional Utility Classes
+   ================================= */
+
+/* Force hardware acceleration for smoother dragging */
+.drag-ghost,
+.drag-preview {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+/* Hardware acceleration for items being animated */
+.draggable-item {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Ensure smooth animations during reorder */
+.drag-active .draggable-item:not(.is-dragging):not(.drag-preview) {
+  will-change: transform, opacity;
+}
+
+/* Ensure proper stacking context */
+.mind-grid-container {
+  position: relative;
+  z-index: 1;
+}
+
+/* Prevent layout shifts during drag */
+.mind-Item.is-dragging {
+  /* Keep the space occupied */
+  opacity: 0 !important;
+  visibility: hidden !important;
+  /* But maintain layout */
+  position: relative !important;
+}

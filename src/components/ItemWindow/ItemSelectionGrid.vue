@@ -430,10 +430,10 @@ onUnmounted(() => {
   position: relative;
 
   &.selected {
-    background: $success-bg !important;
-    border-color: $success-border !important;
+    background: rgba($success-color, 0.15) !important;
+    border-color: $success-color !important;
     transform: translateY(1px);
-    box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
   }
 
   &.disabled {
@@ -448,8 +448,8 @@ onUnmounted(() => {
   }
 
   &:hover:not(.disabled) {
-    background: $success-bg !important;
-    border-color: $success-border !important;
+    background: rgba($success-color, 0.1) !important;
+    border-color: $success-color !important;
     transform: translateY(1px);
   }
 }
@@ -460,7 +460,7 @@ onUnmounted(() => {
   right: -4px;
   width: 20px;
   height: 20px;
-  background: $success-bg;
+  background: $success-color;
   color: $white;
   border-radius: 50%;
   display: flex;
@@ -469,7 +469,7 @@ onUnmounted(() => {
   font-size: 10px;
   font-weight: bold;
   z-index: 10;
-  border: 2px solid $success-border;
+  border: 2px solid darken($success-color, 10%);
 }
 
 .selection-actions {
@@ -496,11 +496,11 @@ onUnmounted(() => {
   }
 
   &.primary {
-    background: $success-bg;
+    background: $success-color;
     color: $white;
 
     &:hover:not(:disabled) {
-      background: #16a34a;
+      background: darken($success-color, 8%);
       transform: translateY(-1px);
     }
   }
