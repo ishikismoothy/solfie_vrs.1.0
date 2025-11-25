@@ -494,7 +494,7 @@
 
       const calculateTransform = (pageIndex) => {
         const baseTransform = (pageIndex - currentPage.value) * pageWidth.value;
-        return isDraggingForPageShift.value
+        return (isDraggingForPageShift.value && !isEditMode.value)
           ? baseTransform + currentDragOffset.value
           : baseTransform;
       };
