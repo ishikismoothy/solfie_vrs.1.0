@@ -218,6 +218,9 @@
       }
 
       const handleItemTouchStart = (event, item) => {
+        if (isEditMode.value) {
+          return
+        }
         iconTouchTimer = setTimeout(() => {
           openIconSelector(event.touches[0], item)
         }, longPressDelay)
