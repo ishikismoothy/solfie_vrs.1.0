@@ -92,7 +92,7 @@ export default {
         async fetchThemes({ commit }, uid ) {
             // Set loading state
             commit('SET_LOADING', true);
-            
+
             // Clear any existing errors
             commit('SET_ERROR', null);
             // Clear any existing theme Data
@@ -107,7 +107,7 @@ export default {
                 throw new Error('User not authenticated');
             }
 
-            
+
 
             // Fetch themes
             const themes = await themeService.getThemes(userId);
@@ -229,7 +229,7 @@ export default {
                 const focusedThemeId = await themeService.getUserThemeId(userId);
                 commit('SET_FOCUS_THEME_ID', focusedThemeId);
                 console.log('[themeSpace.js/setFocusThemeId] Focused ThemeId:', state.focusedThemeId);
-            
+
             } catch (error) {
                 console.error('Error loading user theme data:', error);
                 commit('SET_ERROR', error.message);
@@ -253,21 +253,20 @@ export default {
             }
         },
 
-        async updateThemeOrder({ commit }, themes ) {
-            commit('SET_LOADING', true);
-            console.log('themeSpace.js/updateThemesOrder',themes)
-            try {
-              // Update the order in your backend
-              await themeService.updateThemeOrder(themes);
-              // Update the local state
+        async updateThemeOrder({ commit, rootState }, themes) {
+          commit('SET_LOADING', true);
+          try {
+              const userId = rootState.user.user.uid;
+              await themeService.updateThemeOrder(themes, userId);
               commit('SET_THEMES', themes);
-            } catch (error) {
+          } catch (error) {
               console.error('Error updating theme order:', error);
               throw error;
-            } finally{
-                commit('SET_LOADING', false);
-            }
+          } finally {
+              commit('SET_LOADING', false);
+          }
         },
+
         async updateSatisfaction({ commit, state }, value) {
             // Convert to number right away
             const numValue = Number(value);

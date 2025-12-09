@@ -1033,10 +1033,20 @@
     })
   }
 
-  function saveItemName() {
+  async function saveItemName() {
     isEditingItemName.value = false
     if (editedItemName.value !== currentItemName.value) {
-      store.dispatch('mindspace/setItemName', editedItemName.value)
+      const itemId = currentItemId.value
+      const newName = editedItemName.value
+
+      // Update in mindspace store
+      await store.dispatch('mindspace/setItemName', newName)
+
+      // Also update in user store to keep them in sync
+      await store.dispatch('user/updateItemName', { itemId, name: newName })
+
+      // Emit refresh event so other components update
+      emit('refresh-items')
     }
   }
 
@@ -1063,7 +1073,13 @@
 
   function openDeleteDialog() {
     if (!confirm('Are you sure you want to delete this item?')) return
-    store.dispatch('mindspace/deleteItem', currentItemId.value)
+
+    const deletedItemId = currentItemId.value
+
+    // Emit event to clean up slots BEFORE deleting
+    emitter.emit('itemDeleted', { itemId: deletedItemId })
+
+    store.dispatch('mindspace/deleteItem', deletedItemId)
     emit('close')
   }
 

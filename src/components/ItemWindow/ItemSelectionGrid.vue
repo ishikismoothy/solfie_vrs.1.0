@@ -1,4 +1,4 @@
-<!-- ItemSelectionGrid.vue - Enhanced with theme filtering and proper refresh -->
+<!-- ItemSelectionGrid.vue - Enhanced with theme filtering, proper refresh, and Create New Item option -->
 <template>
   <div
     v-if="isVisible"
@@ -43,19 +43,29 @@
           <p>Loading items...</p>
         </div>
 
-        <div v-else-if="availableItems.length === 0" class="empty-state">
-          <div class="empty-slot-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="8" x2="12" y2="16"></line>
-              <line x1="8" y1="12" x2="16" y2="12"></line>
-            </svg>
-          </div>
-          <h4>No Items Available</h4>
-          <p>Create some items in your current theme first, then come back to fill your slots.</p>
-        </div>
-
         <template v-else>
+          <!-- Create New Item Option - Always shown first -->
+          <div
+            class="icon-option create-new-option"
+            @click="handleCreateNewItem"
+            title="Create New Item"
+          >
+            <div class="icon-preview create-new-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </div>
+            <span class="icon-name">New Item</span>
+          </div>
+
+          <!-- Empty state message (if no items exist) -->
+          <div v-if="availableItems.length === 0" class="empty-state-inline">
+            <p>No items in this theme yet.</p>
+            <p class="empty-state-hint">Create a new item to get started!</p>
+          </div>
+
+          <!-- Existing Items -->
           <div
             v-for="item in availableItems"
             :key="item.id"
@@ -119,6 +129,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, defineProps, defineEmits, watch } from 'vue'
 import { useStore } from 'vuex'
+import emitter from '@/eventBus'
 
 const props = defineProps({
   isVisible: {
@@ -141,7 +152,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['close', 'select-item'])
+const emit = defineEmits(['close', 'select-item', 'create-new-item'])
 
 const store = useStore()
 
@@ -287,6 +298,15 @@ const confirmSelection = () => {
   closeSelector()
 }
 
+// Handle create new item click
+const handleCreateNewItem = () => {
+  emit('create-new-item', {
+    slotIndex: props.slotIndex,
+    slotType: props.slotType
+  })
+  // Don't close the selector - let the parent handle that after item creation
+}
+
 const closeSelector = () => {
   selectedItems.value = []
   emit('close')
@@ -338,15 +358,35 @@ const handleEscape = (event) => {
 
 onMounted(() => {
   document.addEventListener('keydown', handleEscape)
+
+  // Listen for new item creation
+  emitter.on('newItemCreatedForSelection', async ({ itemId }) => {
+    if (!props.isVisible) return
+
+    // Refresh items to include the new one
+    await refreshItems()
+
+    // Find the new item and add it to selection
+    const newItem = availableItems.value.find(item => item.id === itemId)
+    if (newItem) {
+      if (props.slotType === 'single') {
+        selectedItems.value = [newItem]
+      } else if (selectedItems.value.length < maxItems) {
+        selectedItems.value.push(newItem)
+      }
+    }
+  })
 })
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleEscape)
+  emitter.off('newItemCreatedForSelection')
 })
 </script>
 
 <style lang="scss">
 @import "../../assets/styles/colors";
+
 // Additional styles specific to item selection (using existing classes as base)
 .icon-selector-overlay {
   // Ensure item selection modal appears above other modals
@@ -358,7 +398,6 @@ onUnmounted(() => {
   background: $background-white;
   border-radius: 8px;
   margin-bottom: 16px;
-  // border: 1px solid $border-light;
 }
 
 .selection-count {
@@ -452,6 +491,39 @@ onUnmounted(() => {
     border-color: $success-color !important;
     transform: translateY(1px);
   }
+
+  // Create new item option styling
+  &.create-new-option {
+    background: linear-gradient(135deg, rgba($primary-color, 0.08) 0%, rgba($primary-sub-color, 0.12) 100%);
+    border: 2px dashed $primary-color;
+    order: -1; // Always show first
+
+    .create-new-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: $primary-color;
+
+      svg {
+        transition: transform 0.2s ease;
+      }
+    }
+
+    .icon-name {
+      color: $primary-color;
+      font-weight: 600;
+    }
+
+    &:hover {
+      background: linear-gradient(135deg, rgba($primary-color, 0.15) 0%, rgba($primary-sub-color, 0.2) 100%) !important;
+      border-color: $primary-color !important;
+      border-style: solid;
+
+      .create-new-icon svg {
+        transform: rotate(90deg);
+      }
+    }
+  }
 }
 
 .selection-indicator {
@@ -542,27 +614,31 @@ onUnmounted(() => {
   100% { transform: rotate(360deg); }
 }
 
-.empty-state {
+// Inline empty state (shown alongside the create new option)
+.empty-state-inline {
+  grid-column: span 2;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px 20px;
+  padding: 20px;
   text-align: center;
   color: $text-secondary;
-  grid-column: 1 / -1;
-
-  h4 {
-    margin: 16px 0 8px 0;
-    color: $text-color;
-    font-size: 18px;
-  }
+  background: rgba($gray-100, 0.5);
+  border-radius: 12px;
+  border: 1px dashed $border-light;
 
   p {
     margin: 0;
     font-size: 14px;
     line-height: 1.5;
-    max-width: 300px;
+
+    &.empty-state-hint {
+      font-size: 12px;
+      margin-top: 4px;
+      color: $primary-color;
+      font-weight: 500;
+    }
   }
 }
 </style>

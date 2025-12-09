@@ -60,14 +60,14 @@
 
           <!-- Multi-Item or Empty Slot Display -->
           <div v-else class="empty-slot-wrapper">
-            <div v-if="!hasAnyItems(mindslot) && !expanded && !isViewOnly" class="empty-slot-options">
-              <h4 class="empty-slot-title">スロットタイプの選択</h4>
+              <div v-if="!hasAnyItems(mindslot) && !mindslot.slotType && !expanded && !isViewOnly" class="empty-slot-options">
+                <h4 class="empty-slot-title">スロットタイプの選択</h4>
 
-              <div class="slot-type-options">
-                <button
-                  class="slot-type-option single-item-option"
-                  @click="openItemSelector(index, 'single')"
-                >
+                <div class="slot-type-options">
+                  <button
+                    class="slot-type-option single-item-option"
+                    @click="openItemSelector(index, 'single')"
+                  >
                   <div class="option-content">
                     <div class="option-icon">
                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -101,10 +101,22 @@
                 </button>
               </div>
             </div>
-            <!-- Delete this part <div v-else class="empty-slot-options"> no data</div> -->
+
+            <!-- Show empty single-slot state -->
+            <div v-else-if="mindslot.slotType === 'single' && !mindslot.item && !isViewOnly"
+                class="empty-single-slot"
+                @click="openItemSelector(index, 'single')">
+              <div class="empty-slot-placeholder">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.4;">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                <span>Tap to add item</span>
+              </div>
+            </div>
 
             <IconSlotGrid
-              v-if="hasAnyItems(mindslot)"
+              v-if="hasAnyItems(mindslot) || mindslot.slotType === 'multi'"
               :initialIcons="mindslot.slotIcons || [null, null, null]"
               :iconItems="mindslot.iconItems || [null, null, null]"
               :customIcons="mindslot.customIcons || [null, null, null]"
@@ -113,7 +125,7 @@
               :expanded="false"
               @icons-changed="(icons) => !isViewOnly && handleSlotIconsChanged({ index, icons })"
               @icon-clicked="(iconIndex) => handleIconClickToCover(index, iconIndex)"
-              @icon-right-click="(iconIndex) => handleDirectIconClick(index, iconIndex)"
+              @icon-right-click="(iconIndex) => handleIconRightClick(index, iconIndex)"
               @custom-icon-changed="(customIcons) => !isViewOnly && handleCustomIconsChanged({ index, customIcons })"
               @empty-slot-clicked="(iconIndex) => !isViewOnly && openItemSelector(index, 'single', iconIndex)"
             />
@@ -205,6 +217,7 @@
       :screenPosition="'left'"
       @close="closeItemSelector"
       @select-item="handleItemSelection"
+      @create-new-item="handleCreateNewItem"
     />
   </div>
 
@@ -218,7 +231,7 @@
 </template>
 
 <script setup>
-  import { ref, computed, onMounted, watch, nextTick } from 'vue'
+  import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
   import { useStore } from 'vuex'
   import { mindspaceService } from '@/firebase/firebaseMindSpace'
   import emitter from '@/eventBus'
@@ -263,6 +276,7 @@
     name: '',
     mindslot: []
   })
+  const expanded = ref(false)
   const editingSlotIndex = ref(null)
   const editingName = ref('')
   const showSlotSelectionModal = ref(false)
@@ -405,21 +419,23 @@
     }
   }
 
-  // Handle direct icon click - open item selector to replace item
-  const handleDirectIconClick = (slotIndex, iconIndex) => {
+  // Handle right-click on icon slots (both filled and empty)
+  const handleIconRightClick = (slotIndex, iconIndex) => {
+    if (isViewOnly.value) return
+
     const slot = mindspace.value.mindslot[slotIndex]
     const iconItems = slot.iconItems || [null, null, null]
     const itemId = iconItems[iconIndex]
 
-    if (!itemId) {
-      console.log('❌ NO ITEM ID FOUND!')
-      return
+    if (itemId) {
+      // Has item: open item selector to REPLACE it
+      console.log('✅ Icon right-clicked, opening item selector to replace item:', itemId)
+      openItemSelector(slotIndex, 'single', iconIndex)
+    } else {
+      // Empty position: open item selector to ADD an item
+      console.log('✅ Empty slot right-clicked, opening item selector to add item')
+      openItemSelector(slotIndex, 'single', iconIndex)
     }
-
-    console.log('✅ Icon right-clicked, opening item selector to replace item:', itemId)
-
-    // Open item selector to replace the item at this position
-    openItemSelector(slotIndex, 'single', iconIndex)
   }
 
   // Handle icon click to cover image (for left-click/tap)
@@ -551,17 +567,33 @@
     }
   }
 
+  // Handle create new item from ItemSelectionGrid
+  const handleCreateNewItem = ({ slotIndex, slotType }) => {
+    if (isViewOnly.value) return
+
+    // Emit to mindSpace to create the item, passing slot info for callback
+    emitter.emit('createNewItemForSlot', {
+      slotIndex,
+      slotType,
+      iconIndex: itemSelectorIconIndex.value
+    })
+  }
+
+
+
   // Slot management functions
-  const addSlot = async (title, itemId, slotType = 'single') => {
+  const addSlot = async (title, itemId = null, slotType = null) => {
     if (isViewOnly.value) return
     if (mindspace.value.mindslot.length >= 5) return
 
     const newSlot = {
       name: title || 'New Slot',
+      // Only set slotType if we're adding with an item, otherwise leave undefined for selector
+      ...(itemId && slotType ? { slotType: slotType } : {}),
       item: slotType === 'single' ? (itemId || null) : null,
-      iconItems: slotType === 'multi' ?
-        (itemId ? [itemId, null, null] : [null, null, null]) :
-        [null, null, null],
+      iconItems: slotType === 'multi'
+        ? (itemId ? [itemId, null, null] : [null, null, null])
+        : [null, null, null],
       slotIcons: [null, null, null],
       customIcons: [null, null, null]
     }
@@ -816,14 +848,59 @@
     const slot = mindspace.value.mindslot[slotIndex]
 
     if (iconIndex !== undefined) {
+      // Multi-slot: null out the specific position, keep as multi-slot
       const iconItems = [...slot.iconItems]
       iconItems[iconIndex] = null
-      mindspace.value.mindslot[slotIndex] = { ...slot, iconItems }
+      mindspace.value.mindslot[slotIndex] = {
+        ...slot,
+        item: null,  // Ensure item is null for multi-slot
+        iconItems,
+        slotType: 'multi'  // Preserve type
+      }
     } else {
-      mindspace.value.mindslot[slotIndex] = { ...slot, item: null }
+      // Single-slot: null out item, keep as single-slot
+      mindspace.value.mindslot[slotIndex] = {
+        ...slot,
+        item: null,
+        iconItems: [null, null, null],  // Reset to empty
+        slotType: 'single'  // Preserve type
+      }
     }
 
     updateMindspace()
+  }
+
+  // Handle item deletion - clean up any slot references
+  const handleItemDeleted = async ({ itemId }) => {
+    if (!itemId) return
+
+    let hasChanges = false
+
+    const updatedSlots = mindspace.value.mindslot.map(slot => {
+      const updatedSlot = { ...slot }
+
+      // Check single-item slot
+      if (slot.item === itemId) {
+        updatedSlot.item = null
+        // Preserve slot as single-item type by keeping iconItems empty
+        updatedSlot.iconItems = [null, null, null]
+        hasChanges = true
+      }
+
+      // Check multi-item slots
+      if (slot.iconItems && slot.iconItems.includes(itemId)) {
+        updatedSlot.iconItems = slot.iconItems.map(id => id === itemId ? null : id)
+        hasChanges = true
+      }
+
+      return updatedSlot
+    })
+
+    if (hasChanges) {
+      mindspace.value.mindslot = updatedSlots
+      await updateMindspace()
+      console.log('✅ Cleaned up slot references for deleted item:', itemId)
+    }
   }
 
   // Show toast
@@ -874,6 +951,7 @@
   onMounted(async () => {
     emitter.on('showMindslotModal', handleShowMindslotModal)
     emitter.on('removeMindslot', handleRemoveMindslot)
+    emitter.on('itemDeleted', handleItemDeleted)
     console.log('Component mounted with:', debugInfo.value)
     fetchMindspaceSlots()
 
@@ -882,6 +960,15 @@
     if (currentUser.value && Object.keys(store.getters['user/getItems']).length === 0) {
       await store.dispatch('user/fetchItems', currentUser.value)
     }
+
+        emitter.on('showMindslotModal', handleShowMindslotModal)
+    emitter.on('removeMindslot', handleRemoveMindslot)
+  })
+
+  onUnmounted(() => {
+    emitter.off('showMindslotModal', handleShowMindslotModal)
+    emitter.off('removeMindslot', handleRemoveMindslot)
+    emitter.off('itemDeleted', handleItemDeleted)
   })
 
 </script>

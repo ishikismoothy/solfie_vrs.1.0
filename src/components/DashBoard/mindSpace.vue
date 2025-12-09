@@ -153,6 +153,7 @@
   import TruncateText from '../TruncateText/truncateSpanItemText.vue';
   import IconSelector from '@/./components/ItemWindow/IconSelector.vue';
   import { useDragAndDrop } from '@/./components/composables/useDragAndDrop';
+  import emitter from '@/eventBus'
 
   export default defineComponent({
     name: 'iPhoneStyleMaestroUI',
@@ -341,10 +342,13 @@
               });
             }
 
+            return itemId
+
           } catch (error) {
             console.error('Error adding new item:', error);
           }
         }
+        return null;
       };
 
       const handleItemDelete = async (item) => {
@@ -649,6 +653,19 @@
           console.error('[checkAndFixDataConsistency] Error checking consistency:', error);
         }
       };
+
+      // Listen for slot item creation requests
+      emitter.on('createNewItemForSlot', async () => {
+        const pageIndex = currentPage.value || 0
+
+        // Create the item
+        const itemId = await addNewItemImpl('mindSpace', pageIndex)
+
+        // Emit to ItemSelectionGrid so it can add to selection
+        if (itemId) {
+          emitter.emit('newItemCreatedForSelection', { itemId })
+        }
+      })
 
       setInterval(checkAndFixDataConsistency, 60000);
 

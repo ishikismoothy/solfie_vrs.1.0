@@ -20,9 +20,9 @@
       <!-- Search and Create Section -->
       <div class="search-section">
         <div class="search-container">
-          <input 
-            type="text" 
-            placeholder="Search" 
+          <input
+            type="text"
+            placeholder="Search"
             v-model="searchQuery"
             @input="handleSearch"
             @focus="handleSearchFocus"
@@ -62,23 +62,27 @@
       </div>
 
       <!-- Theme Grid -->
-      <draggable
-        v-else
-        v-model="sortableThemes"
-        class="theme-grid"
-        :animation="500"
-        ghost-class="theme-card-ghost"
-        drag-class="theme-card-drag"
-        group="themes"
-        @start="themeDragStart"
-      >
-          <div 
+        <draggable
+          v-else
+          v-model="sortableThemes"
+          class="theme-grid"
+          :animation="500"
+          :delay="150"
+          :delayOnTouchOnly="true"
+          :touchStartThreshold="5"
+          ghost-class="theme-card-ghost"
+          drag-class="theme-card-drag"
+          group="themes"
+          @start="themeDragStart"
+          @end="themeDragEnd"
+        >
+          <div
             v-for="theme in sortableThemes"
-            :key="theme.id" 
+            :key="theme.id"
             class="theme-card"
-            :class="{ 
+            :class="{
               'is-dragging': isDragging,
-              'is-disabled': isLoading 
+              'is-disabled': isLoading
             }"
           >
             <div class="theme-content" @click="!onEdit && !isLoading && selectTheme(theme.id)">
@@ -93,19 +97,19 @@
                   <p class="updated-time">{{ formatDate(theme.updatedAt) }}</p>
                 </div>
               </div>
-              
+
               <div class="action-buttons">
-                <button 
+                <button
                   class="icon-button star-button"
-                  :class="{ 
+                  :class="{
                     'is-focused': focusedThemeId === theme.id,
-                    'is-disabled': isDragging || isLoading 
+                    'is-disabled': isDragging || isLoading
                   }"
                   @click.stop="!isDragging && !isLoading && changeFocusTheme(theme.id)"
                   :disabled="isDragging || isLoading"
                 >
-                  <svg 
-                    viewBox="0 0 24 24" 
+                  <svg
+                    viewBox="0 0 24 24"
                     class="star-default"
                     alt="star"
                     v-show="focusedThemeId !== theme.id"
@@ -113,8 +117,8 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
                   </svg>
 
-                  <svg 
-                    viewBox="0 0 24 24" 
+                  <svg
+                    viewBox="0 0 24 24"
                     class="star-active"
                     alt="star-active"
                     v-show="focusedThemeId === theme.id"
@@ -122,10 +126,10 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
                   </svg>
                 </button>
-                
+
                 <div class="dropdown-container">
-                  <button 
-                    class="icon-button more-button" 
+                  <button
+                    class="icon-button more-button"
                     @click.stop="!isDragging && !isLoading && toggleDropdown(theme.id)"
                     :disabled="isDragging || isLoading"
                     :class="{ 'is-disabled': isDragging || isLoading }"
@@ -134,14 +138,14 @@
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
                     </svg>
                   </button>
-                  <div 
-                    v-if="openDropdownId === theme.id && !isDragging && !isLoading" 
+                  <div
+                    v-if="openDropdownId === theme.id && !isDragging && !isLoading"
                     class="dropdown-menu"
                     @click.stop
                     @click.self="toggleDropdown(theme.id)"
                   >
-                    <button 
-                      @click="showRenameThemeModal(theme)" 
+                    <button
+                      @click="showRenameThemeModal(theme)"
                       class="dropdown-item"
                     >
                       <svg class="dropdown-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -149,8 +153,8 @@
                       </svg>
                       Rename
                     </button>
-                    <button 
-                      @click="deleteTheme(theme.id)" 
+                    <button
+                      @click="deleteTheme(theme.id)"
                       class="dropdown-item delete"
                     >
                       <svg class="dropdown-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -158,8 +162,8 @@
                       </svg>
                       Delete
                     </button>
-                    <button 
-                      @click="openSettings(theme.id)" 
+                    <button
+                      @click="openSettings(theme.id)"
                       class="dropdown-item"
                     >
                       <svg class="dropdown-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -171,7 +175,7 @@
                   </div>
                 </div>
               </div>
-            </div>        
+            </div>
           </div>
       </draggable>
     </div>
@@ -179,7 +183,7 @@
 </template>
 
 <script>
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router'; // Add this import at the top
 import { VueDraggableNext } from 'vue-draggable-next';
@@ -210,7 +214,6 @@ export default {
     const userId = computed(() => store.state.user.user.uid);
     const themes = computed(() => store.getters['themeSpace/getThemes']);
     const isLoading = computed(() => store.getters['themeSpace/isLoading']);
-    const bodyElement = document.querySelector('body');
     const error = computed(() => store.getters['themeSpace/getError']);
     const onEdit = ref(false);
     const selectedThemeSpace = ref(null);
@@ -255,7 +258,7 @@ export default {
     const addTheme = async ({ newTheme, tags }) => {
       console.log('Creating new theme:', { newTheme });
       console.log('Tags:', { tags });
-      
+
       const themeData = {
         name: newTheme,  // This will be the document name
         hashtags: tags
@@ -263,9 +266,9 @@ export default {
       };
 
       try {
-        await store.dispatch('themeSpace/addTheme', { 
+        await store.dispatch('themeSpace/addTheme', {
           themeData,
-          userId: userId.value 
+          userId: userId.value
         });
       } catch (error) {
         console.error('Error in addTheme:', error);
@@ -304,14 +307,14 @@ export default {
       }
 
       try {
-        await store.dispatch('themeSpace/deleteTheme', { userId: userId.value, 
+        await store.dispatch('themeSpace/deleteTheme', { userId: userId.value,
           themeId: themeId });
         console.log('Delete theme:', themeId)
         closeDropdown()
       } catch (error) {
         console.error('Error deleting theme:', error);
       }
-      
+
     }
 
     const clearThemes = () => {
@@ -332,7 +335,7 @@ export default {
       setTimeout(() => {
         const viewport = document.querySelector('meta[name="viewport"]');
         viewport.setAttribute('content', 'width=device-width, initial-scale=1');
-        
+
         // Double-check after a brief delay to ensure the scale is reset
         setTimeout(() => {
           window.scrollTo(0, 0);
@@ -352,11 +355,11 @@ export default {
         console.error('Error during search:', error);
       }
     }, 300);
-    
+
 
     const formatDate = (date) => {
       try {
-        const options = { 
+        const options = {
           year: 'numeric',
           month: 'short',
           day: 'numeric'
@@ -387,7 +390,7 @@ export default {
     };
 
     const selectTheme = async (id) => {
-      
+
       try {
         const selectedThemeData = {uid: userId.value, themeId: id}
         await store.dispatch('mindspace/setSelectedThemeId', selectedThemeData);
@@ -408,7 +411,7 @@ export default {
       try {
         console.log("[ThemeSpaceView.vue/changeFocusTheme]", id);
         await store.dispatch('themeSpace/changeFocusThemeId', {
-          userId: userId.value, 
+          userId: userId.value,
           themeId: id
         });
         onEdit.value = false;
@@ -421,36 +424,37 @@ export default {
 
     const isDragging = ref(false);
 
-    // Add sortableThemes computed property that works with your existing store
     const sortableThemes = computed({
       get: () => store.state.themeSpace.themes || [],
       set: async (newOrder) => {
         console.log('Set new themes order START');
-        try { 
+        try {
           console.log('Set new themes order:', newOrder);
-          store.dispatch('themeSpace/updateThemeOrder', newOrder);
+          await store.dispatch('themeSpace/updateThemeOrder', newOrder);
         } catch (error) {
           console.error('Error updating themes order:', error);
-        }finally {
+        } finally {
           console.log('Set new themes order END');
+          // Safety reset - ensures isDragging is always cleared
           isDragging.value = false;
-          console.log('isDragging',isDragging.value);
+          console.log('isDragging', isDragging.value);
         }
       }
     });
 
-    
+
     // Add drag handlers
     const themeDragStart = () => {
       if (!isLoading.value) {
         isDragging.value = true;
       }
     };
-    
+
     const themeDragEnd = async () => {
-      if (!isLoading.value) {
+      // Commented out to prevent issues with isDragging being reset too early after page load
+      // if (!isLoading.value) {
         isDragging.value = false;
-      }
+      // }
     };
 
     // Watchers
@@ -468,6 +472,7 @@ export default {
 
     // Lifecycle hooks
     onMounted(async () => {
+      const bodyElement = document.querySelector('body');
       enableBodyScroll(bodyElement);
       try {
         await store.dispatch('user/setLastViewLocationHistory', {lastLocation:"themespace"});
@@ -476,6 +481,10 @@ export default {
       } catch (error) {
         console.error('Error in onMounted:', error);
       }
+    });
+
+    onUnmounted(() => {
+      window.removeEventListener('click', closeDropdown);
     });
 
     return {
@@ -490,17 +499,17 @@ export default {
       onEdit,
       formatDate,
 
-      selectTheme, 
+      selectTheme,
       changeFocusTheme,
       fetchThemes,
       addTheme,
       deleteTheme,
       clearThemes,
-      
+
       handleSearchFocus,
       handleSearchBlur,
       handleSearch,
-      
+
 
       //DropDown
       openDropdownId,
@@ -528,10 +537,10 @@ export default {
 @mixin responsive($breakpoint) {
   @if $breakpoint == iPhoneSE {
     @media (min-width: 200px) { @content; }
-  } 
+  }
   @if $breakpoint == iPhonePro {
     @media (min-width: 390px) { @content; }
-  } 
+  }
   @if $breakpoint == tablet {
     @media (min-width: 768px) { @content; }
   } @else if $breakpoint == desktop {
