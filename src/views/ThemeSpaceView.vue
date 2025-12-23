@@ -81,7 +81,6 @@
             :key="theme.id"
             class="theme-card"
             :class="{
-              'is-dragging': isDragging,
               'is-disabled': isLoading
             }"
           >

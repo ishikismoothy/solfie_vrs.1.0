@@ -9,7 +9,8 @@
 }
 
 /* Item being dragged (original) - HIDE IT */
-.is-dragging {
+.mind-Item.is-dragging,
+.draggable-item.is-dragging:not(.theme-card) {
   opacity: 0 !important;
   visibility: hidden !important;
   pointer-events: none !important;
@@ -44,7 +45,7 @@
   background: rgba(66, 153, 225, 0.15) !important;
   border: 3px dashed rgba(66, 153, 225, 0.6) !important;
   border-radius: 8px !important;
-  opacity: 0.4 !important;
+  // opacity: 0.4 !important;
   transition: none !important; /* Remove transition for more responsive feel */
 
   /* Ensure it takes up space properly */
