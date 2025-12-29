@@ -3,6 +3,102 @@ import { widgetService } from '@/firebase/firebaseWidget';
 import { recordService } from '@/firebase/firebaseRecords';
 import { getAvailableWidgets } from '@/config/widgetConfig';
 
+/**
+ * Calculate date info for a set of records
+ * @param {Array} records - Array of records with analysisDate field
+ * @param {string} periodType - '今日', '6ヶ月', or '1年'
+ * @returns {Object} dateInfo object
+ */
+const calculateDateInfo = (records, periodType) => {
+  if (!records || records.length === 0) {
+    return null;
+  }
+
+  // Get analysisDate from records (format: "YYYY-MM-DD")
+  const getAnalysisDate = (record) => {
+    if (record.analysisDate) {
+      return record.analysisDate;
+    }
+    // Fallback to createdAt if analysisDate is not available
+    if (record.createdAt) {
+      const date = record.createdAt.toDate ? record.createdAt.toDate() : new Date(record.createdAt);
+      return date.toISOString().split('T')[0];
+    }
+    return null;
+  };
+
+  // Format date from "YYYY-MM-DD" to "YYYY/MM/DD"
+  const formatDate = (dateStr) => {
+    if (!dateStr) return null;
+    return dateStr.replace(/-/g, '/');
+  };
+
+  // Calculate coverage text based on actual date range
+  const calculateCoverageText = (oldestDateStr, newestDateStr, recordCount) => {
+    if (recordCount === 1) {
+      return '1件';
+    }
+
+    if (!oldestDateStr || !newestDateStr) {
+      return `${recordCount}件`;
+    }
+
+    const oldest = new Date(oldestDateStr);
+    const newest = new Date(newestDateStr);
+    const diffTime = Math.abs(newest - oldest);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 7) {
+      return `${diffDays}日分`;
+    } else if (diffDays < 30) {
+      const weeks = Math.round(diffDays / 7);
+      return `約${weeks}週間分`;
+    } else if (diffDays < 365) {
+      const months = Math.round(diffDays / 30);
+      return `約${months}ヶ月分`;
+    } else {
+      const years = Math.round(diffDays / 365 * 10) / 10;
+      return `約${years}年分`;
+    }
+  };
+
+  // Get dates from records
+  const dates = records
+    .map(record => getAnalysisDate(record))
+    .filter(date => date !== null)
+    .sort((a, b) => new Date(b) - new Date(a)); // Sort descending (newest first)
+
+  if (dates.length === 0) {
+    return null;
+  }
+
+  const newestDate = dates[0];
+  const oldestDate = dates[dates.length - 1];
+  const recordCount = records.length;
+
+  // Determine display type
+  const isSingleRecord = recordCount === 1 || periodType === '今日';
+  const isSameDate = newestDate === oldestDate;
+
+  if (isSingleRecord || isSameDate) {
+    return {
+      type: 'single',
+      newestDate: formatDate(newestDate),
+      oldestDate: formatDate(oldestDate),
+      recordCount,
+      coverageText: recordCount > 1 ? `${recordCount}件` : null
+    };
+  }
+
+  return {
+    type: 'range',
+    newestDate: formatDate(newestDate),
+    oldestDate: formatDate(oldestDate),
+    recordCount,
+    coverageText: calculateCoverageText(oldestDate, newestDate, recordCount)
+  };
+};
+
 export const analysisService = {
   async getAnalysisData(userId, currentThemeId, usersWidgets) {
     try {
@@ -21,7 +117,7 @@ export const analysisService = {
       }
 
       // Fill in empty results for unavailable widgets
-      const allKeys = ['data_A', 'data_B', 'data_C'];
+      const allKeys = ['data_A', 'data_B', 'data_C', 'data_D'];
       allKeys.forEach(key => {
         if (!results[key]) {
           results[key] = { '今日': { percentage: 0, items: {} } };
@@ -53,10 +149,10 @@ export const analysisService = {
       }
 
       // Fill in empty results for unavailable advice widgets
-      const allKeys = ['advice_A', 'advice_B', 'advice_C'];
+      const allKeys = ['advice_A', 'advice_B', 'advice_C', 'advice_D'];
       allKeys.forEach(key => {
         if (!results[key]) {
-          results[key] = [];
+          results[key] = { items: [], dateInfo: null };
         }
       });
 
@@ -77,7 +173,7 @@ export const analysisService = {
       ]);
 
       if (records.length === 0) {
-        return { '今日': { percentage: 0, items: {} } };
+        return { '今日': { percentage: 0, items: {}, dateInfo: null } };
       }
 
       // Group records by time periods
@@ -87,7 +183,12 @@ export const analysisService = {
       const result = {};
       for (const [period, periodRecords] of Object.entries(timeGroups)) {
         if (periodRecords.length > 0) {
-          result[period] = this.calculateAverages(periodRecords, widget.entries);
+          const averages = this.calculateAverages(periodRecords, widget.entries);
+          const dateInfo = calculateDateInfo(periodRecords, period);
+          result[period] = {
+            ...averages,
+            dateInfo
+          };
         }
       }
 
@@ -95,7 +196,7 @@ export const analysisService = {
       return result;
     } catch (error) {
       console.error('❌ Error processing widget analysis:', error);
-      return { '今日': { percentage: 0, items: {} } };
+      return { '今日': { percentage: 0, items: {}, dateInfo: null } };
     }
   },
 
@@ -108,15 +209,18 @@ export const analysisService = {
       ]);
 
       if (!records || records.length === 0 || !widget.entries) {
-        return [];
+        return { items: [], dateInfo: null };
       }
 
       // Get the most recent record for advice
       const latestRecord = records[0];
 
       if (!latestRecord.values || !Array.isArray(latestRecord.values)) {
-        return [];
+        return { items: [], dateInfo: null };
       }
+
+      // Calculate dateInfo for the latest record
+      const dateInfo = calculateDateInfo([latestRecord], 'アドバイス');
 
       // Process the advice data from the object format
       const adviceData = [];
@@ -158,11 +262,11 @@ export const analysisService = {
         }
       });
 
-      console.log('✅ Advice data processed:', adviceData);
-      return adviceData;
+      console.log('✅ Advice data processed:', { items: adviceData, dateInfo });
+      return { items: adviceData, dateInfo };
     } catch (error) {
       console.error('❌ Error processing advice data:', error);
-      return [];
+      return { items: [], dateInfo: null };
     }
   },
 
@@ -171,18 +275,20 @@ export const analysisService = {
     const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate());
     const oneYearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
 
+    const getRecordDate = (record) => {
+      return record.createdAt?.toDate ?
+        record.createdAt.toDate() :
+        new Date(record.createdAt);
+    };
+
     return {
       '今日': records.slice(0, 1), // Most recent
       '6ヶ月': records.filter(record => {
-        const recordDate = record.createdAt?.toDate ?
-          record.createdAt.toDate() :
-          new Date(record.createdAt);
+        const recordDate = getRecordDate(record);
         return recordDate >= sixMonthsAgo;
       }),
       '1年': records.filter(record => {
-        const recordDate = record.createdAt?.toDate ?
-          record.createdAt.toDate() :
-          new Date(record.createdAt);
+        const recordDate = getRecordDate(record);
         return recordDate >= oneYearAgo;
       })
     };
@@ -260,7 +366,7 @@ export const analysisService = {
       const allKeys = ['text_A', 'text_B', 'text_C'];
       allKeys.forEach(key => {
         if (!results[key]) {
-          results[key] = null;
+          results[key] = { data: null, dateInfo: null };
         }
       });
 
@@ -281,15 +387,18 @@ export const analysisService = {
       ]);
 
       if (!records || records.length === 0) {
-        return null;
+        return { data: null, dateInfo: null };
       }
 
       // Get the most recent record
       const latestRecord = records[0];
 
+      // Calculate dateInfo for the latest record
+      const dateInfo = calculateDateInfo([latestRecord], 'テキスト');
+
       // Check if this record has widget data
       if (!latestRecord || !latestRecord.values || !Array.isArray(latestRecord.values) || latestRecord.values.length === 0) {
-        return null;
+        return { data: null, dateInfo };
       }
 
       // Process the text data - expecting object format: { contents: "...", description: "..." }
@@ -304,27 +413,27 @@ export const analysisService = {
           description: valueObject.description || valueObject.author || valueObject.name || ''
         };
 
-        console.log('✅ Text data processed:', textData);
-        return textData;
+        console.log('✅ Text data processed:', { data: textData, dateInfo });
+        return { data: textData, dateInfo };
       } else if (typeof valueObject === 'string') {
         // Handle string format (backwards compatibility)
         return {
-          content: valueObject,
-          description: ''
+          data: { content: valueObject, description: '' },
+          dateInfo
         };
       } else if (typeof valueObject === 'number') {
         // Handle numeric values
         return {
-          content: valueObject.toString(),
-          description: ''
+          data: { content: valueObject.toString(), description: '' },
+          dateInfo
         };
       }
 
       console.warn('⚠️ Unexpected text data format:', typeof valueObject, valueObject);
-      return null;
+      return { data: null, dateInfo };
     } catch (error) {
       console.error('❌ Error processing text data:', error);
-      return null;
+      return { data: null, dateInfo: null };
     }
   },
 };

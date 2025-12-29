@@ -11,16 +11,19 @@ export default {
             tab_A: '今日',
             tab_B: '今日',
             tab_C: '今日',
+            tab_D: '今日',
         },
         analysisData:{
             data_A: {}, // DecisionMakingPower
             data_B: {}, // bodyEmotionMindSpirit
             data_C: {}, // 活動環境表現
-            advice_A: [], // Advice data for DecisionMakingPower
-            advice_B: [], // Advice data for bodyEmotionMindSpirit
-            advice_C: [], // Advice data for 活動環境表現
-            text_A: null, // Quote data - single object with content and description,
-            text_B: null,
+            data_D: {}, // Bidirectional data
+            advice_A: { items: [], dateInfo: null }, // Advice data for DecisionMakingPower
+            advice_B: { items: [], dateInfo: null }, // Advice data for bodyEmotionMindSpirit
+            advice_C: { items: [], dateInfo: null }, // Advice data for 活動環境表現
+            advice_D: { items: [], dateInfo: null }, // Advice data for Bidirectional
+            text_A: { data: null, dateInfo: null }, // Text data with dateInfo
+            text_B: { data: null, dateInfo: null }, // Text data with dateInfo
         },
         isLoading: false,
         // Store current theme info
@@ -41,6 +44,9 @@ export default {
       SET_SELECTED_TAB_C(state, data) {
         state.selectedTab.tab_C = data;
       },
+      SET_SELECTED_TAB_D(state, data) {
+        state.selectedTab.tab_D = data;
+      },
       SET_DATA_A(state, data) {
         state.analysisData.data_A = data;
       },
@@ -50,6 +56,9 @@ export default {
       SET_DATA_C(state, data) {
         state.analysisData.data_C = data;
       },
+      SET_DATA_D(state, data) {
+        state.analysisData.data_D = data;
+      },
       SET_ADVICE_A(state, data) {
         state.analysisData.advice_A = data;
       },
@@ -58,6 +67,9 @@ export default {
       },
       SET_ADVICE_C(state, data) {
         state.analysisData.advice_C = data;
+      },
+      SET_ADVICE_D(state, data) {
+        state.analysisData.advice_D = data;
       },
       // Add this new mutation for setting quote data
       SET_TEXT_A(state, data) {
@@ -89,6 +101,9 @@ export default {
         }
         if (key === 'activityEnvironmentExpression') {
           commit('SET_SELECTED_TAB_C', tab);
+        }
+        if (key === 'bidirectionalData') {
+          commit('SET_SELECTED_TAB_D', tab);
         }
       },
 
@@ -147,11 +162,13 @@ export default {
           commit('SET_DATA_A', analysisData.data_A || {});
           commit('SET_DATA_B', analysisData.data_B || {});
           commit('SET_DATA_C', analysisData.data_C || {});
+          commit('SET_DATA_D', analysisData.data_D || {});
 
           // Commit advice data
           commit('SET_ADVICE_A', adviceData.advice_A || []);
           commit('SET_ADVICE_B', adviceData.advice_B || []);
           commit('SET_ADVICE_C', adviceData.advice_C || []);
+          commit('SET_ADVICE_D', adviceData.advice_D || []);
 
           // Commit text data
           commit('SET_TEXT_A', textData.text_A || null);
@@ -288,28 +305,54 @@ export default {
     },
     getters: {
       getDataA: (state) => {
-        return state.analysisData.data_A[state.selectedTab.tab_A] || { percentage: 0, items: {} };
+        return state.analysisData.data_A[state.selectedTab.tab_A] || { percentage: 0, items: {}, dateInfo: null };
       },
       getDataB: (state) => {
-        return state.analysisData.data_B[state.selectedTab.tab_B] || { percentage: 0, items: {} };
+        return state.analysisData.data_B[state.selectedTab.tab_B] || { percentage: 0, items: {}, dateInfo: null };
       },
       getDataC: (state) => {
-        return state.analysisData.data_C[state.selectedTab.tab_C] || { percentage: 0, items: {} };
+        return state.analysisData.data_C[state.selectedTab.tab_C] || { percentage: 0, items: {}, dateInfo: null };
+      },
+      getDataD: (state) => {
+        return state.analysisData.data_D[state.selectedTab.tab_D] || { percentage: 0, items: {}, dateInfo: null };
       },
       getAdviceA: (state) => {
-        return state.analysisData.advice_A || [];
+        return state.analysisData.advice_A?.items || [];
       },
       getAdviceB: (state) => {
-        return state.analysisData.advice_B || [];
+        return state.analysisData.advice_B?.items || [];
       },
       getAdviceC: (state) => {
-        return state.analysisData.advice_C || [];
+        return state.analysisData.advice_C?.items || [];
+      },
+      getAdviceD: (state) => {
+        return state.analysisData.advice_D?.items || [];
+      },
+      // New getters for advice date info
+      getAdviceDateInfoA: (state) => {
+        return state.analysisData.advice_A?.dateInfo || null;
+      },
+      getAdviceDateInfoB: (state) => {
+        return state.analysisData.advice_B?.dateInfo || null;
+      },
+      getAdviceDateInfoC: (state) => {
+        return state.analysisData.advice_C?.dateInfo || null;
+      },
+      getAdviceDateInfoD: (state) => {
+        return state.analysisData.advice_D?.dateInfo || null;
       },
       getTextDataA: (state) => {
-        return state.analysisData.text_A || null
+        return state.analysisData.text_A?.data || null;
       },
       getTextDataB: (state) => {
-        return state.analysisData.text_B || null
+        return state.analysisData.text_B?.data || null;
+      },
+      // New getters for text date info
+      getTextDateInfoA: (state) => {
+        return state.analysisData.text_A?.dateInfo || null;
+      },
+      getTextDateInfoB: (state) => {
+        return state.analysisData.text_B?.dateInfo || null;
       },
       isLoading: (state) => state.isLoading,
 

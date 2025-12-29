@@ -9,6 +9,9 @@
     <!-- Quote view -->
     <section v-if="!isDataLoading && textData" class="text-content-section">
       <h4 v-if="widgetData" class="text-widget-title">{{ widgetData.name }}</h4>
+      <p v-if="dateDisplayText" class="date-caption">
+        {{ dateDisplayText }}
+      </p>
       
       <div v-if="textData.description" class="text-container">
         <blockquote class="text-text">
@@ -45,6 +48,11 @@ export default defineComponent({
       type: String,
       default: 'analysisData.text_B'  // Fixed: Changed default from text_A to text_B
     },
+    // Getter name for text date info
+    textDateInfoGetterName: {
+      type: String,
+      default: 'getTextDateInfoB'
+    },
     // State path to loading status
     loadingGetterName: {
       type: String,
@@ -73,12 +81,51 @@ export default defineComponent({
         }
       }
       
+      // Handle new structure: { data: {...}, dateInfo: {...} }
+      if (data && typeof data === 'object' && data.data !== undefined) {
+        return data.data;
+      }
+      
       // If data is an array, get the first item
       if (Array.isArray(data) && data.length > 0) {
         return data[0];
       }
       
       return data;
+    });
+
+    // Get text date info from store
+    const textDateInfo = computed(() => {
+      return store.getters[`${props.storeModule}/${props.textDateInfoGetterName}`] || null;
+    });
+
+    // Format date display string based on dateInfo
+    const dateDisplayText = computed(() => {
+      const dateInfo = textDateInfo.value;
+      
+      if (!dateInfo) {
+        return null;
+      }
+
+      // Single date display for text widgets
+      if (dateInfo.type === 'single') {
+        let text = `更新日: ${dateInfo.newestDate}`;
+        if (dateInfo.coverageText) {
+          text += ` (${dateInfo.coverageText})`;
+        }
+        return text;
+      }
+
+      // Date range display (unlikely for text widgets, but included for consistency)
+      if (dateInfo.type === 'range') {
+        let text = `期間: ${dateInfo.oldestDate} - ${dateInfo.newestDate}`;
+        if (dateInfo.coverageText) {
+          text += ` (${dateInfo.coverageText})`;
+        }
+        return text;
+      }
+
+      return null;
     });
     
     const isDataLoading = computed(() => {
@@ -119,6 +166,8 @@ export default defineComponent({
       widgetData,
       textData,
       isDataLoading,
+      textDateInfo,
+      dateDisplayText,
     };
   }
 });
@@ -142,6 +191,18 @@ export default defineComponent({
 .text-widget-title {
   margin-bottom: 1rem;
   color: #333;
+}
+
+.date-caption {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  color: #777;
+  margin: 4px 0 12px 0;
+  padding: 4px 8px;
+  border-radius: 4px;
 }
 
 .text-container {

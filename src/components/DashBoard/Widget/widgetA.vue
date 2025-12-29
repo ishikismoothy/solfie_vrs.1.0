@@ -19,6 +19,9 @@
     <!-- Regular chart view -->
     <section v-if="!isDataLoading && selectedDataTab !== 'アドバイス' && currentDataValues.items && Object.keys(currentDataValues.items).length > 0" class="chart-content-section">
       <h4 v-if="widgetData">{{ widgetData.name }}</h4>
+      <p v-if="dateDisplayText" class="date-caption">
+        {{ dateDisplayText }}
+      </p>
       <div class="chart-circle">
         <svg width="0" height="0">
           <defs>
@@ -59,6 +62,9 @@
     <section v-if="!isDataLoading && selectedDataTab === 'アドバイス'" class="chart-content-section advice-section">
       <h4 v-if="widgetData">{{ widgetData.name }} - アドバイス</h4>
       <h4 v-else>アドバイス</h4>
+      <p v-if="dateDisplayText" class="date-caption">
+        {{ dateDisplayText }}
+      </p>
       
       <div v-if="adviceData && adviceData.length > 0" class="advice-content">
         <div 
@@ -145,6 +151,11 @@ export default defineComponent({
       type: String,
       default: 'analysisData.advice_A'
     },
+    // Getter name for advice date info
+    adviceDateInfoGetterName: {
+      type: String,
+      default: 'getAdviceDateInfoA'
+    },
     // State path to loading status
     loadingGetterName: {
       type: String,
@@ -180,7 +191,7 @@ export default defineComponent({
       set: (tab) => store.dispatch(`${props.storeModule}/selectTab`, { tab, key: props.tabKey })
     });
 
-    const currentDataValues = computed(() => store.getters[`${props.storeModule}/${props.dataGetterName}`] || { percentage: 0, items: {} });
+    const currentDataValues = computed(() => store.getters[`${props.storeModule}/${props.dataGetterName}`] || { percentage: 0, items: {}, dateInfo: null });
     
     // Get chart data from the store using the provided path
     const chartData = computed(() => {
@@ -198,7 +209,7 @@ export default defineComponent({
       return data;
     });
 
-    // Get advice data from the store
+    // Get advice data from the store (new structure: { items: [], dateInfo: null })
     const adviceData = computed(() => {
       const pathParts = props.adviceStatePath.split('.');
       let data = store.state[props.storeModule];
@@ -211,7 +222,54 @@ export default defineComponent({
         }
       }
       
+      // Handle new structure: { items: [], dateInfo: null }
+      if (data && typeof data === 'object' && Array.isArray(data.items)) {
+        return data.items;
+      }
+      
       return Array.isArray(data) ? data : [];
+    });
+
+    // Get advice date info from store
+    const adviceDateInfo = computed(() => {
+      return store.getters[`${props.storeModule}/${props.adviceDateInfoGetterName}`] || null;
+    });
+
+    // Get current date info based on selected tab
+    const currentDateInfo = computed(() => {
+      if (selectedDataTab.value === 'アドバイス') {
+        return adviceDateInfo.value;
+      }
+      return currentDataValues.value?.dateInfo || null;
+    });
+
+    // Format date display string based on dateInfo
+    const dateDisplayText = computed(() => {
+      const dateInfo = currentDateInfo.value;
+      
+      if (!dateInfo) {
+        return null;
+      }
+
+      // Single date display (今日 tab or single record)
+      if (dateInfo.type === 'single') {
+        let text = `更新日: ${dateInfo.newestDate}`;
+        if (dateInfo.coverageText) {
+          text += ` (${dateInfo.coverageText})`;
+        }
+        return text;
+      }
+
+      // Date range display (6ヶ月 or 1年 tab)
+      if (dateInfo.type === 'range') {
+        let text = `期間: ${dateInfo.oldestDate} - ${dateInfo.newestDate}`;
+        if (dateInfo.coverageText) {
+          text += ` (${dateInfo.coverageText})`;
+        }
+        return text;
+      }
+
+      return null;
     });
 
     // Check if advice data exists
@@ -340,7 +398,23 @@ export default defineComponent({
       animatedValues,
       flippedCards,
       toggleFlip,
+      currentDateInfo,
+      dateDisplayText,
     };
   }
 });
 </script>
+
+<style scoped>
+.date-caption {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  color: #777;
+  margin: 4px 0 12px 0;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+</style>

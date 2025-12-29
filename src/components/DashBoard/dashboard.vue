@@ -35,6 +35,7 @@
         tabType="tab_B"
         dataGetterName="getDataB"
         dataStatePath="analysisData.data_B"
+        adviceDateInfoGetterName="getAdviceDateInfoB"
         adviceStatePath="analysisData.advice_B"
         loadingGetterName="isLoading"
         widgetConfig="data_B"
@@ -46,9 +47,22 @@
         tabType="tab_C"
         dataGetterName="getDataC"
         dataStatePath="analysisData.data_C"
+        adviceDateInfoGetterName="getAdviceDateInfoC"
         adviceStatePath="analysisData.advice_C"
         loadingGetterName="isLoading"
         widgetConfig="data_C"
+      />
+      <WidgetD
+        v-if="hasWidgetD"
+        storeModule="analysisRecords"
+        tabKey="bidirectionalData"
+        tabType="tab_D"
+        dataGetterName="getDataD"
+        dataStatePath="analysisData.data_D"
+        adviceDateInfoGetterName="getAdviceDateInfoD"
+        adviceStatePath="analysisData.advice_D"
+        loadingGetterName="isLoading"
+        widgetConfig="data_D"
       />
       <Widget_TextA
         v-if="hasWidget_TextA"
@@ -160,6 +174,7 @@
   import WidgetA from './Widget/widgetA.vue';
   import WidgetB from './Widget/widgetB.vue';
   import WidgetC from './Widget/widgetC.vue';
+  import WidgetD from './Widget/widgetD.vue';
   import Widget_TextA from './Widget/widget_TextA.vue';
   import Widget_TextB from './Widget/widget_TextB.vue';
 
@@ -171,6 +186,7 @@
       WidgetA,
       WidgetB,
       WidgetC,
+      WidgetD,
       Widget_TextA,
       Widget_TextB,
     },
@@ -200,7 +216,7 @@
       const hasWidgetA = computed(() => hasWidget('CC4ZpLD5Sz2DmwrTG84l'));
       const hasWidgetB = computed(() => hasWidget('GORz1h6ts9Vq2PKMD6un'));
       const hasWidgetC = computed(() => hasWidget('n33Khwkw7gKSmo8ZNxhk'));
-      const hasWidgetD = computed(() => hasWidget('rezpOM7Kk7R780BzhqvW'));
+      const hasWidgetD = computed(() => hasWidget('jaLLdAzkSqzG4PpYsVF1'));
       const hasWidget_TextA = computed(() => hasWidget('s4MoRxueN0CznLEXU6ei'));
       const hasWidget_TextB = computed(() => hasWidget('rQ5VgqQIuxsYlmC3Y0PP'));
 
@@ -325,5 +341,3 @@
     },
   });
 </script>
-
-
