@@ -157,7 +157,7 @@ export default {
 
             commit('SET_LOADING', true);
             try {
-                const updatedTheme = await themeService.updateTheme(themeId, themeData);
+                const updatedTheme = await themeService.updateTheme(themeId, themeData, userId);
                 commit('UPDATE_THEME', updatedTheme);
                 return updatedTheme;
             } catch (error) {
