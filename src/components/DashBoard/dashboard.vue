@@ -22,7 +22,12 @@
       <!-- MindSlot Section -->
       <MindSlotView/>
 
-      <h2 style="color: white;" class="title">今の状態</h2>
+      <div class="section-header">
+        <h2 style="color: white;" class="title">今の状態</h2>
+        <button class="edit-btn" @click="toggleMindUniverseModal">
+          編集
+        </button>
+      </div>
 
       <!-- Widget Section -->
       <WidgetA
@@ -235,6 +240,10 @@
         store.dispatch('user/triggerSatWindow', true)
       };
 
+      const toggleMindUniverseModal = async () => {
+        store.dispatch('user/triggerMindUniverseWindow', true);
+      };
+
       //=====[SYSTEM01 : TODOS]=====
       const todos = computed(() => store.state.todos.todos);
       const completedCount = computed(() => store.getters['todos/getCurrentCompleted']);
@@ -311,6 +320,7 @@
         themeName,
         result,
         triggerSatisfaction,
+        toggleMindUniverseModal,
 
         //SHARE VIEW DETECTOR
         isSharedAccess,

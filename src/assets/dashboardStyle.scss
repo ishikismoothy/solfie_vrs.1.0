@@ -139,7 +139,23 @@ main {
   }
 }
 
-
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+  margin-bottom: 0;
+  
+  .title {
+    margin: 0;
+  }
+  
+  .edit-btn {
+    position: absolute;
+    right: 0;
+  }
+}
 
 .scores-section-loading {
   background-color: white;

@@ -76,3 +76,32 @@
       }
     }
   }
+
+.edit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+
+  &:hover {
+    background: rgba(253, 74, 29, 0.2);
+    border-color: rgba(253, 74, 29, 0.4);
+    color: #fd4a1d;
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+    background: rgba(253, 74, 29, 0.3);
+  }
+}
